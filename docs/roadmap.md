@@ -13,7 +13,7 @@ Here's the development roadmap for claude-code-Go, organized into three phases.
 | Phase | Status | Description |
 |-------|--------|-------------|
 | Phase 1 | ✅ Complete | Core foundation - Agent loop, tools, permission, MCP, SSE, sessions |
-| Phase 2 | 🔄 In Progress | Enhanced capabilities - Skills, multi-provider, session resume |
+| Phase 2 | ✅ Complete | Enhanced capabilities - Skills, multi-provider, session resume |
 | Phase 3 | 🔮 Planned | Advanced features - IDE integration, collaboration, cloud |
 
 ---
@@ -34,23 +34,18 @@ The first phase established the core infrastructure for the AI coding assistant.
 
 ---
 
-## Phase 2: Enhanced Capabilities 🔄 In Progress
+## Phase 2: Enhanced Capabilities ✅ Complete
 
 Phase 2 adds more powerful features to improve usability and flexibility.
 
-### Current Work
+### Completed Features
 
 - **Skills System** — Custom commands and reusable workflows (e.g., `/review-pr`, `/deploy`)
 - **Multi-Provider Support** — Anthropic, OpenAI, and any OpenAI-compatible API
 - **Session Resume** — Load previous conversations and continue seamlessly
 - **Enhanced Tools** — Diff view, tree visualization, web fetching
-- **Auto-Update** — Automatic version checking and updates
-
-### Upcoming in Phase 2
-
-- Improved documentation and examples
-- Performance optimizations
-- Additional tool enhancements
+- **Manual Compaction** — `/compact` command to reduce context size
+- **Auto-Update** — `/update` command for version checking and updates
 
 ---
 
@@ -74,7 +69,7 @@ Phase 3 aims to make claude-code-Go a full-fledged development environment, brid
 
 ## Contributing
 
-Want to influence the roadmap? See our [Community](/community) page for how to contribute ideas, report issues, and submit pull requests.
+Want to influence the roadmap? See our [Feedback](/feedback) page for how to report issues and submit feature requests.
 
 ---
 

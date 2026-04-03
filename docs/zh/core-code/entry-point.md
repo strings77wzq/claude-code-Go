@@ -1,94 +1,202 @@
 ---
-title: 入口点详解
-description: 深入解析 main.go —— 组件初始化顺序、信号处理和系统提示词
+title: 入口点架构
+description: 理解初始化序列作为依赖图——为什么顺序重要、依赖注入模式及设计决策
 ---
 
-# 入口点详解
+# 入口点架构
 
-go-code 的主入口点位于 `cmd/go-code/main.go`。本文档详细说明了应用程序如何按正确顺序初始化所有组件。
+入口点是应用程序初始化契约的建立之处。与其将 `main.go` 视为一系列函数调用，不如将其视为**依赖图组装**——每个组件都按照其依赖关系以正确的顺序接入系统，确保在接收用户输入之前系统已完全可用。
 
-## 概述
-
-运行 `go-code` 时，会执行以下顺序：
+## 初始化流程
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        main.go 执行流程                             │
+│                     初始化依赖图                                    │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  1. 日志设置            → 初始化结构化日志                            │
-│  2. 信号处理            → 注册 SIGINT/SIGTERM 处理器                 │
-│  3. 加载配置            → 从环境变量/配置文件加载                     │
-│  4. 创建 API 客户端     → 初始化 Anthropic API 客户端               │
-│  5. 创建工具注册表      → 创建空注册表                               │
-│  6. 注册内置工具        → 注册 6 个内置工具                           │
-│  7. 创建权限策略        → 设置三级权限策略                           │
-│  8. 创建智能体          → 初始化所有依赖项                            │
-│  9. 启动 REPL           → 开始交互式会话（阻塞）                      │
+│  ┌──────────────┐                                                  │
+│  │   日志器     │  (基础层 —— 所有组件在初始化时都使用日志)        │
+│  └──────────────┘                                                  │
+│         │                                                          │
+│         ▼                                                          │
+│  ┌──────────────┐                                                  │
+│  │   信号处理   │  (优雅关闭契约)                                  │
+│  └──────────────┘                                                  │
+│         │                                                          │
+│         ▼                                                          │
+│  ┌──────────────┐    ┌──────────────┐                             │
+│  │    配置      │───▶│  API 客户端  │  (需要凭据)                 │
+│  └──────────────┘    └──────────────┘                             │
+│         │                  │                                       │
+│         │                  ▼                                       │
+│         │          ┌──────────────┐                               │
+│         └─────────▶│  工具注册表   │  (需要工作目录)              │
+│                     └──────────────┘                               │
+│                            │                                        │
+│                            ▼                                        │
+│                     ┌──────────────┐    ┌──────────────┐          │
+│                     │  权限策略    │◀───│    代理      │          │
+│                     │              │    │              │          │
+│                     └──────────────┘    └──────────────┘          │
+│                            │                     │                 │
+│                            └─────────────────────┘                 │
+│                                              ▼                     │
+│                                    ┌──────────────┐                │
+│                                    │    REPL      │  (阻塞)        │
+│                                    └──────────────┘                │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## 源代码分析
+## 为什么这个顺序很重要
 
-### 导入
+初始化序列并非任意——每个步骤都为后续步骤建立前提条件：
+
+### 1. 日志器优先 —— 基础层
+
+日志器必须在其他任何组件之前初始化，因为**每个后续组件在其初始化期间都会记录日志**。没有日志目标，配置加载、客户端创建或工具注册期间的错误将无处可去。
+
+这遵循了**控制反转**原则：应用程序提供一个全局日志器，而不是每个组件创建自己的日志器。这使得：
+- 所有组件的日志格式一致
+- 日志级别集中控制
+- 轻松重定向输出（文件、stderr、syslog）
+
+### 2. 信号 —— 关闭契约
+
+信号处理程序很早就注册，以建立**优雅关闭契约**。应用程序承诺任何信号（SIGINT、SIGTERM）都将导致干净的关闭并正确记录——没有孤儿进程，没有丢失状态。
+
+信号处理程序不需要其他组件准备就绪；它只需要日志器。这种最小依赖允许关闭即使在初始化中途失败也能正常工作。
+
+### 3. 配置 → 客户端 → 工具 —— 依赖链
+
+配置必须在 API 客户端创建之前加载（需要凭据），而 API 客户端必须在代理实例化之前存在。但在工具和配置之间存在一个微妙的顺序：
+
+- **工具注册表**必须在工具注册之前存在（它充当容器）
+- 配置中的**工作目录**必须传递给工具（特别是 Bash 工具需要知道在哪里执行命令）
+
+这创建了一个狭窄的窗口：配置加载 → 创建注册表 → 使用工作目录注册工具。跳过此顺序会导致工具在错误的目录中执行或无法找到其依赖项。
+
+### 4. 权限策略 —— 安全边界
+
+权限策略在所有其他组件之后创建，因为它需要知道**存在哪些工具**来做出访问决策。策略查询工具注册表以确定哪些工具需要权限以及用户已批准什么。
+
+### 5. 代理 —— 组合点
+
+代理是 DDD 术语中的**组合根**——它是所有依赖项组装成驱动应用程序的单个对象的地方。此时：
+- API 客户端已准备好发出请求
+- 工具注册表包含所有可用工具
+- 权限策略知道适用什么限制
+- 系统提示定义了代理的角色
+
+代理不创建其依赖项；它接收它们。这是**构造函数注入**，最纯粹的依赖注入形式。
+
+### 6. REPL —— 端点
+
+REPL 阻塞，等待用户输入。它接收完全配置的代理作为依赖。这遵循了**应用控制器**模式——REPL 将用户命令转换为对代理的方法调用。
+
+## 使用的设计模式
+
+### 注册表模式 —— 工具注册表
+
+工具注册表使用**注册表模式**为所有可用工具提供集中容器：
 
 ```go
-import (
-	"log/slog"
-	"os"
-	"os/signal"
-	"syscall"
-
-	"github.com/user/go-code/internal/agent"
-	"github.com/user/go-code/internal/api"
-	"github.com/user/go-code/internal/config"
-	"github.com/user/go-code/internal/permission"
-	"github.com/user/go-code/internal/tool"
-	toolinit "github.com/user/go-code/internal/tool/init"
-	"github.com/user/go-code/pkg/tty"
-)
+registry := tool.NewRegistry()
 ```
 
-关键依赖：
-- `log/slog` — 结构化日志（Go 1.21+）
-- `os/signal` — 优雅关闭处理
-- `internal/*` — 核心应用组件
-- `pkg/tty` — REPL 实现
+关键特性：
+- **延迟查找**：工具在执行时按名称检索，而非注册时
+- **线程安全**：使用 `sync.RWMutex` 进行并发读取和安全写入
+- **可扩展**：MCP 工具可以在运行时添加，而无需修改现有代码
 
-### 版本常量
+注册表解耦了**工具定义**（API 看到的）与**工具执行**（调用时发生的事）。代理不需要知道工具是内置的还是来自 MCP 服务器。
+
+### 策略模式 —— 权限系统
+
+权限系统使用**策略模式**进行访问决策：
 
 ```go
-const version = "0.1.0"
+policy := permission.NewPolicy(permission.WorkspaceWrite)
 ```
 
-### 系统提示词
+关键特性：
+- **声明式**：策略表达规则，而非实现
+- **可组合**：可以组合多个策略（尽管目前只使用一个）
+- **运行时评估**：策略检查特定工具和输入，而不仅仅是工具名称
+
+权限策略是**策略模式**的一种形式——行为（允许/拒绝/询问）可以根据配置变化而不改变使用它的代码。
+
+### 工厂模式 —— 代理创建
+
+代理构造函数充当**工厂**，用所有依赖项组装代理：
 
 ```go
-const systemPrompt = "You are an interactive agent that helps users with software engineering tasks. You have access to tools for reading files, editing files, executing shell commands, searching code, and more. Use your tools to complete tasks efficiently and accurately."
+agentInstance := agent.NewAgent(client, registry, policy, systemPrompt, model)
 ```
 
-系统提示词定义了智能体的角色和能力。每次 API 请求都会发送此提示词来指导模型的行为。
+这也是**构建器模式**语义的一个例子——每个依赖项都是明确必需的，使构造自我记录且不可能出错（编译错误而非运行时错误）。
 
-## 初始化顺序
+## 依赖注入的优势
 
-### 步骤 1：日志设置
+初始化序列展示了依赖注入的三个关键优势：
+
+### 1. 可测试性
+
+每个组件都可以通过提供模拟依赖项进行隔离测试：
 
 ```go
-logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-    Level: slog.LevelInfo,
-}))
-slog.SetDefault(logger)
+// 生产环境：真实客户端
+agent := agent.NewAgent(realClient, registry, policy, prompt, model)
+
+// 测试：返回可预测响应的模拟客户端
+agent := agent.NewAgent(mockClient, registry, policy, prompt, model)
 ```
 
-应用程序使用 Go 内置的 `log/slog` 进行结构化日志记录。所有日志消息都包含时间戳和严重级别。
+代理不知道区别——它依赖 `APIClient` 接口，而非具体实现。
 
-### 步骤 2：信号处理
+### 2. 模块化
+
+组件可以交换而不改变系统的其他部分。权限策略可以替换（例如，用于不同安全级别），API 客户端可以交换（例如，用于测试），工具可以添加或删除——所有这些都无需修改代理。
+
+### 3. 明确的依赖项
+
+构造函数签名明确记录了代理需要什么：
 
 ```go
-sigChan := make(chan os.Signal, 1)
-signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+func NewAgent(
+    client APIClient,
+    registry *Registry,
+    policy *Policy,
+    systemPrompt string,
+    model string,
+) *Agent
+```
 
+没有隐藏状态，没有全局变量，没有意外的初始化顺序。**编译器强制执行依赖图**。
+
+## 错误处理策略 —— 快速失败
+
+初始化序列遵循**快速失败**原则：
+
+```go
+if err != nil {
+    logger.Error("Failed to load configuration", "error", err)
+    os.Exit(1)
+}
+```
+
+为什么快速失败？
+- **诊断**：早期错误更容易诊断——堆栈跟踪直接指向问题
+- **恢复**：立即退出比以部分初始化状态继续更好
+- **用户体验**：描述性错误消息告诉用户具体出了什么问题以及如何修复
+
+每个初始化步骤都验证其前提条件，如果出现问题则退出并显示清晰的错误消息。没有重试逻辑，没有回退行为——系统要么正确启动，要么不能。
+
+## 信号处理 —— 优雅降级
+
+信号处理程序按设计保持最小化：
+
+```go
 go func() {
     sig := <-sigChan
     logger.Info("Received signal, shutting down", "signal", sig.String())
@@ -97,161 +205,34 @@ go func() {
 }()
 ```
 
-应用程序为以下信号注册处理器：
-- `SIGINT` — 中断（Ctrl+C）
-- `SIGTERM` — 终止请求
+它记录信号并干净地退出。为什么不更复杂？
+- REPL 处理用户级取消（Ctrl+C 取消当前轮次）
+- 信号处理程序处理系统级终止
+- 没有复杂的状态需要保存——每轮后会话都会被保存
+- 应用程序是短命的（运行一次，执行一个任务，退出）
 
-收到信号时，应用程序记录事件并优雅退出。
+这是**有意的简单**——添加更复杂的关闭逻辑对于此用例来说会引入复杂性而没有收益。
 
-### 步骤 3：加载配置
+## 架构总结
 
-```go
-logger.Info("Loading configuration")
-cfg, err := config.Load(nil)
-if err != nil {
-    logger.Error("Failed to load configuration", "error", err)
-    os.Exit(1)
-}
-logger.Info("Configuration loaded", "model", cfg.Model, "baseURL", cfg.BaseURL)
-```
+入口点展示了几个核心架构原则：
 
-配置从多个来源加载（环境变量、配置文件）。详情请参阅[配置指南](../guide/configuration.md)。
-
-### 步骤 4：创建 API 客户端
-
-```go
-logger.Info("Creating API client")
-client := api.NewClient(cfg.APIKey, cfg.BaseURL, cfg.Model)
-logger.Info("API client created")
-```
-
-API 客户端使用凭证和模型设置初始化。它负责与 Anthropic API 的 HTTP 通信。
-
-### 步骤 5：创建工具注册表
-
-```go
-logger.Info("Creating tool registry")
-registry := tool.NewRegistry()
-logger.Info("Tool registry created")
-```
-
-注册表是所有可用工具的线程安全容器。它使用 `sync.RWMutex` 实现并发读取和安全写入。
-
-### 步骤 6：注册内置工具
-
-```go
-logger.Info("Registering builtin tools")
-wd := cfg.WorkingDir
-if wd == "" {
-    wd, _ = os.Getwd()
-}
-if err := toolinit.RegisterBuiltinTools(registry, wd); err != nil {
-    logger.Error("Failed to register builtin tools", "error", err)
-    os.Exit(1)
-}
-logger.Info("Builtin tools registered", "count", len(registry.GetAllDefinitions()))
-```
-
-注册六个内置工具：
-
-| 工具 | 用途 |
+| 原则 | 实现 |
 |------|------|
-| **Read** | 读取文件内容 |
-| **Write** | 创建/覆盖文件 |
-| **Edit** | 修改特定代码段 |
-| **Glob** | 按模式查找文件 |
-| **Grep** | 搜索文件内容 |
-| **Bash** | 执行 Shell 命令 |
+| **依赖图** | 初始化顺序尊重组件依赖 |
+| **组合根** | 代理是所有依赖项汇合的单一位置 |
+| **快速失败** | 错误被及早捕获并带有描述性消息 |
+| **明确依赖** | 构造函数注入使依赖可见 |
+| **注册表模式** | 具有运行时查找的集中式工具容器 |
+| **策略模式** | 在执行时评估的声明式权限规则 |
 
-工作目录传递给 Bash 工具，以便命令在正确的上下文中执行。
-
-### 步骤 7：创建权限策略
-
-```go
-logger.Info("Creating permission policy")
-policy := permission.NewPolicy(permission.WorkspaceWrite)
-logger.Info("Permission policy created")
-```
-
-权限策略确定哪些操作需要用户批准。详见[架构概述](overview.md)。
-
-### 步骤 8：创建智能体
-
-```go
-logger.Info("Creating agent")
-agentInstance := agent.NewAgent(client, registry, policy, systemPrompt, cfg.Model)
-logger.Info("Agent started", "model", cfg.Model)
-```
-
-智能体使用所有依赖项创建：
-- 用于模型通信的 API 客户端
-- 用于执行的工具注册表
-- 用于访问控制的权限策略
-- 用于行为指导的系统提示词
-- 用于 API 请求的模型标识符
-
-### 步骤 9：启动 REPL
-
-```go
-logger.Info("Starting REPL")
-repl := tty.NewREPL(agentInstance, version, cfg.Model)
-
-// Run REPL - this blocks until exit
-repl.Run()
-
-logger.Info("REPL exited")
-```
-
-REPL（Read-Eval-Print Loop）是交互式界面。它：
-1. 从终端读取用户输入
-2. 将其传递给智能体处理
-3. 显示响应
-4. 重复直到用户退出（Ctrl+C 或 `exit` 命令）
-
-## 关键初始化概念
-
-### 依赖注入
-
-应用程序始终使用依赖注入。每个组件通过构造函数接收其依赖项：
-
-```go
-agent.NewAgent(client, registry, policy, systemPrompt, model)
-```
-
-这使代码可测试且模块化。
-
-### 顺序很重要
-
-初始化顺序至关重要：
-
-1. 日志必须首先就绪（其他组件在初始化期间记录日志）
-2. 组件需要配置之前必须先加载配置
-3. 工具注册表必须存在，然后才能注册工具
-4. 创建智能体之前所有组件必须准备就绪
-
-### 错误处理
-
-每个初始化步骤检查错误并退出，并显示描述性消息：
-
-```go
-if err != nil {
-    logger.Error("Failed to load configuration", "error", err)
-    os.Exit(1)
-}
-```
-
-## 相关文档
-
-- [智能体循环实现](agent-loop-impl.md) — Run() 方法和执行流程
-- [工具系统概述](../tools/overview.md) — 工具接口和注册表
-- [MCP 集成](../architecture/mcp.md) — Model Context Protocol 支持
-- [配置指南](../guide/configuration.md) — 配置选项
+理解这个初始化序列是理解整个系统的基础——它是建立依赖契约的地方，所有后续操作都建立在此基础上。
 
 ---
 
 <div class="nav-prev-next">
 
 - [架构概述](../architecture/overview.md) ←
-- → [智能体循环实现](agent-loop-impl.md)
+- → [代理循环实现](agent-loop-impl.md)
 
 </div>

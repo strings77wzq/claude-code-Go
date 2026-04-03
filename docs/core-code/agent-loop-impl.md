@@ -1,358 +1,313 @@
 ---
-title: Agent Loop Implementation
-description: Deep dive into the Run() method — stop_reason dispatch, history management, tool execution, and session persistence
+title: Agent Loop Architecture
+description: Understanding the agent loop as a state machine — stop_reason dispatch, safety mechanisms, and design trade-offs
 ---
 
-# Agent Loop Implementation
+# Agent Loop Architecture
 
-The agent loop is the core execution engine in go-code, implemented in `internal/agent/loop.go`. This document provides a detailed walkthrough of the `Run()` method and its key components.
+The agent loop is the **runtime engine** of the system. While the entry point establishes the dependency graph at startup, the agent loop executes the actual conversation cycles. Viewing it as a **state machine** rather than a procedural loop reveals the core design decisions that make the system robust and predictable.
 
-## The Run() Method Overview
-
-```go
-func (a *Agent) Run(ctx context.Context, userInput string, 
-                   outputCallback func(string)) (string, error)
-```
-
-The method takes:
-- `ctx` — Context for cancellation
-- `userInput` — The user's message
-- `outputCallback` — Function to receive streaming text
-
-Returns the final text response or an error.
-
-## Execution Flow
+## State Machine Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     Run() Method Flow                              │
+│                     Agent Loop State Machine                        │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  1. Initialize session (generate ID, record start time)            │
-│  2. Add user message to history                                    │
-│                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │                    FOR LOOP (MaxTurns)                      │   │
-│  │                                                              │   │
-│  │  3. Compact history if needed                               │   │
-│  │  4. Build API request (system + tools + messages)          │   │
-│  │  5. Send to API and receive streaming response             │   │
-│  │  6. Add assistant message to history                       │   │
-│  │  7. Dispatch on stop_reason:                               │   │
-│  │     - end_turn / stop_sequence → return text               │   │
-│  │     - max_tokens → return text + warning                   │   │
-│  │     - tool_use → execute tools, add results, continue      │   │
-│  │     - default → return text                                 │   │
-│  │  8. Save session on exit                                   │   │
-│  │                                                              │   │
-│  └─────────────────────────────────────────────────────────────┘   │
+│     ┌──────────┐                                                   │
+│     │ thinking │                                                   │
+│     └────┬─────┘                                                   │
+│          │ API response received                                    │
+│          ▼                                                          │
+│  ┌───────────────────────────────────────┐                        │
+│  │         stop_reason dispatch          │                        │
+│  └───────────────────────────────────────┘                        │
+│          │                                                         │
+│    ┌─────┴─────┬───────────┬────────────┐                       │
+│    ▼           ▼           ▼            ▼                        │
+│ ┌──────┐  ┌────────┐  ┌──────────┐  ┌──────────┐                 │
+│ │end_  │  │max_    │  │tool_use  │  │unknown   │                 │
+│ │turn  │  │tokens  │  │          │  │          │                 │
+│ └──┬───┘  └────┬───┘  └────┬─────┘  └────┬─────┘                 │
+│    │           │           │             │                        │
+│    ▼           ▼           ▼             ▼                        │
+│  Return      Return      Execute      Return                      │
+│  response   +warning   tools +                               │
+│                           continue                                │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## Session Initialization
+## State Definitions
 
-```go
-func (a *Agent) Run(ctx context.Context, userInput string, 
-                   outputCallback func(string)) (string, error) {
-    a.sessionID = generateSessionID()
-    a.startTime = time.Now()
+The agent loop operates in these states:
 
-    var totalInputTokens, totalOutputTokens int
+| State | Meaning | Next Action |
+|-------|---------|--------------|
+| **thinking** | Awaiting API response | Transition based on `stop_reason` |
+| **tool_use** | Model requested tool execution | Execute tools, add results, continue loop |
+| **end_turn** | Model completed task | Return response to user |
+| **max_tokens** | Response truncated | Return partial response with warning |
+| **unknown** | Unexpected stop reason | Return whatever content exists |
 
-    if err := a.history.AddUserMessage(userInput); err != nil {
-        return "", fmt.Errorf("failed to add user message: %w", err)
-    }
+## Why a State Machine?
+
+### Procedural vs. State Machine Thinking
+
+A **procedural** view treats the loop as:
+```
+1. Send request
+2. Get response
+3. Check stop_reason
+4. If tool_use: execute and loop
+5. Else: return
 ```
 
-Each session gets:
-- Unique ID: `sess_<timestamp>`
-- Start timestamp for session tracking
-- Token counters for usage monitoring
+This misses the deeper structure. A **state machine** view reveals:
 
-## The Main Loop
+- Each `stop_reason` is a **state transition** — the system moves from "thinking" to a specific outcome state
+- The loop isn't just repeating; it's **cycling through well-defined states**
+- Safety limits (MAX_TURNS) are **circuit breakers** that halt the state machine
 
-```go
-turns := 0
+### Design Trade-offs
 
-for turns < MaxTurns {
-    // Step 1: Compact history if needed
-    CompactIfNeeded(a.history, a.contextConfig)
+Why use a state machine instead of alternatives?
 
-    // Step 2: Build and send API request
-    req := a.buildRequest()
-    resp, err := a.apiClient.SendMessageStream(ctx, req, outputCallback)
-```
+| Approach | Why Not Used |
+|----------|---------------|
+| **Event-driven** | Over-engineered for this use case; the API already provides discrete responses |
+| **Reactive/stream-based** | SSE provides streaming, but we need to reason about complete responses, not individual tokens |
+| **Coroutine-based** | Go's goroutines are available, but the loop logic is simpler as explicit state transitions |
 
-### History Compaction
-
-```go
-CompactIfNeeded(a.history, a.contextConfig)
-```
-
-As the conversation grows, the history is periodically compacted to stay within token limits. This is handled by the compact module to prevent context overflow.
-
-### Request Building
-
-```go
-func (a *Agent) buildRequest() *api.ApiRequest {
-    toolDefs := make([]api.ToolDefinition, 0)
-    for _, td := range a.toolRegistry.GetAllDefinitions() {
-        toolDefs = append(toolDefs, api.ToolDefinition{
-            Name:        td.Name,
-            Description: td.Description,
-            InputSchema: td.InputSchema,
-        })
-    }
-
-    return &api.ApiRequest{
-        Model:     a.model,
-        MaxTokens: a.maxTokens,
-        System:    a.systemPrompt,
-        Stream:    true,
-        Tools:     toolDefs,
-        Messages:  a.history.GetMessages(),
-    }
-}
-```
-
-Each request includes:
-- Model identifier
-- Max tokens limit
-- System prompt
-- Tool definitions from registry
-- Current conversation history
+The state machine is the **minimal complexity** solution that captures the needed behavior: the API tells us what happened (`stop_reason`), and we respond accordingly.
 
 ## Stop Reason Dispatch
 
-The API response includes a `stop_reason` field that determines the next action:
+The `stop_reason` field is the **protocol contract** between the API and the agent. It tells the agent what the model did and what to do next:
 
 ### end_turn / stop_sequence
 
-```go
-switch resp.StopReason {
-case "end_turn", "stop_sequence":
-    result := extractTextContent(resp.Content)
-    a.saveSession(turns, totalInputTokens, totalOutputTokens)
-    return result, nil
+```
+Model believes task is complete → Return response to user
 ```
 
-The model believes the task is complete. Return the text content as the final response.
+This is the **happy path**. The model decided it has enough information and produced a final answer. The agent returns the text content directly.
 
 ### max_tokens
 
-```go
-case "max_tokens":
-    result := extractTextContent(resp.Content) + 
-              "\n[Warning] Response was truncated (max_tokens reached)."
-    a.saveSession(turns, totalInputTokens, totalOutputTokens)
-    return result, nil
+```
+Model hit token limit → Return partial response with warning
 ```
 
-The response was truncated. Return partial content with a warning.
+This is a **degraded but safe** path. The response is truncated, so the user gets partial results plus a warning. They can continue the conversation to get the rest.
 
 ### tool_use
 
-```go
-case "tool_use":
-    toolResults := a.executeTools(ctx, resp.Content)
-    if err := a.history.AddToolResults(toolResults); err != nil {
-        a.saveSession(turns, totalInputTokens, totalOutputTokens)
-        return "", fmt.Errorf("failed to add tool results: %w", err)
-    }
-    turns++
-    continue
+```
+Model wants to call tools → Execute tools, add results, continue loop
 ```
 
-The model wants to call tools. Execute all requested tools, add results to history, and continue the loop.
+This is the **iterative path**. The model identified that it needs to take action (read a file, run a command, search for something). The agent:
+1. Executes all requested tools
+2. Adds results to conversation history
+3. Continues the loop to get the next response
 
 ### unknown / default
 
-```go
-default:
-    result := extractTextContent(resp.Content)
-    a.saveSession(turns, totalInputTokens, totalOutputTokens)
-    return result, nil
+```
+Unexpected stop_reason → Return whatever content exists
 ```
 
-Fallback for unexpected stop reasons. Return whatever content was generated.
+This is a **defensive fallback**. We don't crash on unexpected values; we return what we have and let the user decide what to do.
 
-## MAX_TURNS Safety Limit
+## Circuit Breaker — MAX_TURNS
 
 ```go
-// MaxTurns is the maximum number of agent loop iterations to prevent infinite loops.
 const MaxTurns = 50
 ```
 
-The loop enforces a maximum of 50 iterations to prevent:
-- Infinite tool execution loops
-- Unproductive model oscillation
-- Resource exhaustion
+MAX_TURNS is a **circuit breaker** in the electrical safety sense — it's designed to prevent catastrophic failure:
 
-If reached:
+### What it prevents
 
-```go
-result := "[Agent loop stopped] Reached maximum turns (" + 
-          fmt.Sprintf("%d", MaxTurns) + ")."
-a.saveSession(turns, totalInputTokens, totalOutputTokens)
-return result, nil
+- **Infinite loops**: Model calling tools that produce results that trigger more tool calls endlessly
+- **Oscillation**: Model going back and forth between same approaches without progress
+- **Resource exhaustion**: Running out of API tokens, memory, or time
+
+### How it works
+
+The loop enforces a maximum of 50 iterations (each iteration = one API call + potentially many tool executions). After 50 turns, the agent stops and returns a message indicating the limit was reached.
+
+### Why 50?
+
+This is an **empirical choice**:
+- 50 turns is enough for complex tasks (analyze codebase, make changes, verify)
+- It's beyond what a reasonable conversation would need
+- It provides a safety net without being too restrictive
+
+### What this design choice means
+
+The circuit breaker assumes that **reasonable tasks complete within 50 turns**. If a task legitimately needs more, the design says: break the task into smaller pieces, or accept that the current approach isn't working.
+
+## Context Window Optimization — History Management
+
+The conversation history grows with each turn. The API has a **context window limit** (e.g., 200K tokens). The history management system optimizes this:
+
+### Compaction Strategy
+
+```
+┌─────────────────────────────────────────────────────┐
+│              History Compaction                     │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  Turn 1:  [user: "..."]                             │
+│           [assistant: "..."]                        │
+│                                                     │
+│  Turn 2:  [user: "..."]                             │
+│           [assistant: "tool_use: read file"]        │
+│           [tool_result: "file contents..."]        │
+│           [assistant: "..."]                        │
+│                                                     │
+│  ...                                                │
+│                                                     │
+│  After compaction:                                  │
+│  ─────────────────                                  │
+│  [user: "original request"]                        │
+│  [system: "summary of middle turns"]               │
+│  [assistant: "current response"]                   │
+│                                                     │
+└─────────────────────────────────────────────────────┘
 ```
 
-## History Management
+### Why not keep everything?
 
-### Message Types
+- **Cost**: More tokens = more API costs
+- **Performance**: Larger contexts = slower API responses
+- **Model attention**: Extremely long contexts can reduce model focus on the current task
 
-```go
-// Add user message
-if err := a.history.AddUserMessage(userInput); err != nil {
-    return "", fmt.Errorf("failed to add user message: %w", err)
-}
+### Compaction triggers
 
-// Add assistant response
-if err := a.history.AddAssistantMessage(resp.Content); err != nil {
-    return "", fmt.Errorf("failed to add assistant message: %w", err)
-}
+Compaction happens when:
+1. Token count approaches the limit
+2. Before each API request (to ensure the request fits)
 
-// Add tool results
-if err := a.history.AddToolResults(toolResults); err != nil {
-    return "", fmt.Errorf("failed to add tool results: %w", err)
-}
+### What gets compacted
+
+The system summarizes or removes older turns while preserving:
+- The original user request (context)
+- The most recent conversation (working memory)
+- Tool definitions (always needed)
+
+## Security Checkpoint — Permission Gate
+
+Before any tool executes, it passes through the **permission gate**:
+
+```
+┌─────────────────────────────────────────────────────┐
+│              Permission Gate                         │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  tool_request ──▶ checkPermission() ──▶ decision    │
+│                      │                              │
+│                      ▼                              │
+│              ┌──────────────────┐                   │
+│              │ PermissionPolicy │                   │
+│              │  - Allow         │                   │
+│              │  - Deny          │                   │
+│              │  - Ask (prompt)  │                   │
+│              └──────────────────┘                   │
+│                                                     │
+└─────────────────────────────────────────────────────┘
 ```
 
-### API Message Format
+### Why this design?
 
-The Anthropic API expects messages in this format:
+- **Defense in depth**: Not all tools are dangerous; permission check is a security layer
+- **User control**: Users can allow/deny specific operations
+- **Auditability**: Permission decisions are logged
 
-```json
-{
-  "messages": [
-    { "role": "user", "content": "..." },
-    { "role": "assistant", "content": "..." },
-    { "role": "tool", "tool_use_id": "...", "content": "..." }
-  ]
-}
-```
+### Tool classification
 
-## Tool Execution with Permission Check
+- **No permission needed**: Read, Glob, Grep (read-only, low-risk)
+- **Requires permission**: Bash, Write, Edit (can modify system)
 
-```go
-func (a *Agent) executeTools(ctx context.Context, 
-                             content []api.ContentBlock) []api.ContentBlock {
-    var toolResults []api.ContentBlock
+The permission policy evaluates each tool call based on:
+1. Whether the tool requires permission
+2. The user's configured permission level
+3. The specific operation being attempted
 
-    for _, block := range content {
-        if block.Type != "tool_use" {
-            continue
-        }
+## Crash Recovery — Session Persistence
 
-        toolName := block.Name
-        toolInput := block.Input
-        toolUseID := block.ID
-
-        // Permission check
-        if !a.checkPermission(toolName, toolInput) {
-            toolResults = append(toolResults, api.ContentBlock{
-                Type:      "tool_result",
-                ToolUseID: toolUseID,
-                IsError:   true,
-            })
-            continue
-        }
-
-        // Execute pre-hooks
-        if a.hooksRegistry != nil {
-            if err := a.hooksRegistry.RunPreHooks(toolName, toolInput); err != nil {
-                toolResults = append(toolResults, api.ContentBlock{
-                    Type:      "tool_result",
-                    ToolUseID: toolUseID,
-                    Text:      "pre-hook error: " + err.Error(),
-                    IsError:   true,
-                })
-                continue
-            }
-        }
-
-        // Execute tool
-        result := a.toolRegistry.Execute(ctx, toolName, toolInput)
-
-        // Execute post-hooks
-        if a.hooksRegistry != nil {
-            a.hooksRegistry.RunPostHooks(toolName, toolInput, 
-                                         result.Content, result.IsError)
-        }
-
-        // Collect result
-        toolResults = append(toolResults, api.ContentBlock{
-            Type:      "tool_result",
-            ToolUseID: toolUseID,
-            Text:      result.Content,
-            IsError:   result.IsError,
-        })
-    }
-
-    return toolResults
-}
-```
-
-### Permission Check
-
-```go
-func (a *Agent) checkPermission(toolName string, 
-                                input map[string]any) bool {
-    t := a.toolRegistry.GetTool(toolName)
-    requiresPermission := t != nil && t.RequiresPermission()
-
-    decision := a.permissionPolicy.Evaluate(toolName, input, requiresPermission)
-    return decision == permission.Allow || decision == permission.Ask
-}
-```
-
-If the tool's `RequiresPermission()` returns `true`, the permission policy evaluates whether to allow, deny, or ask the user.
-
-## Session Persistence
+Each turn completes with session persistence:
 
 ```go
 func (a *Agent) saveSession(turnCount, inputTokens, outputTokens int) {
-    if a.sessionID == "" {
-        return
-    }
-
-    s := &session.Session{
-        ID:           a.sessionID,
-        Model:        a.model,
-        StartTime:    a.startTime,
-        EndTime:      time.Now(),
-        TurnCount:    turnCount,
-        InputTokens:  inputTokens,
-        OutputTokens: outputTokens,
-    }
-
-    messages := a.convertHistoryToSessionMessages()
-    dir := getSessionsDir()
-
-    if err := session.SaveSession(s, messages, dir); err != nil {
-        fmt.Fprintf(os.Stderr, "Warning: failed to save session: %v\n", err)
-    }
+    // Save to ~/.claude-code-go/sessions/
 }
 ```
 
-Sessions are saved to `~/.claude-code-go/sessions/` with:
+### What gets saved
+
 - Session ID and timestamps
 - Model used
 - Turn count and token usage
-- Full conversation history
+- **Full conversation history**
 
-## Related Documentation
+### Why save after each turn?
 
-- [Entry Point Walkthrough](entry-point.md) — main.go initialization sequence
-- [Tool System Overview](../tools/overview.md) — Tool interface and registry
-- [Architecture Overview](../architecture/overview.md) — System components
+```
+┌─────────────────────────────────────────────────────┐
+│            Session Persistence Flow                  │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  Turn 1:  request → response → save                 │
+│  Turn 2:  request → response → save                 │
+│  Turn 3:  crash!                                    │
+│                                                     │
+│  Recovery: Load last session → resume from turn 3  │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+This design provides **crash recovery** without complexity:
+- If the process dies mid-turn, the next run can resume
+- No complex transaction log needed
+- Sessions are small enough to save quickly
+
+### Recovery considerations
+
+- Sessions saved to disk survive process crash
+- On next run, user can continue or start fresh
+- Old sessions accumulate (cleanup is a future enhancement)
+
+## Architectural Summary
+
+The agent loop demonstrates several architectural principles:
+
+| Principle | Implementation |
+|-----------|----------------|
+| **State Machine** | `stop_reason` as state transition trigger |
+| **Circuit Breaker** | MAX_TURNS prevents infinite loops |
+| **Context Optimization** | History compaction before each request |
+| **Defense in Depth** | Permission gate before tool execution |
+| **Crash Recovery** | Session persistence after each turn |
+| **Fail Gracefully** | Unknown stop_reason returns partial response |
+
+### Why these choices work
+
+1. **State machine**: Matches the API's discrete response model
+2. **Circuit breaker**: Provides safety without complexity
+3. **History compaction**: Keeps costs predictable, performance high
+4. **Permission gate**: Balances security with usability
+5. **Session persistence**: Enables recovery without transaction complexity
+
+The agent loop is the **operational core** — it takes the initialized components from the entry point and makes them do useful work through well-defined state transitions.
 
 ---
 
 <div class="nav-prev-next">
 
-- [Entry Point Walkthrough](entry-point.md) ←
+- [Entry Point Architecture](entry-point.md) ←
 - → [Tool System Overview](../tools/overview.md)
 
 </div>

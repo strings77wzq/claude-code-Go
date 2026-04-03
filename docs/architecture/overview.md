@@ -1,135 +1,118 @@
 ---
 title: Architecture Overview
-description: High-level architecture of go-code — components, data flow, and design philosophy
+description: Harness-First Engineering — where the model provides intelligence and the harness provides reliability
 ---
 
 # Architecture Overview
 
-go-code is a Go implementation of Anthropic's Claude Code agent system. It combines a large language model (LLM) with a robust execution harness to enable autonomous software engineering tasks.
+In the rapidly evolving landscape of AI-assisted software engineering, the distinction between what the model knows and what the system guarantees has become the defining architectural question. go-code embraces a fundamental principle: **the model provides intelligence, the harness provides reliability**.
 
-## High-Level Architecture
+This is not merely a division of labor — it is an architectural philosophy that shapes every design decision, from the permission system that guards dangerous operations to the context management that maximizes the utility of limited context windows.
+
+## The Five Pillars of go-code Architecture
+
+### Harness-First Engineering
+
+The harness isn't an afterthought; it's the foundation. When building an AI agent system that operates with the same privileges as its user, reliability cannot be layered on top — it must be baked in from the first line of code.
+
+**Permission control** ensures that destructive operations (file deletion, shell command execution, network requests) never execute without explicit user consent or appropriate policy configuration. **Timeout protection** guarantees that a misbehaving tool — whether a runaway grep search or an infinite loop — cannot hang the entire session. **Output truncation** prevents a single tool response from consuming the entire context window. **Session persistence** means the agent can resume after interruption without losing conversation history or context.
+
+These aren't features bolted onto the agent loop. They are the safety net that makes AI agents production-ready. The model can hallucinate, misinterpret, or choose the wrong tool — but the harness must never permit a destructive operation without authorization, must never hang indefinitely, and must never lose the user's work.
+
+### Context Window as Scarce Resource
+
+Modern LLMs offer generous context windows, but "generous" is a relative term when representing an entire codebase, multiple files, and ongoing conversation history. go-code treats context as a scarce resource to be managed, not a luxury to be spent freely.
+
+The architecture implements a **lazy tool loading** strategy — tools are registered in a central registry and only the tool definitions (name, description, input schema) are sent to the model, not their implementations. Tool descriptions themselves are capped at 250 characters, forcing discipline in how capabilities are communicated to the model.
+
+For long conversations, go-code implements **three-tier compaction**: messages are retained in full until a threshold is reached, then compressed into summaries that preserve key information while reducing token count. This allows conversations to span dozens of turns without hitting API limits.
+
+### Layered Permission Defense
+
+Trust is not binary, and neither is authorization. go-code implements a three-tier permission model that reflects real-world security thinking:
+
+| Level | Capability | Use Case |
+|-------|------------|----------|
+| **ReadOnly** | File reading, globbing, grep searching | Safe exploration of codebases |
+| **WorkspaceWrite** | File creation, modification, editing | Controlled development work |
+| **DangerFullAccess** | Shell execution, deletions, network operations | Full automation with explicit approval |
+
+The permission system doesn't merely check a level — it evaluates each operation against **glob rule matching** to determine whether specific paths or operations are permitted. A policy might allow editing files in `/src/` while blocking modifications to `/config/` or `/tests/`.
+
+**Session memory** means the system remembers approval decisions within a session, preventing repetitive prompts for the same operation. A human-in-the-loop approval mode exists for operations requiring explicit confirmation before execution — critical for destructive operations or shell commands that could compromise the system.
+
+### Local-First Execution
+
+go-code runs as a pure Go binary with zero runtime dependencies. There is no Python environment to configure, no Node.js runtime to maintain, no virtual machine to manage. The agent executes in the full environment of the host machine, with access to all system resources, environment variables, and installed tooling.
+
+This **local-first** approach eliminates virtualization overhead and provides maximum performance. The agent can invoke the same build tools, linters, and test runners that developers use daily. There's no abstraction layer between the model's intent and the system's actual capabilities.
+
+### MCP as Universal Bridge
+
+The Model Context Protocol (MCP) is not a closed ecosystem — it is an interoperability hub. go-code treats MCP as a bridge to external tool ecosystems, enabling the agent to discover and utilize capabilities beyond its built-in set.
+
+MCP servers can be configured to provide specialized tooling: database access, API integrations, cloud service management, or domain-specific analyzers. The agent treats MCP tools the same as built-in tools — with full permission enforcement and the same execution guarantees.
+
+## System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                              go-code                                │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌──────────────┐    ┌──────────────┐    ┌───────────────────────┐ │
-│  │   CLI/Repl   │───▶│  Agent Loop  │───▶│    Tool Registry     │ │
-│  └──────────────┘    └──────────────┘    └───────────────────────┘ │
-│                            │                         │              │
-│                            ▼                         ▼              │
-│                     ┌──────────────┐         ┌───────────────────┐  │
-│                     │  API Client  │         │   Built-in Tools  │  │
-│                     │   (Stream)   │         │  Bash, Read,      │  │
-│                     └──────────────┘         │  Write, Edit,     │  │
-│                            │                 │  Glob, Grep       │  │
-│                            ▼                 └───────────────────┘  │
-│                     ┌──────────────┐                                │
-│                     │  Anthropic   │                                │
-│                     │     API      │                                │
-│                     └──────────────┘                                │
-│                                                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐    ┌──────────────┐    ┌───────────────────────┐ │
-│  │    Config    │    │  Permission  │    │    MCP Integration   │ │
-│  │    Loader   │    │    System    │    │       (Adapter)       │ │
-│  └──────────────┘    └──────────────┘    └───────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                 go-code                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                              User                                      │   │
+│  │                          (REPL / CLI)                                  │   │
+│  └─────────────────────────────┬────────────────────────────────────────┘   │
+│                                │                                              │
+│                                ▼                                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                           Agent Loop                                   │   │
+│  │                    State Machine: THINK → ACT → OBSERVE              │   │
+│  │                                                                       │   │
+│  │  ┌──────────────┐    ┌──────────────┐    ┌──────────────────────┐    │   │
+│  │  │   History    │───▶│   Request    │───▶│    Stop Reason       │    │   │
+│  │  │  Management  │    │   Builder   │    │    Dispatch          │    │   │
+│  │  └──────────────┘    └──────────────┘    └──────────────────────┘    │   │
+│  └─────────────────────────────┬────────────────────────────────────────┘   │
+│                                │                                              │
+│                                ▼                                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                          API Client                                   │   │
+│  │                    SSE Streaming + Auth                              │   │
+│  └─────────────────────────────┬────────────────────────────────────────┘   │
+│                                │                                              │
+│                                ▼                                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                        Anthropic API                                  │   │
+│  │                     (Claude Model + Tools)                            │   │
+│  └─────────────────────────────┬────────────────────────────────────────┘   │
+│                                │                                              │
+│  ═══════════════════════════════╪═══════════════════════════════════════════   │
+│                                │                                              │
+│  ┌─────────────────────────────┴────────────────────────────────────────┐   │
+│  │                         Tool Layer                                     │   │
+│  │                                                                       │   │
+│  │  ┌──────────────────┐        ┌──────────────────┐                   │   │
+│  │  │  Tool Registry   │───────▶│  Permission Gate │                   │   │
+│  │  │                  │        │                  │                   │   │
+│  │  │  • Built-in      │        │  • Tier Check    │                   │   │
+│  │  │  • MCP Adapter  │        │  • Glob Rules    │                   │   │
+│  │  │  • Lazy Loading │        │  • Human Approval│                   │   │
+│  │  └──────────────────┘        └──────────────────┘                   │   │
+│  │                                    │                                   │   │
+│  │                                    ▼                                   │   │
+│  │  ┌────────────────────────────────────────────────────────────────┐  │   │
+│  │  │                     Execution Layer                             │  │   │
+│  │  │                                                                  │  │   │
+│  │  │  Read  │  Write  │  Edit  │  Glob  │  Grep  │  Bash  │  MCP... │  │   │
+│  │  │                                                                  │  │   │
+│  │  │  • Timeout Protection  • Output Truncation  • Error Recovery  │  │   │
+│  │  └────────────────────────────────────────────────────────────────┘  │   │
+│  └───────────────────────────────────────────────────────────────────────┘   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
-
-## Component Breakdown
-
-### 1. CLI/RePL
-
-The command-line interface provides the user-facing entry point:
-
-- Parses command-line arguments
-- Manages interactive REPL sessions
-- Streams user input to the agent
-- Displays output and tool execution results
-
-**Location**: `pkg/tty/repl.go`
-
-### 2. Agent Loop
-
-The core orchestrator managing the think → act → observe execution cycle:
-
-- Maintains conversation history
-- Sends requests to the API with tools and context
-- Processes model responses and stop reasons
-- Executes tools and feeds results back to the model
-- Manages the loop until the task completes
-
-**Location**: `internal/agent/loop.go`
-
-### 3. API Client
-
-Handles communication with the Anthropic API:
-
-- Sends messages with tool definitions
-- Receives streaming responses
-- Parses tool call requests from the model
-- Manages authentication
-
-**Location**: `internal/api/client.go`, `internal/api/stream.go`
-
-### 4. Tool Registry
-
-Central registry for all available tools:
-
-- Manages built-in tool registration
-- Handles MCP tool discovery
-- Provides tool schemas to the model
-- Routes tool calls to appropriate implementations
-
-**Location**: `internal/tool/registry.go`
-
-### 5. Built-in Tools
-
-Six core tools that enable file system and command execution:
-
-| Tool | Purpose | Permission Required |
-|------|---------|---------------------|
-| **Read** | Read file contents | No |
-| **Write** | Create or overwrite files | Yes |
-| **Edit** | Make targeted modifications | Yes |
-| **Glob** | Find files by pattern | No |
-| **Grep** | Search file contents | No |
-| **Bash** | Execute shell commands | Yes |
-
-**Location**: `internal/tool/builtin/`
-
-### 6. Permission System
-
-Ensures user control over dangerous operations:
-
-- Intercepts potentially harmful tool calls
-- Prompts for user approval
-- Manages auto-approval policies
-- Logs permission decisions
-
-**Location**: `internal/permission/`
-
-### 7. Config Loader
-
-Loads and manages configuration:
-
-- Reads JSON config files
-- Processes environment variables
-- Applies config precedence rules
-
-**Location**: `internal/config/loader.go`
-
-### 8. MCP Integration
-
-Provides Model Context Protocol support:
-
-- MCP server discovery
-- Tool adapter for MCP tools
-- Transport layer management
-
-**Location**: `internal/tool/mcp/`
 
 ## Data Flow
 
@@ -137,122 +120,93 @@ Provides Model Context Protocol support:
 User Input
     │
     ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                        Agent Loop                               │
-│  1. Add user message to history                                │
-│  2. Compact history if needed                                  │
-│  3. Build API request (tools + messages)                       │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      API Client                                 │
-│  4. Send request to Anthropic API (streaming)                  │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │ Anthropic    │
-                    │     API      │
-                    └──────┬───────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                        Agent Loop                               │
-│  5. Process response based on stop_reason:                     │
-│     - end_turn: Return final response                          │
-│     - tool_use: Execute tools and continue                     │
-│     - max_tokens: Return truncated response                    │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                    ┌──────▼───────┐
-                    │   Execute    │
-                    │    Tools     │
-                    └──────┬───────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   Permission System                             │
-│  6. Check if tool requires permission                          │
-│  7. Prompt user if needed                                      │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Tool Registry                                │
-│  8. Route to appropriate tool (built-in or MCP)               │
-│  9. Execute tool and capture result                            │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                        Agent Loop                               │
-│  10. Add tool results to history                               │
-│  11. Continue loop (back to step 2)                            │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          Agent Loop                                          │
+│  1. Add user message to conversation history                                 │
+│  2. Apply compaction if context threshold exceeded                          │
+│  3. Build API request: messages + tool definitions + system prompt          │
+└─────────────────────────────┬───────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           API Client                                          │
+│  4. Send request via SSE streaming                                           │
+│  5. Receive incremental tokens                                              │
+└─────────────────────────────┬───────────────────────────────────────────────┘
+                              │
+                              ▼
+                       ┌──────────────┐
+                       │ Anthropic    │
+                       │     API      │
+                       └──────┬───────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        Agent Loop                                            │
+│  6. Parse stop_reason for state transition:                                  │
+│     • end_turn: Task complete → Return final response                        │
+│     • tool_use: Need more info → Execute tools, continue                     │
+│     • max_tokens: Truncated → Warn user, return partial                     │
+│     • max_turns: Loop limit → Return with warning                            │
+└─────────────────────────────┬───────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       Permission Gate                                        │
+│  7. Evaluate operation against permission tier                             │
+│  8. Check glob rules for path-specific permissions                          │
+│  9. Prompt user if human-in-the-loop mode enabled                           │
+│  10. Deny or approve based on policy                                         │
+└─────────────────────────────┬───────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       Tool Registry                                           │
+│  11. Route to appropriate tool handler (built-in or MCP)                   │
+│  12. Execute with timeout protection                                         │
+│  13. Truncate output if exceeds limits                                       │
+│  14. Return structured result or error                                       │
+└─────────────────────────────┬───────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        Agent Loop                                            │
+│  15. Add tool results to history                                            │
+│  16. Continue loop (back to step 2) or terminate                            │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Design Philosophy
+## Design Rationale
 
-go-code follows a clear separation of concerns:
+### Why Go?
 
-### Model Provides Intelligence
+Go was chosen for its balance of performance, simplicity, and static linking. The agent loop handles real-time streaming, maintains conversation state, and coordinates concurrent tool executions — all requiring predictable memory usage and low latency. Go's single-binary deployment model aligns with the local-first philosophy: no environment configuration, no dependency hell.
 
-The LLM (Claude) is responsible for:
-- Understanding user intent
-- Deciding which tools to use
-- Interpreting tool results
-- Generating natural language responses
+### Why Three-Tier Permission?
 
-### Harness Provides Reliability
+A binary allow/deny model is insufficient for AI agents that need to perform varied operations across different contexts. A developer might want to allow automatic file editing in a workspace while requiring confirmation for shell commands. The tiered model with glob matching provides the granularity needed for practical, secure automation.
 
-The Go runtime provides:
-- Tool execution and safety
-- Conversation history management
-- Permission enforcement
-- Configuration management
-- Error handling and recovery
+### Why Context Compaction?
 
-This division allows the model to focus on the cognitive task while the harness ensures reliable, safe execution.
+Token limits aren't a theoretical concern — they directly impact what the model can reason about. Without compaction, a 50-turn conversation would consume the entire context window, leaving no room for the model to see the code it's editing. Compaction preserves the conversation's semantic essence while making room for new information.
 
-## Directory Structure
+### Why MAX_TURNS?
 
-```
-internal/
-├── agent/           # Agent loop implementation
-│   ├── loop.go     # Main loop logic
-│   └── history.go  # Message history management
-├── api/            # Anthropic API client
-│   ├── client.go   # HTTP client
-│   ├── stream.go   # Streaming handling
-│   └── types.go    # API types
-├── config/         # Configuration
-│   ├── loader.go   # Config file loading
-│   └── types.go    # Config types
-├── permission/    # Permission system
-│   ├── policy.go   # Permission policies
-│   ├── rules.go    # Permission rules
-│   └── prompter.go # User prompts
-└── tool/           # Tool system
-    ├── registry.go    # Tool registry
-    ├── tool.go        # Tool interface
-    ├── init/          # Tool initialization
-    ├── builtin/       # Built-in tools
-    │   ├── read.go    # File reading
-    │   ├── write.go   # File writing
-    │   ├── edit.go    # File editing
-    │   ├── glob.go    # File globbing
-    │   ├── grep.go    # Content search
-    │   └── bash.go    # Shell execution
-    └── mcp/           # MCP integration
-        ├── adapter.go # MCP tool adapter
-        ├── client.go  # MCP client
-        ├── config.go  # MCP configuration
-        └── transport.go# MCP transport
-```
+The model has no intrinsic understanding of time or resource constraints. An agent loop can theoretically continue indefinitely if the model keeps choosing to call tools. MAX_TURNS provides a hard boundary that prevents resource exhaustion while still allowing complex tasks to complete. It's a reliability guarantee that operates independently of model behavior.
+
+## Target Audience
+
+This documentation is written for:
+
+- **AI Agent Architecture Researchers** — examining how harness design influences agent capabilities
+- **Senior Engineers** evaluating Harness-First engineering patterns for production systems
+- **Tech Leads** seeking reference implementations for production-grade AI tooling
+
+The emphasis throughout is on *why* rather than *what* — the code reveals implementation details, but these pages explain the reasoning behind them.
 
 ## Related Documentation
 
-- [Agent Loop Deep Dive](agent-loop.md) — Detailed execution cycle explanation
-- [Tool System](tools.md) — Tool implementations and extension
-- [Quick Start Guide](../guide/quick-start.md) — Running go-code
+- [Design Philosophy](design-philosophy.md) — Deep dive into the intelligence/reliability separation
+- [Agent Loop](agent-loop.md) — State machine mechanics and history management
+- [Tool System](tools.md) — Built-in tools and extension mechanisms
+- [Configuration Guide](../guide/configuration.md) — Permission policies and model settings

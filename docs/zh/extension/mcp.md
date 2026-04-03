@@ -1,20 +1,20 @@
 ---
 title: MCP 集成
-description: 深入解析 Model Context Protocol — 传输层、JSON-RPC 格式、工具发现、适配器实现和配置
+description: 深入解析模型上下文协议 — 传输层、JSON-RPC 格式、工具发现、适配器实现和配置
 ---
 
 # MCP 集成
 
-go-code 支持 Model Context Protocol (MCP) 来集成外部工具和服务。本文档全面概述 go-code 中的 MCP 实现。
+go-code 支持模型上下文协议 (MCP) 以集成外部工具和服务。本文提供 go-code 中 MCP 实现的全面概述。
 
 ## 什么是 MCP？
 
-**Model Context Protocol (MCP)** 是一个开放标准，使 AI 模型能够通过标准化接口与外部工具和服务交互。它提供：
+**模型上下文协议 (MCP)** 是一个开放标准，使 AI 模型能够通过标准化接口与外部工具和服务交互。它提供：
 
 - **工具发现** — AI 模型可以动态发现可用工具
 - **标准化通信** — 基于 JSON-RPC 的协议
-- **传输灵活性** — 支持 stdio、HTTP 等传输方式
-- **可扩展性** — 轻松添加新工具和服务
+- **传输灵活性** — 支持 stdio、HTTP 和其他传输方式
+- **可扩展性** — 易于添加新工具和服务
 
 ### MCP 架构
 
@@ -25,19 +25,31 @@ go-code 支持 Model Context Protocol (MCP) 来集成外部工具和服务。本
 │                                                                     │
 │   ┌─────────────┐          ┌─────────────────┐                     │
 │   │   go-code   │◄────────►│   MCP 服务器    │                     │
-│   │   (客户端)  │   stdio   │  (子进程)       │                     │
+│   │   (客户端)  │  stdio   │  (子进程)       │                     │
 │   └─────────────┘          └─────────────────┘                     │
 │         │                            │                             │
 │         │                            │                             │
 │         ▼                            ▼                             │
 │   ┌─────────────┐          ┌─────────────────┐                     │
 │   │ 工具        │          │ 工具/服务       │                     │
-│   │ 注册表      │          │ (如文件、        │                     │
-│   │             │          │  数据库、Git 等)  │                    │
+│   │ 注册表      │          │ (例如：文件、   │                     │
+│   │             │          │  数据库、Git)  │                    │
 │   └─────────────┘          └─────────────────┘                     │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+## 扩展架构中的 MCP
+
+MCP 是 go-code 中三种扩展机制之一，另外还有技能和钩子。各自服务不同目的：
+
+| 扩展 | 用途 | 工作方式 |
+|-----------|---------|----------|
+| **技能** | 自定义 agent 行为 | 命名提示词注入系统提示词 |
+| **钩子** | 监控工具执行 | 日志、审计的预/后回调 |
+| **MCP** | 扩展工具能力 | 提供额外工具的外部服务器 |
+
+MCP 在运行时与工具注册表集成，将外部 MCP 服务器的工具与内置工具（Read、Write、Edit、Glob、Grep、Bash）一起添加。
 
 ## Stdio 传输层
 
@@ -87,7 +99,7 @@ func (t *StdioTransport) Start() error {
 }
 ```
 
-传输层启动子进程并创建双向通信管道。
+传输层生成子进程并创建双向通信管道。
 
 ## JSON-RPC 格式
 
@@ -174,19 +186,19 @@ func (t *StdioTransport) ReadResponse() (map[string]any, error) {
 
 ## 工具发现过程
 
-MCP 服务器启动时，go-code 会发现其可用工具：
+当 MCP 服务器启动时，go-code 发现其可用工具：
 
 ### 发现流程
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    工具发现流程                                     │
+│                    工具发现流程                                      │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  1. MCP 服务器启动（通过 stdio 传输）                               │
 │         │                                                           │
 │         ▼                                                           │
-│  2. 发送 "initialize" 请求，包含协议版本                            │
+│  2. 发送 "initialize" 请求及协议版本                               │
 │         │                                                           │
 │         ▼                                                           │
 │  3. 接收服务器能力                                                  │
@@ -198,7 +210,7 @@ MCP 服务器启动时，go-code 会发现其可用工具：
 │  5. 接收工具定义                                                    │
 │         │                                                           │
 │         ▼                                                           │
-│  6. 为每个工具创建 McpToolAdapter                                   │
+│  6. 为每个工具创建 McpToolAdapter                                  │
 │         │                                                           │
 │         ▼                                                           │
 │  7. 在工具注册表中注册适配器                                        │
@@ -320,9 +332,9 @@ MCP 服务器在 JSON 配置文件中配置。
 
 ### 配置文件位置
 
-默认位置：`~/.config/go-code/mcp.json`
+默认：`~/.config/go-code/mcp.json`
 
-或通过配置指定自定义路径。
+或通过配置自定义路径。
 
 ### 配置格式
 
@@ -392,10 +404,10 @@ func LoadMcpConfigs(settingsPath string) (map[string]McpServerConfig, error) {
 }
 ```
 
-## MCP 组件总结
+## MCP 组件概览
 
 | 文件 | 用途 |
-|------|------|
+|------|---------|
 | `internal/tool/mcp/config.go` | 配置加载和环境变量插值 |
 | `internal/tool/mcp/transport.go` | Stdio 传输层实现 |
 | `internal/tool/mcp/client.go` | MCP 协议客户端（JSON-RPC 通信） |
@@ -404,15 +416,16 @@ func LoadMcpConfigs(settingsPath string) (map[string]McpServerConfig, error) {
 
 ## 相关文档
 
+- [技能系统](./skills.md) — 自定义 agent 行为的命名提示词
+- [钩子系统](./hooks.md) — 预/后执行回调
 - [工具系统概述](../tools/overview.md) — 工具接口和注册表
-- [智能体循环实现](../core-code/agent-loop-impl.md) — 工具执行流程
 - [配置指南](../guide/configuration.md) — MCP 配置选项
 
 ---
 
 <div class="nav-prev-next">
 
-- [工具系统概述](../tools/overview.md) ←
-- → [配置指南](../guide/configuration.md)
+- [技能系统](./skills.md) ←
+- → [钩子系统](./hooks.md)
 
 </div>

@@ -39,6 +39,18 @@ The **Model Context Protocol (MCP)** is an open standard that enables AI models 
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+## MCP in the Extension Architecture
+
+MCP is one of three extension mechanisms in go-code, alongside Skills and Hooks. Each serves a different purpose:
+
+| Extension | Purpose | How it Works |
+|-----------|---------|--------------|
+| **Skills** | Customize agent behavior | Named prompts injected into system prompt |
+| **Hooks** | Monitor tool execution | Pre/post callbacks for logging, auditing |
+| **MCP** | Extend tool capabilities | External servers providing additional tools |
+
+MCP integrates with the tool registry at runtime, adding tools from external MCP servers alongside built-in tools (Read, Write, Edit, Glob, Grep, Bash).
+
 ## Stdio Transport Layer
 
 go-code uses stdio (standard input/output) as the transport layer for MCP communication:
@@ -404,15 +416,16 @@ func LoadMcpConfigs(settingsPath string) (map[string]McpServerConfig, error) {
 
 ## Related Documentation
 
+- [Skills System](./skills.md) — Named prompts for customizing agent behavior
+- [Hooks System](./hooks.md) — Pre/post execution callbacks
 - [Tool System Overview](../tools/overview.md) — Tool interface and registry
-- [Agent Loop Implementation](../core-code/agent-loop-impl.md) — Tool execution flow
 - [Configuration Guide](../guide/configuration.md) — MCP configuration options
 
 ---
 
 <div class="nav-prev-next">
 
-- [Tool System Overview](../tools/overview.md) ←
-- → [Configuration Guide](../guide/configuration.md)
+- [Skills System](./skills.md) ←
+- → [Hooks System](./hooks.md)
 
 </div>

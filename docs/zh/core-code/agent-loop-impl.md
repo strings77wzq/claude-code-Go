@@ -1,358 +1,312 @@
 ---
-title: 智能体循环实现
-description: 深入解析 Run() 方法 —— stop_reason 分派、历史管理、工具执行和会话持久化
+title: 代理循环架构
+description: 理解代理循环作为状态机——stop_reason 调度、安全机制及设计权衡
 ---
 
-# 智能体循环实现
+# 代理循环架构
 
-智能体循环是 go-code 的核心执行引擎，实现位于 `internal/agent/loop.go`。本文档详细说明 `Run()` 方法及其关键组件。
+代理循环是系统的**运行时引擎**。虽然入口点在启动时建立了依赖图，但代理循环执行实际的对话循环。将其视为**状态机**而非过程循环，能够揭示使系统健壮和可预测的核心设计决策。
 
-## Run() 方法概述
-
-```go
-func (a *Agent) Run(ctx context.Context, userInput string, 
-                   outputCallback func(string)) (string, error)
-```
-
-方法接收：
-- `ctx` — 取消上下文
-- `userInput` — 用户消息
-- `outputCallback` — 接收流式文本的函数
-
-返回最终文本响应或错误。
-
-## 执行流程
+## 状态机概览
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     Run() 方法流程                                  │
+│                     代理循环状态机                                   │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  1. 初始化会话（生成 ID，记录开始时间）                              │
-│  2. 将用户消息添加到历史记录                                        │
-│                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │                    FOR 循环 (MaxTurns)                       │   │
-│  │                                                              │   │
-│  │  3. 必要时压缩历史记录                                       │   │
-│  │  4. 构建 API 请求（系统 + 工具 + 消息）                      │   │
-│  │  5. 发送到 API 并接收流式响应                                │   │
-│  │  6. 将助手消息添加到历史记录                                  │   │
-│  │  7. 根据 stop_reason 分派：                                 │   │
-│  │     - end_turn / stop_sequence → 返回文本                  │   │
-│  │     - max_tokens → 返回文本 + 警告                          │   │
-│  │     - tool_use → 执行工具，添加结果，继续                    │   │
-│  │     - default → 返回文本                                    │   │
-│  │  8. 退出时保存会话                                           │   │
-│  │                                                              │   │
-│  └─────────────────────────────────────────────────────────────┘   │
+│     ┌──────────┐                                                   │
+│     │ thinking │                                                   │
+│     └────┬─────┘                                                   │
+│          │ API 响应已接收                                           │
+│          ▼                                                          │
+│  ┌───────────────────────────────────────┐                        │
+│  │         stop_reason 调度              │                        │
+│  └───────────────────────────────────────┘                        │
+│          │                                                         │
+│    ┌─────┴─────┬───────────┬────────────┐                       │
+│    ▼           ▼           ▼            ▼                        │
+│ ┌──────┐  ┌────────┐  ┌──────────┐  ┌──────────┐                 │
+│ │end_  │  │max_    │  │tool_use  │  │unknown   │                 │
+│ │turn  │  │tokens  │  │          │  │          │                 │
+│ └──┬───┘  └────┬───┘  └────┬─────┘  └────┬─────┘                 │
+│    │           │           │             │                        │
+│    ▼           ▼           ▼             ▼                        │
+│  返回      返回+警告    执行工具+                               │
+│  响应                  继续循环                                   │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## 会话初始化
+## 状态定义
 
-```go
-func (a *Agent) Run(ctx context.Context, userInput string, 
-                   outputCallback func(string)) (string, error) {
-    a.sessionID = generateSessionID()
-    a.startTime = time.Now()
+代理循环在这些状态下运行：
 
-    var totalInputTokens, totalOutputTokens int
+| 状态 | 含义 | 下一个动作 |
+|------|------|------------|
+| **thinking** | 等待 API 响应 | 根据 `stop_reason` 转换 |
+| **tool_use** | 模型请求执行工具 | 执行工具，添加结果，继续循环 |
+| **end_turn** | 模型完成任务 | 向用户返回响应 |
+| **max_tokens** | 响应被截断 | 返回部分响应并附带警告 |
+| **unknown** | 意外的停止原因 | 返回存在的任何内容 |
 
-    if err := a.history.AddUserMessage(userInput); err != nil {
-        return "", fmt.Errorf("failed to add user message: %w", err)
-    }
+## 为什么要用状态机？
+
+### 过程式 vs 状态机思维
+
+**过程式**视图将循环视为：
+```
+1. 发送请求
+2. 获取响应
+3. 检查 stop_reason
+4. 如果是 tool_use：执行并循环
+5. 否则：返回
 ```
 
-每个会话获得：
-- 唯一 ID：`sess_<时间戳>`
-- 开始时间戳用于会话跟踪
-- 用于监控的令牌计数器
+这错过了更深层的结构。**状态机**视图揭示了：
 
-## 主循环
+- 每个 `stop_reason` 是一个**状态转换**——系统从"thinking"移动到特定的结果状态
+- 循环不仅仅是重复；它**循环通过明确定义的状态**
+- 安全限制 (MAX_TURNS) 是**断路器**，停止状态机
 
-```go
-turns := 0
+### 设计权衡
 
-for turns < MaxTurns {
-    // 步骤 1：必要时压缩历史记录
-    CompactIfNeeded(a.history, a.contextConfig)
+为什么使用状态机而不是其他方案？
 
-    // 步骤 2：构建并发送 API 请求
-    req := a.buildRequest()
-    resp, err := a.apiClient.SendMessageStream(ctx, req, outputCallback)
-```
+| 方案 | 为什么不用 |
+|------|------------|
+| **事件驱动** | 对此用例过度工程化；API 已经提供离散响应 |
+| **响应式/流式** | SSE 提供流式传输，但我们需要对完整响应进行推理，而不是单个令牌 |
+| **协程式** | Go 的 goroutine 可用，但循环逻辑作为显式状态转换更简单 |
 
-### 历史记录压缩
+状态机是**最小复杂度**的解决方案，捕获了需要的行为：API 告诉我们发生了什么（`stop_reason`），我们相应地做出响应。
 
-```go
-CompactIfNeeded(a.history, a.contextConfig)
-```
+## Stop Reason 调度
 
-随着对话增长，历史记录会定期压缩以保持在令牌限制内。这由压缩模块处理，以防止上下文溢出。
-
-### 请求构建
-
-```go
-func (a *Agent) buildRequest() *api.ApiRequest {
-    toolDefs := make([]api.ToolDefinition, 0)
-    for _, td := range a.toolRegistry.GetAllDefinitions() {
-        toolDefs = append(toolDefs, api.ToolDefinition{
-            Name:        td.Name,
-            Description: td.Description,
-            InputSchema: td.InputSchema,
-        })
-    }
-
-    return &api.ApiRequest{
-        Model:     a.model,
-        MaxTokens: a.maxTokens,
-        System:    a.systemPrompt,
-        Stream:    true,
-        Tools:     toolDefs,
-        Messages:  a.history.GetMessages(),
-    }
-}
-```
-
-每个请求包含：
-- 模型标识符
-- 最大令牌限制
-- 系统提示词
-- 来自注册表的工具定义
-- 当前对话历史
-
-## Stop Reason 分派
-
-API 响应包含 `stop_reason` 字段，决定下一步操作：
+`stop_reason` 字段是 API 和代理之间的**协议契约**。它告诉代理模型做了什么以及接下来要做什么：
 
 ### end_turn / stop_sequence
 
-```go
-switch resp.StopReason {
-case "end_turn", "stop_sequence":
-    result := extractTextContent(resp.Content)
-    a.saveSession(turns, totalInputTokens, totalOutputTokens)
-    return result, nil
+```
+模型认为任务已完成 → 向用户返回响应
 ```
 
-模型认为任务已完成。将文本内容作为最终响应返回。
+这是**成功路径**。模型决定它有足够的信息并产生了最终答案。代理直接返回文本内容。
 
 ### max_tokens
 
-```go
-case "max_tokens":
-    result := extractTextContent(resp.Content) + 
-              "\n[Warning] Response was truncated (max_tokens reached)."
-    a.saveSession(turns, totalInputTokens, totalOutputTokens)
-    return result, nil
+```
+模型达到令牌限制 → 返回部分响应并附带警告
 ```
 
-响应被截断。返回部分内容并附带警告。
+这是**降级但安全**的路径。响应被截断，所以用户获得部分结果加上警告。他们可以继续对话以获取剩余内容。
 
 ### tool_use
 
-```go
-case "tool_use":
-    toolResults := a.executeTools(ctx, resp.Content)
-    if err := a.history.AddToolResults(toolResults); err != nil {
-        a.saveSession(turns, totalInputTokens, totalOutputTokens)
-        return "", fmt.Errorf("failed to add tool results: %w", err)
-    }
-    turns++
-    continue
+```
+模型想要调用工具 → 执行工具，添加结果，继续循环
 ```
 
-模型希望调用工具。执行所有请求的工具，将结果添加到历史记录，然后继续循环。
+这是**迭代路径**。模型确定它需要采取行动（读取文件、运行命令、搜索某物）。代理：
+1. 执行所有请求的工具
+2. 将结果添加到对话历史
+3. 继续循环以获取下一个响应
 
 ### unknown / default
 
-```go
-default:
-    result := extractTextContent(resp.Content)
-    a.saveSession(turns, totalInputTokens, totalOutputTokens)
-    return result, nil
+```
+意外的 stop_reason → 返回存在的任何内容
 ```
 
-意外 stop_reason 的后备处理。返回生成的任何内容。
+这是**防御性回退**。我们不会因意外值而崩溃；我们返回所拥有的内容，让用户决定怎么做。
 
-## MAX_TURNS 安全限制
+## 断路器 — MAX_TURNS
 
 ```go
-// MaxTurns is the maximum number of agent loop iterations to prevent infinite loops.
 const MaxTurns = 50
 ```
 
-循环强制执行最多 50 次迭代以防止：
-- 无限工具执行循环
-- 无效的模型振荡
-- 资源耗尽
+MAX_TURNS 是电气安全意义上的**断路器**——旨在防止灾难性故障：
 
-如果达到限制：
+### 它防止什么
 
-```go
-result := "[Agent loop stopped] Reached maximum turns (" + 
-          fmt.Sprintf("%d", MaxTurns) + ")."
-a.saveSession(turns, totalInputTokens, totalOutputTokens)
-return result, nil
+- **无限循环**：模型调用工具产生触发更多工具调用的结果，无穷无尽
+- **振荡**：模型在相同方法之间来回切换而没有进展
+- **资源耗尽**：耗尽 API 令牌、内存或时间
+
+### 它如何工作
+
+循环强制执行最多 50 次迭代（每次迭代 = 一次 API 调用 + 可能是许多工具执行）。50 轮后，代理停止并返回一条消息，表明达到了限制。
+
+### 为什么是 50？
+
+这是**经验性选择**：
+- 50 轮足以完成复杂任务（分析代码库，进行更改，验证）
+- 它超出了合理对话所需
+- 它提供了一个安全网而不会过于严格
+
+### 这个设计选择意味着什么
+
+断路器假设**合理任务在 50 轮内完成**。如果一个任务确实需要更多，设计说：将任务分解成更小的部分，或接受当前方法不起作用。
+
+## 上下文窗口优化 — 历史管理
+
+对话历史随着每轮增长。API 有**上下文窗口限制**（例如 200K 令牌）。历史管理系统优化这一点：
+
+### 压缩策略
+
+```
+┌─────────────────────────────────────────────────────┐
+│              历史压缩                               │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  第 1 轮：  [user: "..."]                           │
+│            [assistant: "..."]                       │
+│                                                     │
+│  第 2 轮：  [user: "..."]                           │
+│            [assistant: "tool_use: read file"]      │
+│            [tool_result: "file contents..."]      │
+│            [assistant: "..."]                      │
+│                                                     │
+│  ...                                                │
+│                                                     │
+│  压缩后：                                           │
+│  ─────────────────                                  │
+│  [user: "原始请求"]                                 │
+│  [system: "中间轮次的摘要"]                         │
+│  [assistant: "当前响应"]                            │
+│                                                     │
+└─────────────────────────────────────────────────────┘
 ```
 
-## 历史记录管理
+### 为什么不保留一切？
 
-### 消息类型
+- **成本**：更多令牌 = 更多 API 成本
+- **性能**：更大的上下文 = 更慢的 API 响应
+- **模型注意力**：极长的上下文会降低模型对当前任务的关注度
 
-```go
-// 添加用户消息
-if err := a.history.AddUserMessage(userInput); err != nil {
-    return "", fmt.Errorf("failed to add user message: %w", err)
-}
+### 压缩触发
 
-// 添加助手响应
-if err := a.history.AddAssistantMessage(resp.Content); err != nil {
-    return "", fmt.Errorf("failed to add assistant message: %w", err)
-}
+压缩在以下情况发生：
+1. 令牌数量接近限制
+2. 每次 API 请求之前（以确保请求适合）
 
-// 添加工具结果
-if err := a.history.AddToolResults(toolResults); err != nil {
-    return "", fmt.Errorf("failed to add tool results: %w", err)
-}
+### 什么被压缩
+
+系统总结或删除较旧的轮次，同时保留：
+- 原始用户请求（上下文）
+- 最近的对话（工作内存）
+- 工具定义（始终需要）
+
+## 安全检查点 — 权限门
+
+在任何工具执行之前，它会通过**权限门**：
+
+```
+┌─────────────────────────────────────────────────────┐
+│              权限门                                  │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  工具请求 ──▶ checkPermission() ──▶ 决策            │
+│                      │                              │
+│                      ▼                              │
+│              ┌──────────────────┐                   │
+│              │  权限策略         │                   │
+│              │  - Allow（允许）  │                   │
+│              │  - Deny（拒绝）   │                   │
+│              │  - Ask（询问）    │                   │
+│              └──────────────────┘                   │
+│                                                     │
+└─────────────────────────────────────────────────────┘
 ```
 
-### API 消息格式
+### 为什么是这个设计？
 
-Anthropic API 期望以下格式的消息：
+- **深度防御**：并非所有工具都是危险的；权限检查是一个安全层
+- **用户控制**：用户可以允许/拒绝特定操作
+- **可审计性**：权限决策被记录
 
-```json
-{
-  "messages": [
-    { "role": "user", "content": "..." },
-    { "role": "assistant", "content": "..." },
-    { "role": "tool", "tool_use_id": "...", "content": "..." }
-  ]
-}
-```
+### 工具分类
 
-## 工具执行与权限检查
+- **不需要权限**：Read、Glob、Grep（只读、低风险）
+- **需要权限**：Bash、Write、Edit（可以修改系统）
 
-```go
-func (a *Agent) executeTools(ctx context.Context, 
-                             content []api.ContentBlock) []api.ContentBlock {
-    var toolResults []api.ContentBlock
+权限策略评估每个工具调用，基于：
+1. 工具是否需要权限
+2. 用户配置的权限级别
+3. 尝试的具体操作
 
-    for _, block := range content {
-        if block.Type != "tool_use" {
-            continue
-        }
+## 崩溃恢复 — 会话持久化
 
-        toolName := block.Name
-        toolInput := block.Input
-        toolUseID := block.ID
-
-        // 权限检查
-        if !a.checkPermission(toolName, toolInput) {
-            toolResults = append(toolResults, api.ContentBlock{
-                Type:      "tool_result",
-                ToolUseID: toolUseID,
-                IsError:   true,
-            })
-            continue
-        }
-
-        // 执行 pre-hooks
-        if a.hooksRegistry != nil {
-            if err := a.hooksRegistry.RunPreHooks(toolName, toolInput); err != nil {
-                toolResults = append(toolResults, api.ContentBlock{
-                    Type:      "tool_result",
-                    ToolUseID: toolUseID,
-                    Text:      "pre-hook error: " + err.Error(),
-                    IsError:   true,
-                })
-                continue
-            }
-        }
-
-        // 执行工具
-        result := a.toolRegistry.Execute(ctx, toolName, toolInput)
-
-        // 执行 post-hooks
-        if a.hooksRegistry != nil {
-            a.hooksRegistry.RunPostHooks(toolName, toolInput, 
-                                         result.Content, result.IsError)
-        }
-
-        // 收集结果
-        toolResults = append(toolResults, api.ContentBlock{
-            Type:      "tool_result",
-            ToolUseID: toolUseID,
-            Text:      result.Content,
-            IsError:   result.IsError,
-        })
-    }
-
-    return toolResults
-}
-```
-
-### 权限检查
-
-```go
-func (a *Agent) checkPermission(toolName string, 
-                                input map[string]any) bool {
-    t := a.toolRegistry.GetTool(toolName)
-    requiresPermission := t != nil && t.RequiresPermission()
-
-    decision := a.permissionPolicy.Evaluate(toolName, input, requiresPermission)
-    return decision == permission.Allow || decision == permission.Ask
-}
-```
-
-如果工具的 `RequiresPermission()` 返回 `true`，权限策略将评估是允许、拒绝还是询问用户。
-
-## 会话持久化
+每轮完成后都会进行会话持久化：
 
 ```go
 func (a *Agent) saveSession(turnCount, inputTokens, outputTokens int) {
-    if a.sessionID == "" {
-        return
-    }
-
-    s := &session.Session{
-        ID:           a.sessionID,
-        Model:        a.model,
-        StartTime:    a.startTime,
-        EndTime:      time.Now(),
-        TurnCount:    turnCount,
-        InputTokens:  inputTokens,
-        OutputTokens: outputTokens,
-    }
-
-    messages := a.convertHistoryToSessionMessages()
-    dir := getSessionsDir()
-
-    if err := session.SaveSession(s, messages, dir); err != nil {
-        fmt.Fprintf(os.Stderr, "Warning: failed to save session: %v\n", err)
-    }
+    // 保存到 ~/.claude-code-go/sessions/
 }
 ```
 
-会话保存到 `~/.claude-code-go/sessions/`，包含：
+### 保存了什么
+
 - 会话 ID 和时间戳
 - 使用的模型
-- 回合数和令牌使用量
-- 完整对话历史
+- 轮数和令牌使用量
+- **完整对话历史**
 
-## 相关文档
+### 为什么每轮都保存？
 
-- [入口点详解](entry-point.md) — main.go 初始化顺序
-- [工具系统概述](../tools/overview.md) — 工具接口和注册表
-- [架构概述](../architecture/overview.md) — 系统组件
+```
+┌─────────────────────────────────────────────────────┐
+│            会话持久化流程                            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  第 1 轮：  request → response → save               │
+│  第 2 轮：  request → response → save               │
+│  第 3 轮：  crash!                                   │
+│                                                     │
+│  恢复：加载最后一个会话 → 从第 3 轮继续              │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+这种设计提供**崩溃恢复**而不需要复杂性：
+- 如果进程在轮次中间死亡，下次运行可以从中断处继续
+- 不需要复杂的事务日志
+- 会话很小，可以快速保存
+
+### 恢复注意事项
+
+- 保存到磁盘的会话在进程崩溃后仍然存在
+- 下次运行时，用户可以继续或重新开始
+- 旧会话会累积（清理是未来增强功能）
+
+## 架构总结
+
+代理循环展示了几个架构原则：
+
+| 原则 | 实现 |
+|------|------|
+| **状态机** | `stop_reason` 作为状态转换触发器 |
+| **断路器** | MAX_TURNS 防止无限循环 |
+| **上下文优化** | 每次请求前进行历史压缩 |
+| **深度防御** | 工具执行前的权限门 |
+| **崩溃恢复** | 每轮后进行会话持久化 |
+| **优雅失败** | 未知 stop_reason 返回部分响应 |
+
+### 为什么这些选择有效
+
+1. **状态机**：匹配 API 的离散响应模型
+2. **断路器**：提供安全性而不增加复杂性
+3. **历史压缩**：保持成本可预测，性能高
+4. **权限门**：在安全性和可用性之间取得平衡
+5. **会话持久化**：启用恢复而不需要事务复杂性
+
+代理循环是**运营核心**——它获取入口点初始化的组件，通过明确定义的状态转换使它们做有用的工作。
 
 ---
 
 <div class="nav-prev-next">
 
-- [入口点详解](entry-point.md) ←
+- [入口点架构](entry-point.md) ←
 - → [工具系统概述](../tools/overview.md)
 
 </div>

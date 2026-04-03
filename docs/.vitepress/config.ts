@@ -15,11 +15,9 @@ export default defineConfig({
         nav: [
           { text: 'Guide', link: '/guide/introduction' },
           { text: 'Architecture', link: '/architecture/overview' },
-          { text: 'Core Code', link: '/core-code/entry-point' },
+          { text: 'Extensions', link: '/extension/skills' },
           { text: 'Tools', link: '/tools/overview' },
-          { text: 'MCP', link: '/architecture/mcp' },
-          { text: 'Roadmap', link: '/roadmap' },
-          { text: 'Community', link: '/community' },
+          { text: 'Resources', link: '/roadmap' },
           { text: 'GitHub', link: 'https://github.com/strings77wzq/claude-code-Go' }
         ],
         footer: {
@@ -37,11 +35,9 @@ export default defineConfig({
         nav: [
           { text: '指南', link: '/zh/guide/introduction' },
           { text: '架构', link: '/zh/architecture/overview' },
-          { text: '核心代码', link: '/zh/core-code/entry-point' },
+          { text: '扩展', link: '/zh/extension/skills' },
           { text: '工具', link: '/zh/tools/overview' },
-          { text: 'MCP', link: '/zh/architecture/mcp' },
-          { text: '路线图', link: '/zh/roadmap' },
-          { text: '社区', link: '/zh/community' },
+          { text: '资源', link: '/zh/roadmap' },
           { text: 'GitHub', link: 'https://github.com/strings77wzq/claude-code-Go' }
         ],
         footer: {
@@ -71,16 +67,17 @@ export default defineConfig({
           collapsed: false,
           items: [
             { text: 'Overview', link: '/architecture/overview' },
-            { text: 'Agent Loop', link: '/architecture/agent-loop' },
-            { text: 'Tools', link: '/architecture/tools' }
+            { text: 'Design Philosophy', link: '/architecture/design-philosophy' },
+            { text: 'Agent Loop', link: '/architecture/agent-loop' }
           ]
         },
         {
-          text: 'Core Code',
+          text: 'Extensions',
           collapsed: false,
           items: [
-            { text: 'Entry Point', link: '/core-code/entry-point' },
-            { text: 'Agent Loop Implementation', link: '/core-code/agent-loop-impl' }
+            { text: 'Skills Tutorial', link: '/extension/skills' },
+            { text: 'MCP Protocol', link: '/extension/mcp' },
+            { text: 'Hooks System', link: '/extension/hooks' }
           ]
         },
         {
@@ -91,18 +88,11 @@ export default defineConfig({
           ]
         },
         {
-          text: 'MCP',
-          collapsed: false,
-          items: [
-            { text: 'Integration', link: '/architecture/mcp' }
-          ]
-        },
-        {
           text: 'Resources',
           collapsed: false,
           items: [
             { text: 'Roadmap', link: '/roadmap' },
-            { text: 'Community', link: '/community' }
+            { text: 'Feedback', link: '/feedback' }
           ]
         }
       ],
@@ -121,30 +111,24 @@ export default defineConfig({
           collapsed: false,
           items: [
             { text: '概览', link: '/zh/architecture/overview' },
-            { text: 'Agent 循环', link: '/zh/architecture/agent-loop' },
-            { text: '工具', link: '/zh/architecture/tools' }
+            { text: '设计理念', link: '/zh/architecture/design-philosophy' },
+            { text: 'Agent Loop', link: '/zh/architecture/agent-loop' }
           ]
         },
         {
-          text: '核心代码',
+          text: '扩展',
           collapsed: false,
           items: [
-            { text: '入口点', link: '/zh/core-code/entry-point' },
-            { text: 'Agent Loop 实现', link: '/zh/core-code/agent-loop-impl' }
+            { text: 'Skills 教程', link: '/zh/extension/skills' },
+            { text: 'MCP 协议', link: '/zh/extension/mcp' },
+            { text: 'Hooks 系统', link: '/zh/extension/hooks' }
           ]
         },
         {
-          text: '工具系统',
+          text: '工具',
           collapsed: false,
           items: [
             { text: '概览', link: '/zh/tools/overview' }
-          ]
-        },
-        {
-          text: 'MCP 集成',
-          collapsed: false,
-          items: [
-            { text: '协议详解', link: '/zh/architecture/mcp' }
           ]
         },
         {
@@ -152,7 +136,7 @@ export default defineConfig({
           collapsed: false,
           items: [
             { text: '路线图', link: '/zh/roadmap' },
-            { text: '社区', link: '/zh/community' }
+            { text: '反馈', link: '/zh/feedback' }
           ]
         }
       ]
