@@ -175,11 +175,6 @@ Output binaries are placed in `bin/`.
 make clean
 ```
 
-## Reference Projects
-
-- [OwnCode](https://github.com/owncode/owncode) - Another Claude Code implementation
-- [claw-code](https://github.com/anthrop/claw-code) - Anthropic's official Claude Code
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
