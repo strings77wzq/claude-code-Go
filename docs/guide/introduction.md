@@ -1,21 +1,25 @@
 ---
 title: Introduction
-description: What is claude-code-Go? Learn about this Go implementation of Claude Code and its core features
+description: What is claude-code-Go? A Go-native implementation of the Claude Code agent architecture
 ---
 
 # Introduction
 
-Welcome to claude-code-Go, a Go implementation of Anthropic's Claude Code (Cline) agent system.
+Welcome to claude-code-Go—a Go implementation of the Claude Code agent system.
 
 ## What is claude-code-Go?
 
-claude-code-Go is a terminal-based AI coding assistant that brings Claude Code's powerful agent capabilities to the Go ecosystem. It implements the complete agent loop with built-in tools, a permission system, MCP (Model Context Protocol) support, and SSE (Server-Sent Events) streaming.
+claude-code-Go is a terminal-based AI coding assistant that implements the complete agent loop with built-in tools, a permission system, MCP (Model Context Protocol) support, and SSE (Server-Sent Events) streaming.
 
-Think of it as having an AI coding partner that can:
-- Read, write, and edit files across your project
-- Execute shell commands to run builds, tests, or scripts
-- Search through your codebase with glob patterns and content search
-- Work with you interactively in a terminal REPL
+Core design philosophy: **Model provides intelligence, harness provides reliability.**
+
+The LLM handles understanding intent, deciding tool calls, and interpreting results. The runtime handles permission control, timeout protection, output truncation, and session persistence—ensuring production-grade reliability.
+
+It operates as:
+- An AI assistant that can read, write, and edit files across your project
+- An automation tool that executes shell commands for builds, tests, and scripts
+- A code navigator that searches your codebase with glob patterns and content search
+- An autonomous agent that collaborates with you interactively in a terminal REPL
 
 ## How is it Different from Chatbots?
 
