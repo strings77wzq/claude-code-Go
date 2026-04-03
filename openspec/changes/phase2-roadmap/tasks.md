@@ -43,6 +43,6 @@
 - [x] 6.1 首页增加 Phase 2 新功能卡片（Skills、多 Provider、Session 恢复）
 - [x] 6.2 创建 Roadmap 页面（docs/roadmap.md + 中文版）
 - [x] 6.3 创建 Community 页面（docs/community.md + 中文版）
-- [ ] 6.4 更新功能对比表（Phase 1 vs Phase 2 vs Claude Code 官方）
+- [x] 6.4 更新功能对比表（Phase 1 vs Phase 2 vs Claude Code 官方）
 - [x] 6.5 更新导航栏（新增 Roadmap、Community 链接）
 - [x] 6.6 更新侧边栏（新增 Skills 指南、Provider 文档）

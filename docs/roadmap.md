@@ -73,4 +73,23 @@ Want to influence the roadmap? See our [Feedback](/feedback) page for how to rep
 
 ---
 
+## Feature Comparison
+
+| Feature | Phase 1 | Phase 2 | Claude Code |
+|---------|---------|---------|-------------|
+| Agent Loop | ✅ | ✅ | ✅ |
+| Built-in Tools | 6 core | 9 total | 20+ |
+| Permission System | ✅ | ✅ | ✅ |
+| MCP Integration | ✅ | ✅ | ✅ |
+| SSE Streaming | ✅ | ✅ | ✅ |
+| Session Persistence | ✅ | ✅ | ✅ |
+| Session Resume | ❌ | ✅ | ✅ |
+| Skills System | ❌ | ✅ | ✅ |
+| Multi-Provider | ❌ | ✅ | ❌ |
+| Auto-Update | ❌ | ✅ | ✅ |
+| Hooks System | ❌ | ✅ | ✅ |
+| IDE Integration | ❌ | ❌ | ✅ |
+
+---
+
 *Last updated: April 2026*
