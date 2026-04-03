@@ -18,6 +18,21 @@ hero:
       text: 查看源码
       link: https://github.com/strings77wzq/claude-code-Go
 
+---
+
+<div class="terminal-window">
+  <div class="terminal-header">
+    <span class="terminal-dot red"></span>
+    <span class="terminal-dot yellow"></span>
+    <span class="terminal-dot green"></span>
+  </div>
+  <div class="terminal-body">
+    <div><span class="terminal-prompt">$</span> go-code "你好，给我写一个 REST API"</div>
+    <div style="margin-top: 8px;">初始化 Agent Loop...</div>
+    <div>思考中... <span class="terminal-cursor"></span></div>
+  </div>
+</div>
+
 features:
   - icon: ⚡
     title: 单二进制部署

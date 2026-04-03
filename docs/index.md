@@ -18,6 +18,21 @@ hero:
       text: View on GitHub
       link: https://github.com/strings77wzq/claude-code-Go
 
+---
+
+<div class="terminal-window">
+  <div class="terminal-header">
+    <span class="terminal-dot red"></span>
+    <span class="terminal-dot yellow"></span>
+    <span class="terminal-dot green"></span>
+  </div>
+  <div class="terminal-body">
+    <div><span class="terminal-prompt">$</span> go-code "Hello, build me a REST API"</div>
+    <div style="margin-top: 8px;">Initializing agent loop...</div>
+    <div>Thinking... <span class="terminal-cursor"></span></div>
+  </div>
+</div>
+
 features:
   - icon: ⚡
     title: Single Binary
