@@ -1,11 +1,10 @@
 ---
 layout: home
 title: claude-code-Go
-titleTemplate: Claude Code in Go — AI-powered coding assistant
+titleTemplate: AI-powered coding assistant built in Go
 
 hero:
   name: claude-code-Go
-  text: Claude Code in Go
   tagline: AI-powered coding assistant with a full agent loop, tool execution, and permission management — built in Go.
   image:
     src: /logo.svg
@@ -37,4 +36,27 @@ features:
   - icon: 🧠
     title: Context Management
     details: Intelligent token estimation and automatic conversation compaction. Preserves context while staying within model limits.
+
+useCases:
+  - icon: 👀
+    title: Code Review
+    details: Automatically review pull requests, analyze code changes, and provide detailed feedback on code quality and potential issues.
+  - icon: 🔧
+    title: Refactoring
+    details: Understand code structure and intelligently refactor, improve naming, extract functions, and optimize code patterns.
+  - icon: 🐛
+    title: Debugging
+    details: Analyze error messages, trace through code execution, identify root causes, and suggest fixes for complex bugs.
+  - icon: 📋
+    title: Boilerplate Generation
+    details: Quickly scaffold new projects, generate repetitive code patterns, and create full file structures from specifications.
+
+cta:
+  - title: Ready to try it?
+    details: Get started in minutes and experience the future of AI-assisted coding.
+    actions:
+      - text: Get Started
+        link: /en/guide/installation
+      - text: GitHub
+        link: https://github.com/strings77wzq/claude-code-Go
 ---

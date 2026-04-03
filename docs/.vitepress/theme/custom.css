@@ -1,0 +1,20 @@
+/* Custom styles for home page sections */
+
+/* Use Cases Section */
+.use-cases-section {
+  margin-top: 2rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+/* CTA Section */
+.cta-section {
+  margin-top: 3rem;
+  padding-top: 2rem;
+}
+
+/* Ensure smooth transitions */
+.use-case-card,
+.cta-button {
+  transition: all 0.2s ease;
+}

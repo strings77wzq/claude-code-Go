@@ -1,11 +1,11 @@
 ---
 layout: home
 title: claude-code-Go
-titleTemplate: Go 语言实现的 Claude Code — AI 编程助手
+titleTemplate: Go 语言实现的 AI 编程助手
 
 hero:
   name: claude-code-Go
-  text: Claude Code 的 Go 语言实现
+  text: AI 编程助手
   tagline: 模型提供智能，harness 提供可靠性。完整的 Agent Loop、工具执行、权限管理——纯 Go 打造的生产级 AI 编程助手。
   image:
     src: /logo.svg
@@ -37,4 +37,27 @@ features:
   - icon: 🧠
     title: 上下文管理
     details: 智能 token 估算与自动对话压缩，在模型上下文窗口限制内保留关键信息。
+
+useCases:
+  - icon: 👀
+    title: 代码审查
+    details: 自动审查 Pull Request，分析代码变更，提供代码质量和潜在问题的详细反馈。
+  - icon: 🔧
+    title: 重构优化
+    details: 理解代码结构，智能重构，改善命名，提取函数，优化代码模式。
+  - icon: 🐛
+    title: 调试排错
+    details: 分析错误信息，跟踪代码执行，定位复杂 bug 的根本原因并提供修复建议。
+  - icon: 📋
+    title: 模板生成
+    details: 快速搭建新项目，生成重复代码模式，根据规格说明创建完整文件结构。
+
+cta:
+  - title: 准备开始？
+    details: 几分钟内开始使用，体验 AI 辅助编程的未来。
+    actions:
+      - text: 快速开始
+        link: /zh/guide/installation
+      - text: 查看源码
+        link: https://github.com/strings77wzq/claude-code-Go
 ---

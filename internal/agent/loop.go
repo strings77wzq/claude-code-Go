@@ -4,9 +4,14 @@ package agent
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/user/go-code/internal/api"
+	"github.com/user/go-code/internal/hooks"
 	"github.com/user/go-code/internal/permission"
+	"github.com/user/go-code/internal/session"
 	"github.com/user/go-code/internal/tool"
 )
 
@@ -38,11 +43,14 @@ type Agent struct {
 	apiClient        ApiClientInterface
 	toolRegistry     ToolRegistryInterface
 	permissionPolicy PermissionPolicyInterface
+	hooksRegistry    *hooks.Registry
 	systemPrompt     string
 	model            string
 	maxTokens        int
 	history          *History
 	contextConfig    *ContextConfig
+	sessionID        string
+	startTime        time.Time
 }
 
 // NewAgent creates a new Agent with the given dependencies.
@@ -62,63 +70,77 @@ func NewAgent(
 		maxTokens:        DefaultMaxTokens,
 		history:          NewHistory(),
 		contextConfig:    DefaultContextConfig(),
+		hooksRegistry:    hooks.NewRegistry(),
 	}
 }
 
+// SetHooksRegistry sets the hooks registry for the agent.
+func (a *Agent) SetHooksRegistry(reg *hooks.Registry) {
+	a.hooksRegistry = reg
+}
+
 // Run is the main entry point for the agent. It takes user input and returns the final text response.
-// The function drives the agent loop: think → act → observe → think again.
 func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(string)) (string, error) {
-	// Add user message to history
+	a.sessionID = generateSessionID()
+	a.startTime = time.Now()
+
+	var totalInputTokens, totalOutputTokens int
+
 	if err := a.history.AddUserMessage(userInput); err != nil {
 		return "", fmt.Errorf("failed to add user message: %w", err)
 	}
 
 	turns := 0
+
 	for turns < MaxTurns {
-		// Compact history if needed before building request
 		CompactIfNeeded(a.history, a.contextConfig)
 
-		// Build API request
 		req := a.buildRequest()
 
-		// Call API with streaming
 		resp, err := a.apiClient.SendMessageStream(ctx, req, outputCallback)
 		if err != nil {
+			a.saveSession(turns, totalInputTokens, totalOutputTokens)
 			return "", fmt.Errorf("API call failed: %w", err)
 		}
 
-		// Add assistant response to history
+		totalInputTokens += resp.Usage.InputTokens
+		totalOutputTokens += resp.Usage.OutputTokens
+
 		if err := a.history.AddAssistantMessage(resp.Content); err != nil {
+			a.saveSession(turns, totalInputTokens, totalOutputTokens)
 			return "", fmt.Errorf("failed to add assistant message: %w", err)
 		}
 
-		// Check stop_reason
 		switch resp.StopReason {
 		case "end_turn", "stop_sequence":
-			// LLM believes task is complete
-			return extractTextContent(resp.Content), nil
+			result := extractTextContent(resp.Content)
+			a.saveSession(turns, totalInputTokens, totalOutputTokens)
+			return result, nil
 
 		case "max_tokens":
-			// Output was truncated
-			return extractTextContent(resp.Content) + "\n[Warning] Response was truncated (max_tokens reached).", nil
+			result := extractTextContent(resp.Content) + "\n[Warning] Response was truncated (max_tokens reached)."
+			a.saveSession(turns, totalInputTokens, totalOutputTokens)
+			return result, nil
 
 		case "tool_use":
-			// LLM wants to call tools - execute them and continue loop
 			toolResults := a.executeTools(ctx, resp.Content)
 			if err := a.history.AddToolResults(toolResults); err != nil {
+				a.saveSession(turns, totalInputTokens, totalOutputTokens)
 				return "", fmt.Errorf("failed to add tool results: %w", err)
 			}
 			turns++
 			continue
 
 		default:
-			// Unknown stop_reason - safe fallback
-			return extractTextContent(resp.Content), nil
+			result := extractTextContent(resp.Content)
+			a.saveSession(turns, totalInputTokens, totalOutputTokens)
+			return result, nil
 		}
 	}
 
-	// Max turns reached
-	return "[Agent loop stopped] Reached maximum turns (" + fmt.Sprintf("%d", MaxTurns) + ").", nil
+	result := "[Agent loop stopped] Reached maximum turns (" + fmt.Sprintf("%d", MaxTurns) + ")."
+	a.saveSession(turns, totalInputTokens, totalOutputTokens)
+	return result, nil
 }
 
 // buildRequest assembles the API request with system prompt, tools, and messages.
@@ -143,7 +165,6 @@ func (a *Agent) buildRequest() *api.ApiRequest {
 }
 
 // executeTools executes tool calls from the assistant's response.
-// It checks permissions before each tool execution.
 func (a *Agent) executeTools(ctx context.Context, content []api.ContentBlock) []api.ContentBlock {
 	var toolResults []api.ContentBlock
 
@@ -156,7 +177,6 @@ func (a *Agent) executeTools(ctx context.Context, content []api.ContentBlock) []
 		toolInput := block.Input
 		toolUseID := block.ID
 
-		// Check permission
 		if !a.checkPermission(toolName, toolInput) {
 			toolResults = append(toolResults, api.ContentBlock{
 				Type:      "tool_result",
@@ -166,8 +186,24 @@ func (a *Agent) executeTools(ctx context.Context, content []api.ContentBlock) []
 			continue
 		}
 
-		// Execute tool
+		if a.hooksRegistry != nil {
+			if err := a.hooksRegistry.RunPreHooks(toolName, toolInput); err != nil {
+				toolResults = append(toolResults, api.ContentBlock{
+					Type:      "tool_result",
+					ToolUseID: toolUseID,
+					Text:      "pre-hook error: " + err.Error(),
+					IsError:   true,
+				})
+				continue
+			}
+		}
+
 		result := a.toolRegistry.Execute(ctx, toolName, toolInput)
+
+		if a.hooksRegistry != nil {
+			a.hooksRegistry.RunPostHooks(toolName, toolInput, result.Content, result.IsError)
+		}
+
 		toolResults = append(toolResults, api.ContentBlock{
 			Type:      "tool_result",
 			ToolUseID: toolUseID,
@@ -202,4 +238,72 @@ func extractTextContent(blocks []api.ContentBlock) string {
 		}
 	}
 	return text
+}
+
+// generateSessionID creates a unique session identifier.
+func generateSessionID() string {
+	return fmt.Sprintf("sess_%d", time.Now().UnixMilli())
+}
+
+// getSessionsDir returns the directory for storing session files.
+func getSessionsDir() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return ".claude-code-go/sessions"
+	}
+	return filepath.Join(homeDir, ".claude-code-go", "sessions")
+}
+
+// saveSession saves the current session to disk.
+func (a *Agent) saveSession(turnCount, inputTokens, outputTokens int) {
+	if a.sessionID == "" {
+		return
+	}
+
+	s := &session.Session{
+		ID:           a.sessionID,
+		Model:        a.model,
+		StartTime:    a.startTime,
+		EndTime:      time.Now(),
+		TurnCount:    turnCount,
+		InputTokens:  inputTokens,
+		OutputTokens: outputTokens,
+	}
+
+	messages := a.convertHistoryToSessionMessages()
+	dir := getSessionsDir()
+
+	if err := session.SaveSession(s, messages, dir); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to save session: %v\n", err)
+	}
+}
+
+// convertHistoryToSessionMessages converts the agent's history to session messages.
+func (a *Agent) convertHistoryToSessionMessages() []session.SessionMessage {
+	var messages []session.SessionMessage
+	historyMsg := a.history.GetMessages()
+
+	for _, msg := range historyMsg {
+		var content string
+		switch c := msg.Content.(type) {
+		case string:
+			content = c
+		case []api.ContentBlock:
+			for _, block := range c {
+				if block.Type == "text" {
+					content += block.Text
+				} else if block.Type == "tool_result" {
+					content += fmt.Sprintf("[tool result: %s]", block.Text)
+				}
+			}
+		}
+		messages = append(messages, session.SessionMessage{
+			Type:      "message",
+			Role:      msg.Role,
+			Content:   content,
+			Timestamp: time.Now(),
+		})
+	}
+
+	return messages
 }
