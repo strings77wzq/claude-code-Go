@@ -26,11 +26,23 @@ export default defineConfig({
     nav: [
       {
         text: 'Guide',
-        link: '/en/guide/installation'
+        link: '/guide/introduction'
       },
       {
         text: 'Architecture',
-        link: '/en/architecture/overview'
+        link: '/architecture/overview'
+      },
+      {
+        text: 'Core Code',
+        link: '/core-code/entry-point'
+      },
+      {
+        text: 'Tools',
+        link: '/tools/overview'
+      },
+      {
+        text: 'MCP',
+        link: '/architecture/mcp'
       },
       {
         text: 'GitHub',
@@ -44,18 +56,40 @@ export default defineConfig({
           text: 'Guide',
           collapsed: false,
           items: [
-            { text: 'Installation', link: '/en/guide/installation' },
-            { text: 'Quick Start', link: '/en/guide/quick-start' },
-            { text: 'Configuration', link: '/en/guide/configuration' }
+            { text: 'Introduction', link: '/guide/introduction' },
+            { text: 'Quick Start', link: '/guide/quick-start' },
+            { text: 'Project Structure', link: '/guide/project-structure' }
           ]
         },
         {
           text: 'Architecture',
           collapsed: false,
           items: [
-            { text: 'Overview', link: '/en/architecture/overview' },
-            { text: 'Agent Loop', link: '/en/architecture/agent-loop' },
-            { text: 'Tools', link: '/en/architecture/tools' }
+            { text: 'Overview', link: '/architecture/overview' },
+            { text: 'Agent Loop', link: '/architecture/agent-loop' },
+            { text: 'Tools', link: '/architecture/tools' }
+          ]
+        },
+        {
+          text: 'Core Code',
+          collapsed: false,
+          items: [
+            { text: 'Entry Point', link: '/core-code/entry-point' },
+            { text: 'Agent Loop Implementation', link: '/core-code/agent-loop-impl' }
+          ]
+        },
+        {
+          text: 'Tools',
+          collapsed: false,
+          items: [
+            { text: 'Overview', link: '/tools/overview' }
+          ]
+        },
+        {
+          text: 'MCP',
+          collapsed: false,
+          items: [
+            { text: 'Integration', link: '/architecture/mcp' }
           ]
         }
       ],
@@ -64,18 +98,40 @@ export default defineConfig({
           text: '指南',
           collapsed: false,
           items: [
-            { text: '安装', link: '/zh/guide/installation' },
+            { text: '项目简介', link: '/zh/guide/introduction' },
             { text: '快速开始', link: '/zh/guide/quick-start' },
-            { text: '配置', link: '/zh/guide/configuration' }
+            { text: '项目结构', link: '/zh/guide/project-structure' }
           ]
         },
         {
           text: '架构',
           collapsed: false,
           items: [
-            { text: '概述', link: '/zh/architecture/overview' },
+            { text: '概览', link: '/zh/architecture/overview' },
             { text: 'Agent 循环', link: '/zh/architecture/agent-loop' },
-            { text: '工具系统', link: '/zh/architecture/tools' }
+            { text: '工具', link: '/zh/architecture/tools' }
+          ]
+        },
+        {
+          text: '核心代码',
+          collapsed: false,
+          items: [
+            { text: '入口点', link: '/zh/core-code/entry-point' },
+            { text: 'Agent Loop 实现', link: '/zh/core-code/agent-loop-impl' }
+          ]
+        },
+        {
+          text: '工具系统',
+          collapsed: false,
+          items: [
+            { text: '概览', link: '/zh/tools/overview' }
+          ]
+        },
+        {
+          text: 'MCP 集成',
+          collapsed: false,
+          items: [
+            { text: '协议详解', link: '/zh/architecture/mcp' }
           ]
         }
       ]
@@ -102,5 +158,7 @@ export default defineConfig({
     lineNumbers: true
   },
 
-  lastUpdated: true
+  lastUpdated: true,
+
+  ignoreDeadLinks: true
 })

@@ -19,24 +19,46 @@ hero:
       link: https://github.com/strings77wzq/claude-code-Go
 
 features:
-  - icon: 🔄
+  - icon: <img src="/icons/agent-loop.svg" width="48" height="48">
     title: Agent Loop 核心
     details: 基于 stop_reason 驱动的「思考→行动→观察」自主循环。完美处理 tool_use、end_turn、max_tokens 等状态切换。
-  - icon: 🛠️
+  - icon: <img src="/icons/tools.svg" width="48" height="48">
     title: 6 大内置工具
     details: Read、Write、Edit、Glob、Grep、Bash —— 开箱即用的完整工具集，覆盖软件工程全场景。
-  - icon: 🔒
+  - icon: <img src="/icons/permission.svg" width="48" height="48">
     title: 权限管理系统
     details: 三级权限模型（只读/工作区写入/完全访问），支持 glob 规则匹配与会话记忆，保障系统安全。
-  - icon: 🔌
+  - icon: <img src="/icons/mcp.svg" width="48" height="48">
     title: MCP 协议集成
     details: 支持 Model Context Protocol，stdio 传输、JSON-RPC 客户端、外部服务器工具自动发现与注册。
-  - icon: 🌊
+  - icon: <img src="/icons/sse.svg" width="48" height="48">
     title: SSE 流式通信
     details: 逐 token 实时流式响应，自研 SSE 解析器，零外部依赖。
-  - icon: 🧠
+  - icon: <img src="/icons/context.svg" width="48" height="48">
     title: 上下文管理
     details: 智能 token 估算与自动对话压缩，在模型上下文窗口限制内保留关键信息。
+
+stats:
+  - label: 源代码文件
+    value: 50+
+  - label: 模块数量
+    value: 8
+  - label: 内置工具
+    value: 6
+  - label: 代码行数
+    value: 7,000+
+
+learningOutcomes:
+  - title: AI Agent 架构设计
+    description: Agent Loop 模式、工具调用协议、stop_reason 驱动的控制流
+  - title: 流式 API 集成
+    description: Claude Messages API、SSE 流式传输、HTTP 重试与错误处理
+  - title: 可扩展工具系统
+    description: 接口抽象、注册器模式，只需实现接口即可添加新工具
+  - title: 安全设计
+    description: 最小权限、人在循环中、通配符规则匹配
+  - title: 工程实践
+    description: 进程管理、文件 I/O、终端交互、并发编程
 
 useCases:
   - icon: 👀

@@ -18,24 +18,46 @@ hero:
       link: https://github.com/strings77wzq/claude-code-Go
 
 features:
-  - icon: 🔄
+  - icon: <img src="/icons/agent-loop.svg" width="48" height="48">
     title: Agent Loop
     details: Autonomous "think → act → observe" cycle driven by stop_reason dispatch. Handles tool_use, end_turn, and max_tokens seamlessly.
-  - icon: 🛠️
+  - icon: <img src="/icons/tools.svg" width="48" height="48">
     title: 6 Built-in Tools
     details: Read, Write, Edit, Glob, Grep, and Bash — a complete toolset for software engineering tasks out of the box.
-  - icon: 🔒
+  - icon: <img src="/icons/permission.svg" width="48" height="48">
     title: Permission System
     details: Three-tier permission model (ReadOnly / WorkspaceWrite / DangerFullAccess) with rule-based matching and session memory.
-  - icon: 🔌
+  - icon: <img src="/icons/mcp.svg" width="48" height="48">
     title: MCP Integration
     details: Model Context Protocol support with stdio transport, JSON-RPC client, and automatic tool discovery from external servers.
-  - icon: 🌊
+  - icon: <img src="/icons/sse.svg" width="48" height="48">
     title: SSE Streaming
     details: Real-time token-by-token response streaming with custom SSE parser. No external dependencies needed.
-  - icon: 🧠
+  - icon: <img src="/icons/context.svg" width="48" height="48">
     title: Context Management
     details: Intelligent token estimation and automatic conversation compaction. Preserves context while staying within model limits.
+
+stats:
+  - label: Source Files
+    value: 50+
+  - label: Modules
+    value: 8
+  - label: Built-in Tools
+    value: 6
+  - label: Lines of Code
+    value: 7,000+
+
+learningOutcomes:
+  - title: AI Agent Architecture
+    description: Agent Loop pattern, tool call protocol, stop_reason driven control
+  - title: Streaming API Integration
+    description: Claude Messages API, SSE streaming, HTTP retry and error handling
+  - title: Extensible Tool System
+    description: Interface abstraction, registry pattern, just implement one interface to add new tools
+  - title: Security Design
+    description: Least privilege, human-in-the-loop, wildcard rule matching
+  - title: Engineering Practice
+    description: Process management, file I/O, terminal interaction, concurrency
 
 useCases:
   - icon: 👀

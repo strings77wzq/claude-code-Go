@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" stroke="#00ADD8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Wave lines representing streaming -->
+  <path d="M6 24 Q12 12 18 24 Q24 36 30 24 Q36 12 42 24"/>
+  <!-- Additional stream indicators -->
+  <path d="M10 30 Q16 24 22 30" opacity="0.6"/>
+  <path d="M26 18 Q32 24 38 18" opacity="0.6"/>
+  <!-- Arrow indicating flow direction -->
+  <path d="M22 42 L24 38 L26 42"/>
+</svg>

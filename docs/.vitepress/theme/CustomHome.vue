@@ -18,6 +18,16 @@ const cta = page.value.frontmatter.cta as Array<{
   actions: Array<{ text: string; link: string }>
 }> | undefined
 
+const stats = page.value.frontmatter.stats as Array<{
+  label: string
+  value: string
+}> | undefined
+
+const learningOutcomes = page.value.frontmatter.learningOutcomes as Array<{
+  title: string
+  description: string
+}> | undefined
+
 // Check if this is the home page
 const isHome = page.value.frontmatter.layout === 'home'
 </script>
@@ -26,6 +36,28 @@ const isHome = page.value.frontmatter.layout === 'home'
   <DefaultTheme.Layout>
     <!-- Custom sections after the default home content -->
     <template #doc-after>
+      <!-- Stats Section -->
+      <div v-if="isHome && stats && stats.length > 0" class="stats-section">
+        <h2 class="section-title">By The Numbers</h2>
+        <div class="stats-grid">
+          <div v-for="(stat, index) in stats" :key="index" class="stat-card">
+            <div class="stat-value">{{ stat.value }}</div>
+            <div class="stat-label">{{ stat.label }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Learning Outcomes Section -->
+      <div v-if="isHome && learningOutcomes && learningOutcomes.length > 0" class="learning-section">
+        <h2 class="section-title">What You'll Learn</h2>
+        <div class="learning-grid">
+          <div v-for="(item, index) in learningOutcomes" :key="index" class="learning-card">
+            <h3 class="learning-title">{{ item.title }}</h3>
+            <p class="learning-description">{{ item.description }}</p>
+          </div>
+        </div>
+      </div>
+
       <div v-if="isHome && useCases && useCases.length > 0" class="use-cases-section">
         <h2 class="section-title">Use Cases</h2>
         <div class="use-cases-grid">
@@ -67,6 +99,108 @@ const isHome = page.value.frontmatter.layout === 'home'
   color: var(--vp-c-text-1);
 }
 
+/* Stats Section */
+.stats-section {
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stat-card {
+  background: linear-gradient(135deg, var(--vp-c-brand-1) 0%, var(--vp-c-brand-2) 100%);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  color: white;
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+/* Learning Outcomes Section */
+.learning-section {
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.learning-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .learning-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .learning-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.learning-card {
+  background: var(--vp-c-bg-soft);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--vp-c-divider);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.learning-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.learning-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--vp-c-brand-1);
+  margin: 0 0 0.75rem 0;
+}
+
+.learning-description {
+  font-size: 0.875rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Use Cases Section */
 .use-cases-section {
   margin-top: 3rem;
   padding-top: 3rem;
@@ -123,6 +257,7 @@ const isHome = page.value.frontmatter.layout === 'home'
   margin: 0;
 }
 
+/* CTA Section */
 .cta-section {
   margin-top: 3rem;
 }
