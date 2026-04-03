@@ -57,6 +57,11 @@ sudo mv go-code /usr/local/bin/
 
 ## Quick Start
 
+### For AI Agents
+
+If you're using an AI coding assistant, paste this URL into its session:
+[Installation Guide for Agents](https://github.com/strings77wzq/claude-code-Go/blob/main/docs/guide/installation-for-agents.md)
+
 ### 1. Set your API key
 
 ```bash

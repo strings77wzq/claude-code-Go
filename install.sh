@@ -67,10 +67,31 @@ echo -e "${GREEN}========================================${NC}"
 echo ""
 echo "Binary installed to: ${INSTALL_DIR}/${BINARY_NAME}"
 echo ""
-echo "Next steps:"
-echo "  1. Set your API key:"
-echo "     export ANTHROPIC_API_KEY=sk-ant-..."
-echo ""
-echo "  2. Start using go-code:"
-echo "     go-code"
-echo ""
+
+# Run setup wizard
+if command -v "${BINARY_NAME}" &> /dev/null; then
+    echo -e "${YELLOW}Starting setup wizard...${NC}"
+    echo ""
+    "${BINARY_NAME}" --setup
+    setup_exit=$?
+    if [ $setup_exit -ne 0 ]; then
+        echo ""
+        echo -e "${YELLOW}Setup wizard exited with code ${setup_exit}.${NC}"
+        echo "You can configure your API key manually:"
+        echo "  mkdir -p ~/.go-code"
+        echo "  echo '{\"apiKey\": \"sk-ant-...\"}' > ~/.go-code/settings.json"
+        echo ""
+        echo "Or run setup again later:"
+        echo "  go-code --setup"
+    fi
+else
+    echo "Next steps:"
+    echo "  1. Set your API key:"
+    echo "     export ANTHROPIC_API_KEY=sk-ant-..."
+    echo ""
+    echo "  2. Start using go-code:"
+    echo "     go-code"
+    echo ""
+    echo "  Or run the setup wizard:"
+    echo "     go-code --setup"
+fi
