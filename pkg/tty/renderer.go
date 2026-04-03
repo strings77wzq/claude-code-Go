@@ -19,7 +19,7 @@ func NewRenderer() *Renderer {
 	return &Renderer{}
 }
 
-func (r *Renderer) PrintWelcome(version string, provider string) {
+func (r *Renderer) PrintWelcome(version string, provider string, model string) {
 	fmt.Println(ColorGreen + `
   ____   _    ____ ___ 
  |  _ \ / \  / ___|_ _|
@@ -31,6 +31,7 @@ func (r *Renderer) PrintWelcome(version string, provider string) {
 	if provider != "" {
 		fmt.Printf("Provider: %s\n", provider)
 	}
+	fmt.Printf("Model: %s\n", model)
 	fmt.Println("Type /help for available commands")
 	fmt.Println()
 }
@@ -71,7 +72,8 @@ func (r *Renderer) PrintHelp() {
 	fmt.Println("  /update - Check for updates and download")
 	fmt.Println("  /exit   - Exit the program")
 	fmt.Println("  /quit   - Exit the program")
-	fmt.Println("  /model  - Show current model")
+	fmt.Println("  /model  - Show current model, or /model <name> to switch")
+	fmt.Println("  /models - List available models")
 	fmt.Println("  /skills - List available skills")
 	fmt.Println("  /sessions - List available sessions")
 	fmt.Println("  /resume <session-id> - Resume a saved session")

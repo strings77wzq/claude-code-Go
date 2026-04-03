@@ -229,6 +229,19 @@ func (a *Agent) GetHistory() *History {
 	return a.history
 }
 
+// SetModel updates the model used by the agent at runtime.
+func (a *Agent) SetModel(model string) {
+	a.model = model
+	if api, ok := a.apiClient.(interface{ SetModel(string) }); ok {
+		api.SetModel(model)
+	}
+}
+
+// Model returns the current model name.
+func (a *Agent) Model() string {
+	return a.model
+}
+
 // extractTextContent extracts all text from content blocks.
 func extractTextContent(blocks []api.ContentBlock) string {
 	var text string

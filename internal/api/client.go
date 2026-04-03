@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -22,6 +23,7 @@ type Client struct {
 	baseURL    string
 	model      string
 	httpClient *http.Client
+	mu         sync.RWMutex
 }
 
 func NewClient(apiKey, baseURL, model string) *Client {
@@ -40,7 +42,7 @@ func NewClient(apiKey, baseURL, model string) *Client {
 
 func (c *Client) SendMessage(ctx context.Context, req *ApiRequest) (*ApiResponse, error) {
 	if req.Model == "" {
-		req.Model = c.model
+		req.Model = c.Model()
 	}
 
 	body, err := json.Marshal(req)
@@ -110,7 +112,7 @@ func (c *Client) SendMessage(ctx context.Context, req *ApiRequest) (*ApiResponse
 func (c *Client) SendMessageStream(ctx context.Context, req *ApiRequest, onTextDelta func(text string)) (*ApiResponse, error) {
 	req.Stream = true
 	if req.Model == "" {
-		req.Model = c.model
+		req.Model = c.Model()
 	}
 
 	body, err := json.Marshal(req)
@@ -177,4 +179,16 @@ func (c *Client) setHeaders(req *http.Request) {
 	req.Header.Set("x-api-key", c.apiKey)
 	req.Header.Set("anthropic-version", anthropicVersion)
 	req.Header.Set("content-type", "application/json")
+}
+
+func (c *Client) SetModel(model string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.model = model
+}
+
+func (c *Client) Model() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.model
 }

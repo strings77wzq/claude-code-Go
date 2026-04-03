@@ -62,7 +62,7 @@ func (r *REPL) Run() {
 
 func (r *REPL) RunWithContext(ctx context.Context) {
 	r.ctx = ctx
-	r.renderer.PrintWelcome(r.version, r.provider)
+	r.renderer.PrintWelcome(r.version, r.provider, r.model)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	sigChan := make(chan os.Signal, 1)
@@ -200,7 +200,20 @@ func (r *REPL) handleSpecialCommand(input string) bool {
 	case "/exit", "/quit":
 		return false
 	case "/model":
-		r.renderer.PrintModel(r.model)
+		if remainder := strings.TrimSpace(strings.TrimPrefix(input, "/model")); remainder != "" {
+			if setter, ok := r.agent.(interface{ SetModel(string) }); ok {
+				setter.SetModel(remainder)
+				r.model = remainder
+				fmt.Printf("Model switched to: %s\n", remainder)
+			} else {
+				fmt.Println("Model switching is not supported for the current agent")
+			}
+		} else {
+			r.renderer.PrintModel(r.model)
+		}
+		return true
+	case "/models":
+		r.printAvailableModels()
 		return true
 	default:
 		if r.handleSkillCommand(input) {
@@ -378,4 +391,25 @@ func (r *REPL) expandSessionsDir() string {
 	}
 
 	return dir
+}
+
+func (r *REPL) printAvailableModels() {
+	fmt.Println("Available models:")
+	fmt.Println()
+	fmt.Println("  Anthropic:")
+	fmt.Println("    claude-sonnet-4-20250514 (default)")
+	fmt.Println("    claude-opus-4-20250514")
+	fmt.Println("    claude-haiku-4-20250514")
+	fmt.Println()
+	fmt.Println("  Tencent Coding Plan:")
+	fmt.Println("    tc-code-latest (Auto)")
+	fmt.Println("    hunyuan-2.0-instruct")
+	fmt.Println("    hunyuan-2.0-thinking")
+	fmt.Println("    minimax-m2.5")
+	fmt.Println("    kimi-k2.5")
+	fmt.Println("    glm-5")
+	fmt.Println("    hunyuan-t1")
+	fmt.Println("    hunyuan-turbos")
+	fmt.Println()
+	fmt.Println("Switch model: /model <model-name>")
 }

@@ -71,7 +71,7 @@ func TestRendererOutput(t *testing.T) {
 
 	_ = old
 
-	r.PrintWelcome("1.0.0", "anthropic")
+	r.PrintWelcome("1.0.0", "anthropic", "test-model")
 	r.PrintHelp()
 	r.PrintModel("test-model")
 	r.PrintError(nil)

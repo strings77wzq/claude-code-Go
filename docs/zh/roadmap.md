@@ -88,6 +88,7 @@ description: claude-code-Go 项目 Roadmap
 | 多 Provider 支持 | ❌ | ✅ | ❌ |
 | 自动更新 | ❌ | ✅ | ✅ |
 | Hooks 系统 | ❌ | ✅ | ✅ |
+| 运行时切换模型 | ❌ | ✅ | ✅ |
 | IDE 集成 | ❌ | ❌ | ✅ |
 
 ---

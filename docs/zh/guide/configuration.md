@@ -165,6 +165,66 @@ MCP 配置支持 `${VAR}` 语法来插值环境变量：
 }
 ```
 
+## 运行时切换模型
+
+你可以在不重启 go-code 的情况下运行时切换模型。
+
+### 使用 `/model` 命令
+
+```
+go-code> /model
+Current model: claude-sonnet-4-20250514
+
+go-code> /model hunyuan-2.0-instruct
+Model switched to: hunyuan-2.0-instruct
+```
+
+### 使用 `/models` 命令
+
+列出所有可用模型：
+
+```
+go-code> /models
+Available models:
+
+  Anthropic:
+    claude-sonnet-4-20250514 (default)
+    claude-opus-4-20250514
+    claude-haiku-4-20250514
+
+  Tencent Coding Plan:
+    tc-code-latest (Auto)
+    hunyuan-2.0-instruct
+    hunyuan-2.0-thinking
+    minimax-m2.5
+    kimi-k2.5
+    glm-5
+    hunyuan-t1
+    hunyuan-turbos
+
+Switch model: /model <model-name>
+```
+
+### 腾讯云 Coding Plan 配置
+
+使用腾讯云 Coding Plan 时，配置如下：
+
+```bash
+export ANTHROPIC_API_KEY="sk-sp-你的密钥"
+export ANTHROPIC_BASE_URL="https://api.lkeap.cloud.tencent.com/coding/anthropic"
+export ANTHROPIC_MODEL="tc-code-latest"
+```
+
+或在 `~/.go-code/settings.json` 中：
+
+```json
+{
+  "apiKey": "sk-sp-你的密钥",
+  "baseUrl": "https://api.lkeap.cloud.tencent.com/coding/anthropic",
+  "model": "tc-code-latest"
+}
+```
+
 ## 故障排除
 
 ### "API key is required" 错误

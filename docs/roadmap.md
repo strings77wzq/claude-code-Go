@@ -88,6 +88,7 @@ Want to influence the roadmap? See our [Feedback](/feedback) page for how to rep
 | Multi-Provider | ❌ | ✅ | ❌ |
 | Auto-Update | ❌ | ✅ | ✅ |
 | Hooks System | ❌ | ✅ | ✅ |
+| Runtime Model Switch | ❌ | ✅ | ✅ |
 | IDE Integration | ❌ | ❌ | ✅ |
 
 ---

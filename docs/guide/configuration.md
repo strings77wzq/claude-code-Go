@@ -167,6 +167,66 @@ This project-specific config overrides the model while using the API key from th
 }
 ```
 
+## Runtime Model Switching
+
+You can switch models at runtime without restarting go-code.
+
+### Using `/model` Command
+
+```
+go-code> /model
+Current model: claude-sonnet-4-20250514
+
+go-code> /model hunyuan-2.0-instruct
+Model switched to: hunyuan-2.0-instruct
+```
+
+### Using `/models` Command
+
+List all available models:
+
+```
+go-code> /models
+Available models:
+
+  Anthropic:
+    claude-sonnet-4-20250514 (default)
+    claude-opus-4-20250514
+    claude-haiku-4-20250514
+
+  Tencent Coding Plan:
+    tc-code-latest (Auto)
+    hunyuan-2.0-instruct
+    hunyuan-2.0-thinking
+    minimax-m2.5
+    kimi-k2.5
+    glm-5
+    hunyuan-t1
+    hunyuan-turbos
+
+Switch model: /model <model-name>
+```
+
+### Tencent Coding Plan Setup
+
+For Tencent Coding Plan, configure:
+
+```bash
+export ANTHROPIC_API_KEY="sk-sp-your-key"
+export ANTHROPIC_BASE_URL="https://api.lkeap.cloud.tencent.com/coding/anthropic"
+export ANTHROPIC_MODEL="tc-code-latest"
+```
+
+Or in `~/.go-code/settings.json`:
+
+```json
+{
+  "apiKey": "sk-sp-your-key",
+  "baseUrl": "https://api.lkeap.cloud.tencent.com/coding/anthropic",
+  "model": "tc-code-latest"
+}
+```
+
 ## Troubleshooting
 
 ### "API key is required" Error
