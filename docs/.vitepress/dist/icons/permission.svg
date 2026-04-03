@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" stroke="#00ADD8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Shield outline -->
-  <path d="M24 6 L8 12 L8 26 C8 36 16 42 24 44 C32 42 40 36 40 26 L40 12 L24 6 Z"/>
-  <!-- Shield inner line -->
-  <path d="M24 14 L24 34"/>
-  <!-- Checkmark -->
-  <path d="M18 24 L22 28 L30 20"/>
-</svg>
