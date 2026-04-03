@@ -242,6 +242,11 @@ func (a *Agent) Model() string {
 	return a.model
 }
 
+// ClearHistory resets the conversation history.
+func (a *Agent) ClearHistory() {
+	a.history = NewHistory()
+}
+
 // extractTextContent extracts all text from content blocks.
 func extractTextContent(blocks []api.ContentBlock) string {
 	var text string

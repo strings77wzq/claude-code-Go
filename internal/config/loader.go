@@ -11,6 +11,7 @@ import (
 const (
 	envAPIKey      = "ANTHROPIC_API_KEY"
 	envBaseURL     = "ANTHROPIC_BASE_URL"
+	envModel       = "ANTHROPIC_MODEL"
 	envLLMProvider = "LLM_PROVIDER"
 
 	settingsFileName = "settings.json"
@@ -119,6 +120,9 @@ func loadEnvConfig(cfg *Config) {
 	}
 	if baseURL := os.Getenv(envBaseURL); baseURL != "" {
 		cfg.BaseURL = baseURL
+	}
+	if model := os.Getenv(envModel); model != "" {
+		cfg.Model = model
 	}
 	if provider := os.Getenv(envLLMProvider); provider != "" {
 		cfg.Provider = provider
