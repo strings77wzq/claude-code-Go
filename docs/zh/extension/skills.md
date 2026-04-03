@@ -1,28 +1,28 @@
 ---
-title: 技能系统
-description: 技能系统技术深度解析 — JSON 格式、加载机制、自定义技能创建、REPL 集成和最佳实践
+title: Skills 系统
+description: Skills 系统技术深度解析 — JSON 格式、加载机制、自定义 Skills 创建、REPL 集成和最佳实践
 ---
 
-# 技能系统
+# Skills 系统
 
-go-code 实现了一个强大的技能系统，允许用户通过命名提示词来扩展和自定义 agent 的行为。本文提供全面的技术概述。
+go-code 实现了一个强大的 Skills 系统，允许用户通过命名提示词来扩展和自定义 agent 的行为。本文提供全面的技术概述。
 
-## 什么是技能？
+## 什么是 Skills？
 
-**技能**是命名提示词，当被调用时会注入到 agent 的系统提示词中。它们提供了以下能力：
+**Skills** 是命名提示词，当被调用时会注入到 agent 的系统提示词中。它们提供了以下能力：
 
 - 为常见任务定义可重用的提示词
 - 自定义 agent 在特定工作流中的行为
 - 创建领域特定的指令
 - 通过专门知识增强 agent
 
-当你在 REPL 中使用 `/<skill-name>` 调用技能时，技能的提示词会被前置到你的消息中，为任务提供专门的上下文。
+当你在 REPL 中使用 `/<skill-name>` 调用 Skills 时，Skills 的提示词会被前置到你的消息中，为任务提供专门的上下文。
 
-## 技能工作原理
+## Skills 工作原理
 
 ### 加载机制
 
-技能在启动时从 `.go-code/skills/` 目录加载：
+Skills 在启动时从 `.go-code/skills/` 目录加载：
 
 ```
 .go-code/skills/
@@ -32,7 +32,7 @@ go-code 实现了一个强大的技能系统，允许用户通过命名提示词
 └── custom-skill.json
 ```
 
-加载器读取此目录中的所有 `.json` 文件并将它们解析为 `Skill` 结构体：
+加载器读取此目录中的所有 `.json` 文件并将它们解析为 Skills 结构体：
 
 ```go
 // Skill represents a custom command skill
@@ -45,20 +45,20 @@ type Skill struct {
 ```
 
 加载过程：
-1. 读取技能目录中的所有条目
+1. 读取 Skills 目录中的所有条目
 2. 仅筛选 `.json` 文件
-3. 将每个 JSON 文件解析为 Skill 结构体
+3. 将每个 JSON 文件解析为 Skills 结构体
 4. 验证必填字段是否存在
-5. 在注册表中注册有效的技能
+5. 在注册表中注册有效的 Skills
 
 ### JSON 格式
 
-每个技能都定义为 JSON 文件，结构如下：
+每个 Skills 都定义为 JSON 文件，结构如下：
 
 ```json
 {
   "name": "skill-name",
-  "description": "这个技能的用途",
+  "description": "这个 Skills 的用途",
   "prompt": "注入到 agent 上下文的指令内容",
   "examples": ["/skill-name"]
 }
@@ -66,55 +66,55 @@ type Skill struct {
 
 | 字段 | 必填 | 说明 |
 |-------|----------|-------------|
-| `name` | 是 | 技能的唯一标识符（用于 REPL 命令） |
-| `description` | 是 | 列出技能时显示的简要描述 |
-| `prompt` | 是 | 调用技能时注入的实际提示词内容 |
+| `name` | 是 | Skills 的唯一标识符（用于 REPL 命令） |
+| `description` | 是 | 列出 Skills 时显示的简要描述 |
+| `prompt` | 是 | 调用 Skills 时注入的实际提示词内容 |
 | `examples` | 否 | 用法示例（用于文档） |
 
 ### REPL 集成
 
-技能通过斜杠命令与 REPL 集成：
+Skills 通过斜杠命令与 REPL 集成：
 
 ```
-> /skills              # 列出所有可用技能
-> /review-pr          # 调用 review-pr 技能
-> /explain-code       # 调用 explain-code 技能
-> /write-tests        # 调用 write-tests 技能
+> /skills              # 列出所有可用 Skills
+> /review-pr          # 调用 review-pr Skills
+> /explain-code       # 调用 explain-code Skills
+> /write-tests        # 调用 write-tests Skills
 ```
 
-调用技能时：
-1. 从注册表中获取技能的提示词
+调用 Skills 时：
+1. 从注册表中获取 Skills 的提示词
 2. 将提示词前置到用户消息
 3. 将组合消息发送给 agent
-4. agent 根据技能的专门上下文做出响应
+4. agent 根据 Skills 的专门上下文做出响应
 
-## 创建自定义技能
+## 创建自定义 Skills
 
 ### 步骤指南
 
-1. **创建技能目录**（如果不存在）：
+1. **创建 Skills 目录**（如果不存在）：
    ```bash
    mkdir -p ~/.go-code/skills
    ```
 
-2. **为技能创建 JSON 文件**：
+2. **为 Skills 创建 JSON 文件**：
    ```bash
    touch ~/.go-code/skills/my-skill.json
    ```
 
-3. **使用 JSON 格式定义技能**：
+3. **使用 JSON 格式定义 Skills**：
    ```json
    {
      "name": "my-skill",
-     "description": "这个技能的用途描述",
+     "description": "这个 Skills 的用途描述",
      "prompt": "你的自定义提示词内容...",
      "examples": ["/my-skill"]
    }
    ```
 
-4. **重启 go-code** 以加载新技能
+4. **重启 go-code** 以加载新 Skills
 
-### 示例：代码审查技能
+### 示例：代码审查 Skills
 
 创建 `~/.go-code/skills/review-pr.json`：
 
@@ -127,7 +127,7 @@ type Skill struct {
 }
 ```
 
-### 示例：代码解释技能
+### 示例：代码解释 Skills
 
 创建 `~/.go-code/skills/explain-code.json`:
 
@@ -140,7 +140,7 @@ type Skill struct {
 }
 ```
 
-### 示例：测试生成技能
+### 示例：测试生成 Skills
 
 创建 `~/.go-code/skills/write-tests.json`:
 
@@ -153,7 +153,7 @@ type Skill struct {
 }
 ```
 
-### 示例：重构技能
+### 示例：重构 Skills
 
 创建 `~/.go-code/skills/refactor.json`:
 
@@ -168,20 +168,20 @@ type Skill struct {
 
 ## 最佳实践
 
-### 编写有效的技能
+### 编写有效的 Skills
 
 1. **具体明确**：定义针对特定任务的清晰、专注的提示词
 2. **使用上下文**：包含关于领域或任务类型的相关上下文
 3. **提供结构**：使用编号列表或章节来组织期望
 4. **设定期望**：明确定义期望的输出格式或质量
-5. **保持更新**：如果进行重大更改，请对技能进行版本控制
+5. **保持更新**：如果进行重大更改，请对 Skills 进行版本控制
 
-### 技能组织
+### Skills 组织
 
-- **将相关技能分组**在同一目录
+- **将相关 Skills 分组**在同一目录
 - **使用一致的命名约定**（例如，`动词-名词` 模式）
-- **为复杂技能添加文档**，包含详细描述
-- **用实际用例测试**技能
+- **为复杂 Skills 添加文档**，包含详细描述
+- **用实际用例测试** Skills
 
 ### 常见模式
 
@@ -198,23 +198,23 @@ type Skill struct {
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        技能系统架构                                   │
+│                        Skills 系统架构                                   │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │   ┌─────────────┐          ┌─────────────────┐                     │
-│   │   REPL      │─────────▶│  技能注册表     │                     │
+│   │   REPL      │─────────▶│  Skills 注册表     │                     │
 │   │  (/skills)  │          │                 │                     │
 │   └─────────────┘          └────────┬────────┘                     │
 │                                      │                               │
 │                                      ▼                               │
 │                              ┌─────────────────┐                     │
-│                              │  技能加载器     │                     │
+│                              │  Skills 加载器     │                     │
 │                              │  (JSON 文件)   │                     │
 │                              └────────┬────────┘                     │
 │                                       │                              │
 │                                       ▼                              │
 │   ┌─────────────┐          ┌─────────────────┐                     │
-│   │   Agent     │◄─────────│  技能目录       │                     │
+│   │   Agent     │◄─────────│  Skills 目录       │                     │
 │   │ (注入的)    │          │ ~/.config/...   │                     │
 │   └─────────────┘          └─────────────────┘                     │
 │                                                                     │

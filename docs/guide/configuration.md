@@ -11,11 +11,13 @@ This guide covers all configuration options for go-code, including config files,
 
 go-code loads configuration from multiple locations with the following priority (highest to lowest):
 
-1. **Environment variables** (highest priority)
-2. **Project config file**: `./.go-code/settings.json`
-3. **User config file**: `~/.go-code/settings.json`
+1. **CLI arguments** (highest priority)
+2. **Environment variables**
+3. **Project config file**: `./.go-code/settings.json`
+4. **User config file**: `~/.go-code/settings.json`
+5. **Built-in defaults** (lowest priority)
 
-This means you can set defaults in the user config and override them per-project or via environment variables.
+This means you can set defaults in the user config and override them per-project, via environment variables, or via CLI arguments.
 
 ## Configuration File Format
 

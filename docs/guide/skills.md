@@ -1,3 +1,8 @@
+---
+title: Skills System
+description: How to create and use custom skills
+---
+
 # Skills
 
 Skills are custom commands that enhance the agent's capabilities. When you invoke a skill in the REPL using `/<skill-name>`, the skill's prompt is injected into the agent's system prompt, providing specialized instructions for the current task.

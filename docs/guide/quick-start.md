@@ -37,9 +37,11 @@ Create a configuration file at `~/.go-code/settings.json`:
 ```
 
 The config loader searches in this order (later sources override earlier ones):
-1. User config: `~/.go-code/settings.json`
-2. Project config: `./.go-code/settings.json`
-3. Environment variables: `ANTHROPIC_API_KEY`
+1. CLI arguments (highest priority)
+2. Environment variables: `ANTHROPIC_API_KEY`
+3. Project config: `./.go-code/settings.json`
+4. User config: `~/.go-code/settings.json`
+5. Built-in defaults (lowest priority)
 
 ## Running go-code
 

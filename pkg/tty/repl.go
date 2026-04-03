@@ -37,7 +37,7 @@ type REPL struct {
 
 func NewREPL(agent AgentInterface, version string, provider string, model string, skillsRegistry *skills.Registry, sessionsDir string) *REPL {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &REPL{
+	repl := &REPL{
 		agent:          agent,
 		renderer:       NewRenderer(),
 		version:        version,
@@ -49,9 +49,19 @@ func NewREPL(agent AgentInterface, version string, provider string, model string
 		skillsRegistry: skillsRegistry,
 		sessionsDir:    sessionsDir,
 	}
+	return repl
+}
+
+func (r *REPL) SetExternalContext(ctx context.Context) {
+	r.ctx = ctx
 }
 
 func (r *REPL) Run() {
+	r.RunWithContext(context.Background())
+}
+
+func (r *REPL) RunWithContext(ctx context.Context) {
+	r.ctx = ctx
 	r.renderer.PrintWelcome(r.version, r.provider)
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -60,16 +70,27 @@ func (r *REPL) Run() {
 
 	go func() {
 		for {
-			sig := <-sigChan
-			if sig == syscall.SIGINT {
-				r.cancel()
-				r.ctx, r.cancel = context.WithCancel(context.Background())
-				fmt.Println("\n(Canceled. Press Enter to continue)")
+			select {
+			case <-r.ctx.Done():
+				return
+			case sig := <-sigChan:
+				if sig == syscall.SIGINT {
+					r.cancel()
+					r.ctx, r.cancel = context.WithCancel(context.Background())
+					fmt.Println("\n(Canceled. Press Enter to continue)")
+				}
 			}
 		}
 	}()
 
 	for {
+		select {
+		case <-r.ctx.Done():
+			fmt.Println("\nGoodbye!")
+			return
+		default:
+		}
+
 		r.renderer.PrintPrompt()
 
 		if !scanner.Scan() {

@@ -9,10 +9,14 @@ import (
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
-type EditTool struct{}
+type EditTool struct {
+	workingDir string
+}
 
-func NewEditTool() tool.Tool {
-	return &EditTool{}
+func NewEditTool(workingDir string) tool.Tool {
+	return &EditTool{
+		workingDir: workingDir,
+	}
 }
 
 func (e *EditTool) Name() string {
@@ -56,6 +60,10 @@ func (e *EditTool) Execute(ctx context.Context, input map[string]any) tool.Resul
 	filePath, ok := input["file_path"].(string)
 	if !ok || filePath == "" {
 		return tool.Error("file_path is required")
+	}
+
+	if err := ValidatePath(filePath, e.workingDir); err != nil {
+		return tool.Error(err.Error())
 	}
 
 	oldString, ok := input["old_string"].(string)

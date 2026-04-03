@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
-          cache: false
+          cache: true
 
       - name: Run go vet
         run: go vet ./...
@@ -39,7 +39,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
-          cache: false
+          cache: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -66,7 +66,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
-          cache: false
+          cache: true
 
       - name: Build for linux/amd64
         run: GOOS=linux GOARCH=amd64 go build -o bin/go-code-linux-amd64 ./cmd/go-code

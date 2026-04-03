@@ -13,17 +13,17 @@ func RegisterBuiltinTools(r *tool.Registry, workingDir string) error {
 		return fmt.Errorf("failed to register bash tool: %w", err)
 	}
 
-	readTool := builtin.NewReadTool()
+	readTool := builtin.NewReadTool(workingDir)
 	if err := r.Register(readTool); err != nil {
 		return fmt.Errorf("failed to register read tool: %w", err)
 	}
 
-	writeTool := builtin.NewWriteTool()
+	writeTool := builtin.NewWriteTool(workingDir)
 	if err := r.Register(writeTool); err != nil {
 		return fmt.Errorf("failed to register write tool: %w", err)
 	}
 
-	editTool := builtin.NewEditTool()
+	editTool := builtin.NewEditTool(workingDir)
 	if err := r.Register(editTool); err != nil {
 		return fmt.Errorf("failed to register edit tool: %w", err)
 	}

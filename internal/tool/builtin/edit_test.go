@@ -15,7 +15,7 @@ func TestEditToolBasic(t *testing.T) {
 	content := "hello world"
 	os.WriteFile(tmpFile, []byte(content), 0644)
 
-	editTool := NewEditTool()
+	editTool := NewEditTool(tmpDir)
 	result := editTool.Execute(context.Background(), map[string]any{
 		"file_path":  tmpFile,
 		"old_string": "world",
@@ -38,7 +38,7 @@ func TestEditToolNotFound(t *testing.T) {
 	content := "hello world"
 	os.WriteFile(tmpFile, []byte(content), 0644)
 
-	editTool := NewEditTool()
+	editTool := NewEditTool(tmpDir)
 	result := editTool.Execute(context.Background(), map[string]any{
 		"file_path":  tmpFile,
 		"old_string": "nonexistent",
@@ -56,7 +56,7 @@ func TestEditToolMultipleOccurrences(t *testing.T) {
 	content := "hello hello world"
 	os.WriteFile(tmpFile, []byte(content), 0644)
 
-	editTool := NewEditTool()
+	editTool := NewEditTool(tmpDir)
 	result := editTool.Execute(context.Background(), map[string]any{
 		"file_path":  tmpFile,
 		"old_string": "hello",
@@ -74,7 +74,7 @@ func TestEditToolReplaceAll(t *testing.T) {
 	content := "hello hello world"
 	os.WriteFile(tmpFile, []byte(content), 0644)
 
-	editTool := NewEditTool()
+	editTool := NewEditTool(tmpDir)
 	result := editTool.Execute(context.Background(), map[string]any{
 		"file_path":   tmpFile,
 		"old_string":  "hello",
@@ -93,7 +93,8 @@ func TestEditToolReplaceAll(t *testing.T) {
 }
 
 func TestEditToolMissingFilePath(t *testing.T) {
-	editTool := NewEditTool()
+	tmpDir := t.TempDir()
+	editTool := NewEditTool(tmpDir)
 	result := editTool.Execute(context.Background(), map[string]any{
 		"old_string": "old",
 		"new_string": "new",
@@ -109,7 +110,7 @@ func TestEditToolMissingOldString(t *testing.T) {
 	tmpFile := filepath.Join(tmpDir, "test.txt")
 	os.WriteFile(tmpFile, []byte("test"), 0644)
 
-	editTool := NewEditTool()
+	editTool := NewEditTool(tmpDir)
 	result := editTool.Execute(context.Background(), map[string]any{
 		"file_path":  tmpFile,
 		"new_string": "new",
@@ -121,21 +122,24 @@ func TestEditToolMissingOldString(t *testing.T) {
 }
 
 func TestEditToolName(t *testing.T) {
-	editTool := NewEditTool()
+	tmpDir := t.TempDir()
+	editTool := NewEditTool(tmpDir)
 	if editTool.Name() != "Edit" {
 		t.Errorf("expected 'Edit', got '%s'", editTool.Name())
 	}
 }
 
 func TestEditToolRequiresPermission(t *testing.T) {
-	editTool := NewEditTool()
+	tmpDir := t.TempDir()
+	editTool := NewEditTool(tmpDir)
 	if !editTool.RequiresPermission() {
 		t.Errorf("Edit tool should require permission")
 	}
 }
 
 func TestEditToolInputSchema(t *testing.T) {
-	editTool := NewEditTool()
+	tmpDir := t.TempDir()
+	editTool := NewEditTool(tmpDir)
 	schema := editTool.InputSchema()
 
 	if schema["type"] != "object" {
@@ -155,7 +159,8 @@ func TestEditToolInputSchema(t *testing.T) {
 }
 
 func TestEditToolFileNotFound(t *testing.T) {
-	editTool := NewEditTool()
+	tmpDir := t.TempDir()
+	editTool := NewEditTool(tmpDir)
 	result := editTool.Execute(context.Background(), map[string]any{
 		"file_path":  "/nonexistent/file.txt",
 		"old_string": "old",

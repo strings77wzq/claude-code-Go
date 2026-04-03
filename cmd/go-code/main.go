@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/strings77wzq/claude-code-Go/internal/agent"
 	"github.com/strings77wzq/claude-code-Go/internal/api"
@@ -38,6 +40,10 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
+	// Create context with cancellation for graceful shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Register signal handlers for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -45,6 +51,9 @@ func main() {
 	go func() {
 		sig := <-sigChan
 		logger.Info("Received signal, shutting down", "signal", sig.String())
+		cancel()
+		// Wait briefly for graceful shutdown
+		time.Sleep(100 * time.Millisecond)
 		logger.Info("Shutdown complete")
 		os.Exit(0)
 	}()
@@ -105,6 +114,9 @@ func main() {
 	}
 
 	repl := tty.NewREPL(agentInstance, version, cfg.Provider, cfg.Model, skillsRegistry, "~/.go-code/sessions/")
+
+	// Pass external context for graceful shutdown
+	repl.SetExternalContext(ctx)
 
 	// Run REPL - this blocks until exit
 	repl.Run()

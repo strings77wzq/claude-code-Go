@@ -1,4 +1,4 @@
-# go-code — Claude Code 的 Go+Python 仿写
+# go-code — Go implementation of Claude Code
 
 [![Go Version](https://img.shields.io/badge/Go-1.23+-blue)](https://go.dev/doc/install)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
@@ -150,9 +150,8 @@ claude-code-Go/
 │   └── hooks/            # Pre/post execution hooks
 ├── pkg/tty/              # REPL + terminal rendering
 ├── harness/              # Python test harness (optional)
-├── docs/                 # VitePress documentation
-│   ├── en/               # English docs
-│   └── zh/               # Chinese docs
+├── docs/                 # Documentation
+│   └── guide/            # User guides
 └── .github/workflows/   # CI/CD
 ```
 
@@ -189,7 +188,7 @@ make docs-build     # Build for production
 
 ---
 
-⭐ 如果这个项目对你有帮助，请给个 Star！
+⭐ If you find this project helpful, please give it a ⭐ Star!
 
 ## License
 

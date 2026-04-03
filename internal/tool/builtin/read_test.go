@@ -15,7 +15,7 @@ func TestReadToolBasic(t *testing.T) {
 	content := "line1\nline2\nline3\n"
 	os.WriteFile(tmpFile, []byte(content), 0644)
 
-	readTool := NewReadTool()
+	readTool := NewReadTool(tmpDir)
 	result := readTool.Execute(context.Background(), map[string]any{
 		"file_path": tmpFile,
 	})
@@ -36,7 +36,7 @@ func TestReadToolOffsetLimit(t *testing.T) {
 	content := "line1\nline2\nline3\nline4\nline5\n"
 	os.WriteFile(tmpFile, []byte(content), 0644)
 
-	readTool := NewReadTool()
+	readTool := NewReadTool(tmpDir)
 
 	result := readTool.Execute(context.Background(), map[string]any{
 		"file_path": tmpFile,
@@ -55,7 +55,8 @@ func TestReadToolOffsetLimit(t *testing.T) {
 }
 
 func TestReadToolFileNotFound(t *testing.T) {
-	readTool := NewReadTool()
+	tmpDir := t.TempDir()
+	readTool := NewReadTool(tmpDir)
 	result := readTool.Execute(context.Background(), map[string]any{
 		"file_path": "/nonexistent/file.txt",
 	})
@@ -67,7 +68,7 @@ func TestReadToolFileNotFound(t *testing.T) {
 
 func TestReadToolDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
-	readTool := NewReadTool()
+	readTool := NewReadTool(tmpDir)
 	result := readTool.Execute(context.Background(), map[string]any{
 		"file_path": tmpDir,
 	})
@@ -78,7 +79,8 @@ func TestReadToolDirectory(t *testing.T) {
 }
 
 func TestReadToolMissingFilePath(t *testing.T) {
-	readTool := NewReadTool()
+	tmpDir := t.TempDir()
+	readTool := NewReadTool(tmpDir)
 	result := readTool.Execute(context.Background(), map[string]any{})
 
 	if !result.IsError {
@@ -87,21 +89,24 @@ func TestReadToolMissingFilePath(t *testing.T) {
 }
 
 func TestReadToolName(t *testing.T) {
-	readTool := NewReadTool()
+	tmpDir := t.TempDir()
+	readTool := NewReadTool(tmpDir)
 	if readTool.Name() != "Read" {
 		t.Errorf("expected 'Read', got '%s'", readTool.Name())
 	}
 }
 
 func TestReadToolRequiresPermission(t *testing.T) {
-	readTool := NewReadTool()
+	tmpDir := t.TempDir()
+	readTool := NewReadTool(tmpDir)
 	if readTool.RequiresPermission() {
 		t.Errorf("Read tool should not require permission")
 	}
 }
 
 func TestReadToolInputSchema(t *testing.T) {
-	readTool := NewReadTool()
+	tmpDir := t.TempDir()
+	readTool := NewReadTool(tmpDir)
 	schema := readTool.InputSchema()
 
 	if schema["type"] != "object" {

@@ -25,7 +25,7 @@ description: claude-code-Go 开发路线图
 ### 已完成功能
 
 - **Agent Loop** — 基于 stop_reason 驱动的「思考→行动→观察」自主循环
-- **6 大内置工具** — Read、Write、Edit、Glob、Grep、Bash
+- **9 大内置工具** — 6 个核心（Read、Write、Edit、Glob、Grep、Bash）+ 3 个增强（Diff view、Tree、WebFetch）
 - **权限系统** — 三级权限模型，支持 glob 规则匹配与会话记忆
 - **MCP 集成** — Model Context Protocol，stdio 传输、JSON-RPC
 - **SSE 流式** — 逐 token 实时流式响应

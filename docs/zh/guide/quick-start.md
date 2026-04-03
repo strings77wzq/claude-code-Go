@@ -35,9 +35,11 @@ export ANTHROPIC_API_KEY=sk-ant-your-api-key-here
 ```
 
 配置加载器按以下顺序搜索（后者覆盖前者）：
-1. 用户配置：`~/.go-code/settings.json`
-2. 项目配置：`.go-code/settings.json`
-3. 环境变量：`ANTHROPIC_API_KEY`
+1. CLI 参数（最高优先级）
+2. 环境变量：`ANTHROPIC_API_KEY`
+3. 项目配置：`.go-code/settings.json`
+4. 用户配置：`~/.go-code/settings.json`
+5. 内置默认值（最低优先级）
 
 ## 运行 go-code
 

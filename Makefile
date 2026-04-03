@@ -48,6 +48,6 @@ help:
 	@echo "  vet         - Run go vet for static analysis"
 	@echo "  docs        - Serve VitePress documentation locally"
 	@echo "  docs-build  - Build VitePress documentation for production"
-  @echo "  build-all   - Build for linux/amd64, darwin/amd64, darwin/arm64, windows/amd64"
+	@echo "  build-all   - Build for linux/amd64, darwin/amd64, darwin/arm64, windows/amd64"
 	@echo "  clean       - Remove bin/ directory"
 	@echo "  help        - Display this help message"

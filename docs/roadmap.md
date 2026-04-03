@@ -25,7 +25,7 @@ The first phase established the core infrastructure for the AI coding assistant.
 ### Completed Features
 
 - **Agent Loop** — Autonomous "think → act → observe" cycle with stop_reason dispatch
-- **6 Built-in Tools** — Read, Write, Edit, Glob, Grep, Bash
+- **9 Built-in Tools** — 6 core (Read, Write, Edit, Glob, Grep, Bash) + 3 enhanced (Diff view, Tree, WebFetch)
 - **Permission System** — Three-tier model with rule-based matching and session memory
 - **MCP Integration** — Model Context Protocol with stdio transport and JSON-RPC
 - **SSE Streaming** — Real-time token-by-token response with custom parser

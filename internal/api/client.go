@@ -72,35 +72,31 @@ func (c *Client) SendMessage(ctx context.Context, req *ApiRequest) (*ApiResponse
 			continue
 		}
 
+		defer resp.Body.Close()
+
 		if resp.StatusCode == http.StatusTooManyRequests {
-			resp.Body.Close()
 			lastErr = fmt.Errorf("rate limited (429)")
 			continue
 		}
 
 		if resp.StatusCode == http.StatusUnauthorized {
-			resp.Body.Close()
 			return nil, fmt.Errorf("unauthorized (401): invalid API key")
 		}
 
 		if resp.StatusCode == http.StatusForbidden {
-			resp.Body.Close()
 			return nil, fmt.Errorf("forbidden (403): access denied")
 		}
 
 		if resp.StatusCode >= 500 {
-			resp.Body.Close()
 			lastErr = fmt.Errorf("server error (%d)", resp.StatusCode)
 			continue
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
 			body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
 			return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
 		}
 
-		defer resp.Body.Close()
 		var apiResp ApiResponse
 		if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 			return nil, fmt.Errorf("failed to decode response: %w", err)
@@ -146,35 +142,31 @@ func (c *Client) SendMessageStream(ctx context.Context, req *ApiRequest, onTextD
 			continue
 		}
 
+		defer resp.Body.Close()
+
 		if resp.StatusCode == http.StatusTooManyRequests {
-			resp.Body.Close()
 			lastErr = fmt.Errorf("rate limited (429)")
 			continue
 		}
 
 		if resp.StatusCode == http.StatusUnauthorized {
-			resp.Body.Close()
 			return nil, fmt.Errorf("unauthorized (401): invalid API key")
 		}
 
 		if resp.StatusCode == http.StatusForbidden {
-			resp.Body.Close()
 			return nil, fmt.Errorf("forbidden (403): access denied")
 		}
 
 		if resp.StatusCode >= 500 {
-			resp.Body.Close()
 			lastErr = fmt.Errorf("server error (%d)", resp.StatusCode)
 			continue
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
 			body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
 			return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
 		}
 
-		defer resp.Body.Close()
 		return parseStreamResponse(resp.Body, onTextDelta)
 	}
 

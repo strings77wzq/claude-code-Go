@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"sync"
@@ -142,8 +143,12 @@ func (t *StdioTransport) Close() error {
 
 	// Kill the process if still running
 	if t.process != nil {
-		t.process.Kill()
-		t.process.Wait()
+		if err := t.process.Kill(); err != nil {
+			slog.Error("failed to kill process", "error", err)
+		}
+		if _, err := t.process.Wait(); err != nil {
+			slog.Error("failed to wait for process", "error", err)
+		}
 	}
 
 	return nil

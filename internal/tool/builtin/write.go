@@ -9,10 +9,14 @@ import (
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
-type WriteTool struct{}
+type WriteTool struct {
+	workingDir string
+}
 
-func NewWriteTool() tool.Tool {
-	return &WriteTool{}
+func NewWriteTool(workingDir string) tool.Tool {
+	return &WriteTool{
+		workingDir: workingDir,
+	}
 }
 
 func (w *WriteTool) Name() string {
@@ -48,6 +52,10 @@ func (w *WriteTool) Execute(ctx context.Context, input map[string]any) tool.Resu
 	filePath, ok := input["file_path"].(string)
 	if !ok || filePath == "" {
 		return tool.Error("file_path is required")
+	}
+
+	if err := ValidatePath(filePath, w.workingDir); err != nil {
+		return tool.Error(err.Error())
 	}
 
 	content, ok := input["content"].(string)

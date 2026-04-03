@@ -85,26 +85,29 @@ func (b *BashTool) Execute(ctx context.Context, input map[string]any) tool.Resul
 		return tool.Error(fmt.Sprintf("failed to create stdout pipe: %v", err))
 	}
 
-	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var outputLock sync.Mutex
 	var output strings.Builder
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		buf := make([]byte, 4096)
 		for {
 			n, readErr := stdout.Read(buf)
 			if n > 0 {
-				mu.Lock()
+				outputLock.Lock()
 				if output.Len()+n > maxOutputSize {
 					if output.Len() < maxOutputSize {
 						remaining := maxOutputSize - output.Len()
 						output.Write(buf[:remaining])
 						output.WriteString("... (output truncated)")
 					}
-					mu.Unlock()
+					outputLock.Unlock()
 					return
 				}
 				output.Write(buf[:n])
-				mu.Unlock()
+				outputLock.Unlock()
 			}
 			if readErr != nil {
 				break
@@ -114,9 +117,10 @@ func (b *BashTool) Execute(ctx context.Context, input map[string]any) tool.Resul
 
 	err = cmd.Run()
 
-	mu.Lock()
+	wg.Wait()
+	outputLock.Lock()
 	result := output.String()
-	mu.Unlock()
+	outputLock.Unlock()
 
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {

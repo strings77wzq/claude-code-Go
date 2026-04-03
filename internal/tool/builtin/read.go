@@ -17,10 +17,14 @@ const (
 	maxFileReadSize = 200 * 1024
 )
 
-type ReadTool struct{}
+type ReadTool struct {
+	workingDir string
+}
 
-func NewReadTool() tool.Tool {
-	return &ReadTool{}
+func NewReadTool(workingDir string) tool.Tool {
+	return &ReadTool{
+		workingDir: workingDir,
+	}
 }
 
 func (r *ReadTool) Name() string {
@@ -60,6 +64,10 @@ func (r *ReadTool) Execute(ctx context.Context, input map[string]any) tool.Resul
 	filePath, ok := input["file_path"].(string)
 	if !ok || filePath == "" {
 		return tool.Error("file_path is required")
+	}
+
+	if err := ValidatePath(filePath, r.workingDir); err != nil {
+		return tool.Error(err.Error())
 	}
 
 	offset := defaultOffset
