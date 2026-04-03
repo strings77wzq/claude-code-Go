@@ -1,35 +1,32 @@
 <script setup lang="ts">
 import { useData } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
-import './custom.css'
 
 const { page } = useData()
 
-// Extract custom sections from frontmatter
-const useCases = page.value.frontmatter.useCases as Array<{
+const useCases = (page.value.frontmatter as any).useCases as Array<{
   icon: string
   title: string
   details: string
 }> | undefined
 
-const cta = page.value.frontmatter.cta as Array<{
+const cta = (page.value.frontmatter as any).cta as Array<{
   title: string
   details: string
   actions: Array<{ text: string; link: string }>
 }> | undefined
 
-const stats = page.value.frontmatter.stats as Array<{
+const stats = (page.value.frontmatter as any).stats as Array<{
   label: string
   value: string
 }> | undefined
 
-const learningOutcomes = page.value.frontmatter.learningOutcomes as Array<{
+const learningOutcomes = (page.value.frontmatter as any).learningOutcomes as Array<{
   title: string
   description: string
 }> | undefined
 
-// Check if this is the home page
-const isHome = page.value.frontmatter.layout === 'home'
+const isHome = (page.value.frontmatter as any).layout === 'home'
 </script>
 
 <template>
