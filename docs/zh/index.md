@@ -175,13 +175,3 @@ chmod +x go-code
 export ANTHROPIC_API_KEY=sk-ant-...
 ./go-code
 ```
-
-<div class="cta-section fade-in-section">
-  <h2 class="cta-title">准备开始？</h2>
-  <p class="cta-desc">几秒钟即可开始使用 claude-code-Go。</p>
-  <div class="cta-actions">
-    <a href="/zh/guide/introduction" class="cta-button primary">快速开始</a>
-    <a href="/zh/guide/quick-start" class="cta-button secondary">安装指南</a>
-    <a href="https://github.com/strings77wzq/claude-code-Go" class="cta-button secondary">GitHub</a>
-  </div>
-</div>

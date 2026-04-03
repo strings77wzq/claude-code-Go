@@ -175,13 +175,3 @@ Then set your API key and start:
 export ANTHROPIC_API_KEY=sk-ant-...
 ./go-code
 ```
-
-<div class="cta-section fade-in-section">
-  <h2 class="cta-title">Ready to start?</h2>
-  <p class="cta-desc">Get started with claude-code-Go in seconds.</p>
-  <div class="cta-actions">
-    <a href="/guide/introduction" class="cta-button primary">Get Started</a>
-    <a href="/guide/quick-start" class="cta-button secondary">Quick Start</a>
-    <a href="https://github.com/strings77wzq/claude-code-Go" class="cta-button secondary">GitHub</a>
-  </div>
-</div>

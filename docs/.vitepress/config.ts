@@ -50,7 +50,7 @@ export default defineConfig({
 
   themeConfig: {
     logo: '/logo.svg',
-    appearance: { label: '自动', value: 'auto' },
+    appearance: true,
 
     sidebar: {
       '/': [
