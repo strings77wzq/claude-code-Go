@@ -1,40 +1,40 @@
-# go-code — Claude Code in Go
+---
+layout: home
+title: claude-code-Go
+titleTemplate: Claude Code in Go — AI-powered coding assistant
 
-go-code is a Go implementation of Anthropic's Claude Code (Cline) agent system. It provides a command-line interface for interacting with Large Language Models using the Claude API, featuring a full agent loop with tool execution, permission management, and Model Context Protocol (MCP) support.
+hero:
+  name: claude-code-Go
+  text: Claude Code in Go
+  tagline: AI-powered coding assistant with a full agent loop, tool execution, and permission management — built in Go.
+  image:
+    src: /logo.svg
+    alt: claude-code-Go Logo
+  actions:
+    - theme: brand
+      text: Get Started
+      link: /en/guide/installation
+    - theme: alt
+      text: View on GitHub
+      link: https://github.com/strings77wzq/claude-code-Go
 
-## Overview
-
-go-code implements the core functionality of Claude Code in pure Go, offering:
-
-- **Full Agent Loop**: State management, message history, and tool execution
-- **6 Built-in Tools**: Read, Write, Edit, Glob, Grep, and Bash commands
-- **Permission System**: User approval for dangerous operations
-- **MCP Support**: Extensible tool ecosystem via Model Context Protocol
-- **Streaming**: Real-time token-by-token response streaming
-
-## Quick Links
-
-- [Installation Guide](guide/install.md)
-- [Quick Start](guide/quick-start.md)
-- [Configuration](guide/config.md)
-- [Architecture Overview](architecture/overview.md)
-- [Agent Loop](architecture/agent-loop.md)
-- [Built-in Tools](architecture/tools.md)
-- [Python Harness](harness/overview.md)
-
-## Why Go?
-
-This implementation leverages Go's strengths:
-
-- **Performance**: Fast execution and low memory footprint
-- **Concurrency**: Built-in goroutines for parallel tool execution
-- **Cross-Platform**: Single binary deployment across all major platforms
-- **Standard Library**: Rich built-in packages for HTTP, JSON, and file operations
-
-## Status
-
-This is an educational implementation demonstrating how Claude Code works under the hood. It is not affiliated with or endorsed by Anthropic.
-
-## License
-
-MIT License - see [LICENSE](https://github.com/user/go-code/blob/main/LICENSE) for details.
+features:
+  - icon: 🔄
+    title: Agent Loop
+    details: Autonomous "think → act → observe" cycle driven by stop_reason dispatch. Handles tool_use, end_turn, and max_tokens seamlessly.
+  - icon: 🛠️
+    title: 6 Built-in Tools
+    details: Read, Write, Edit, Glob, Grep, and Bash — a complete toolset for software engineering tasks out of the box.
+  - icon: 🔒
+    title: Permission System
+    details: Three-tier permission model (ReadOnly / WorkspaceWrite / DangerFullAccess) with rule-based matching and session memory.
+  - icon: 🔌
+    title: MCP Integration
+    details: Model Context Protocol support with stdio transport, JSON-RPC client, and automatic tool discovery from external servers.
+  - icon: 🌊
+    title: SSE Streaming
+    details: Real-time token-by-token response streaming with custom SSE parser. No external dependencies needed.
+  - icon: 🧠
+    title: Context Management
+    details: Intelligent token estimation and automatic conversation compaction. Preserves context while staying within model limits.
+---

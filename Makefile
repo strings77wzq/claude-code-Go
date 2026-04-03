@@ -1,6 +1,6 @@
 # Makefile for go-code
 
-.PHONY: build test vet docs build-all clean help
+.PHONY: build test vet docs docs-build build-all clean help
 
 # Default target
 build: go-build
@@ -22,7 +22,11 @@ vet:
 
 # Serve documentation locally
 docs:
-	mkdocs serve
+	cd docs && npm run dev
+
+# Build documentation for production
+docs-build:
+	cd docs && npm install && npm run build
 
 # Build for all platforms
 build-all:
@@ -41,7 +45,8 @@ help:
 	@echo "  build       - Build the Go application (default)"
 	@echo "  test        - Run Go and Python tests"
 	@echo "  vet         - Run go vet for static analysis"
-	@echo "  docs        - Serve documentation locally"
+	@echo "  docs        - Serve VitePress documentation locally"
+	@echo "  docs-build  - Build VitePress documentation for production"
 	@echo "  build-all   - Build for linux/amd64, darwin/amd64, darwin/arm64"
 	@echo "  clean       - Remove bin/ directory"
 	@echo "  help        - Display this help message"
