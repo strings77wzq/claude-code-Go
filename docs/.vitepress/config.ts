@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitepress/config'
+import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'claude-code-Go',
@@ -26,11 +26,11 @@ export default defineConfig({
     nav: [
       {
         text: 'Guide',
-        link: '/guide/installation'
+        link: '/en/guide/installation'
       },
       {
         text: 'Architecture',
-        link: '/architecture/overview'
+        link: '/en/architecture/overview'
       },
       {
         text: 'GitHub',
@@ -44,18 +44,18 @@ export default defineConfig({
           text: 'Guide',
           collapsed: false,
           items: [
-            { text: 'Installation', link: '/guide/installation' },
-            { text: 'Quick Start', link: '/guide/quick-start' },
-            { text: 'Configuration', link: '/guide/configuration' }
+            { text: 'Installation', link: '/en/guide/installation' },
+            { text: 'Quick Start', link: '/en/guide/quick-start' },
+            { text: 'Configuration', link: '/en/guide/configuration' }
           ]
         },
         {
           text: 'Architecture',
           collapsed: false,
           items: [
-            { text: 'Overview', link: '/architecture/overview' },
-            { text: 'Agent Loop', link: '/architecture/agent-loop' },
-            { text: 'Tools', link: '/architecture/tools' }
+            { text: 'Overview', link: '/en/architecture/overview' },
+            { text: 'Agent Loop', link: '/en/architecture/agent-loop' },
+            { text: 'Tools', link: '/en/architecture/tools' }
           ]
         }
       ],
