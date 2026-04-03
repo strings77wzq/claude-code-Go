@@ -1,3 +1,10 @@
+/* Go brand colors */
+:root {
+  --vp-c-brand-1: #00ADD8;
+  --vp-c-brand-2: #00875a;
+  --vp-c-brand-soft: rgba(0, 173, 216, 0.14);
+}
+
 /* Custom styles for home page sections */
 
 /* Use Cases Section */

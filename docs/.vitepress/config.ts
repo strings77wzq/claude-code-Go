@@ -10,45 +10,46 @@ export default defineConfig({
       label: 'English',
       lang: 'en',
       title: 'claude-code-Go',
-      description: 'Claude Code in Go — AI-powered coding assistant'
+      description: 'Claude Code in Go — AI-powered coding assistant',
+      themeConfig: {
+        nav: [
+          { text: 'Guide', link: '/guide/introduction' },
+          { text: 'Architecture', link: '/architecture/overview' },
+          { text: 'Core Code', link: '/core-code/entry-point' },
+          { text: 'Tools', link: '/tools/overview' },
+          { text: 'MCP', link: '/architecture/mcp' },
+          { text: 'GitHub', link: 'https://github.com/strings77wzq/claude-code-Go' }
+        ],
+        footer: {
+          message: 'Released under the MIT License.',
+          copyright: 'Copyright © 2024-present claude-code-Go Contributors'
+        }
+      }
     },
     zh: {
       label: '中文',
       lang: 'zh-CN',
       title: 'claude-code-Go',
-      description: 'Go 实现的 Claude Code — AI 编程助手'
+      description: 'Go 实现的 Claude Code — AI 编程助手',
+      themeConfig: {
+        nav: [
+          { text: '指南', link: '/zh/guide/introduction' },
+          { text: '架构', link: '/zh/architecture/overview' },
+          { text: '核心代码', link: '/zh/core-code/entry-point' },
+          { text: '工具', link: '/zh/tools/overview' },
+          { text: 'MCP', link: '/zh/architecture/mcp' },
+          { text: 'GitHub', link: 'https://github.com/strings77wzq/claude-code-Go' }
+        ],
+        footer: {
+          message: '基于 MIT 许可证发布',
+          copyright: 'Copyright © 2024-present claude-code-Go 贡献者'
+        }
+      }
     }
   },
 
   themeConfig: {
     logo: '/logo.svg',
-
-    nav: [
-      {
-        text: 'Guide',
-        link: '/guide/introduction'
-      },
-      {
-        text: 'Architecture',
-        link: '/architecture/overview'
-      },
-      {
-        text: 'Core Code',
-        link: '/core-code/entry-point'
-      },
-      {
-        text: 'Tools',
-        link: '/tools/overview'
-      },
-      {
-        text: 'MCP',
-        link: '/architecture/mcp'
-      },
-      {
-        text: 'GitHub',
-        link: 'https://github.com/strings77wzq/claude-code-Go'
-      }
-    ],
 
     sidebar: {
       '/': [
@@ -143,11 +144,6 @@ export default defineConfig({
         link: 'https://github.com/strings77wzq/claude-code-Go'
       }
     ],
-
-    footer: {
-      message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2024-present claude-code-Go Contributors'
-    },
 
     outline: {
       level: [2, 3]

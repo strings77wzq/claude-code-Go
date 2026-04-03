@@ -5,37 +5,29 @@ titleTemplate: AI-powered coding assistant built in Go
 
 hero:
   name: claude-code-Go
-  tagline: AI-powered coding assistant with a full agent loop, tool execution, and permission management — built in Go.
+  text: Model provides intelligence, harness provides reliability.
+  tagline: A production-grade AI coding assistant with full agent loop, tool execution, and permission management — built in pure Go.
   image:
     src: /logo.svg
     alt: claude-code-Go Logo
   actions:
     - theme: brand
       text: Get Started
-      link: /en/guide/installation
+      link: /guide/introduction
     - theme: alt
       text: View on GitHub
       link: https://github.com/strings77wzq/claude-code-Go
 
 features:
-  - icon: 🔄
-    title: Agent Loop
-    details: Autonomous "think → act → observe" cycle driven by stop_reason dispatch. Handles tool_use, end_turn, and max_tokens seamlessly.
-  - icon: 🛠️
-    title: 6 Built-in Tools
-    details: Read, Write, Edit, Glob, Grep, and Bash — a complete toolset for software engineering tasks out of the box.
+  - icon: ⚡
+    title: Single Binary
+    details: Zero dependencies. One file runs everywhere — Linux, macOS, Windows. No runtime, no virtualenv, no node_modules.
   - icon: 🔒
-    title: Permission System
-    details: Three-tier permission model (ReadOnly / WorkspaceWrite / DangerFullAccess) with rule-based matching and session memory.
+    title: Reliability First
+    details: Permission system, timeout protection, session persistence. The harness ensures safety so the model can focus on intelligence.
   - icon: 🔌
-    title: MCP Integration
-    details: Model Context Protocol support with stdio transport, JSON-RPC client, and automatic tool discovery from external servers.
-  - icon: 🌊
-    title: SSE Streaming
-    details: Real-time token-by-token response streaming with custom SSE parser. No external dependencies needed.
-  - icon: 🧠
-    title: Context Management
-    details: Intelligent token estimation and automatic conversation compaction. Preserves context while staying within model limits.
+    title: Extensible Ecosystem
+    details: MCP protocol, Hooks, and Skills — extend with custom tools and integrate with your workflow.
 
 stats:
   - label: Source Files
@@ -46,39 +38,66 @@ stats:
     value: 6
   - label: Lines of Code
     value: 7,000+
-
-learningOutcomes:
-  - title: AI Agent Architecture
-    description: Agent Loop pattern, tool call protocol, stop_reason driven control
-  - title: Streaming API Integration
-    description: Claude Messages API, SSE streaming, HTTP retry and error handling
-  - title: Extensible Tool System
-    description: Interface abstraction, registry pattern, just implement one interface to add new tools
-  - title: Security Design
-    description: Least privilege, human-in-the-loop, wildcard rule matching
-  - title: Engineering Practice
-    description: Process management, file I/O, terminal interaction, concurrency
-
-useCases:
-  - icon: 👀
-    title: Code Review
-    details: Automatically review pull requests, analyze code changes, and provide detailed feedback on code quality and potential issues.
-  - icon: 🔧
-    title: Refactoring
-    details: Understand code structure and intelligently refactor, improve naming, extract functions, and optimize code patterns.
-  - icon: 🐛
-    title: Debugging
-    details: Analyze error messages, trace through code execution, identify root causes, and suggest fixes for complex bugs.
-  - icon: 📋
-    title: Boilerplate Generation
-    details: Quickly scaffold new projects, generate repetitive code patterns, and create full file structures from specifications.
-
-cta:
-  - title: Ready to try it?
-    details: Get started in minutes and experience the future of AI-assisted coding.
-    actions:
-      - text: Get Started
-        link: /en/guide/installation
-      - text: GitHub
-        link: https://github.com/strings77wzq/claude-code-Go
 ---
+
+## Architecture Philosophy
+
+::: details 🧠 Model Provides Intelligence
+The LLM handles: understanding intent, deciding which tool to use, interpreting results, and planning next steps. It's the brain of the system.
+:::
+
+::: details 🛡️ Harness Provides Reliability
+The runtime handles: permission control, timeout protection, output truncation, session persistence, and error recovery. It's the safety net that makes the system production-ready.
+:::
+
+::: details 🔌 Extensible Ecosystem
+MCP protocol for external tool discovery, Hooks for pre/post execution callbacks, and a clean Tool interface — just implement one interface to add new capabilities.
+:::
+
+## Feature Highlights
+
+| Feature | Description |
+|---------|-------------|
+| 🔄 Agent Loop | Autonomous "think → act → observe" cycle driven by stop_reason dispatch |
+| 🛠️ 6 Built-in Tools | Read, Write, Edit, Glob, Grep, Bash — complete toolset out of the box |
+| 🔒 Permission System | Three-tier model with rule-based matching and session memory |
+| 🔌 MCP Integration | Model Context Protocol with stdio transport and JSON-RPC |
+| 🌊 SSE Streaming | Real-time token-by-token with custom parser, zero dependencies |
+| 🧠 Context Management | Intelligent token estimation and automatic conversation compaction |
+
+## Why Go?
+
+| | Go | Python | Rust |
+|---|---|---|---|
+| **Deployment** | Single binary | Requires runtime | Single binary |
+| **Dependencies** | Zero | pip install | Cargo build |
+| **Cross-compile** | `GOOS=linux go build` | Platform-specific | Cross-toolchain needed |
+| **Concurrency** | Goroutines (built-in) | asyncio (library) | async/await |
+| **Learning curve** | Moderate | Easy | Steep |
+
+Go gives you the best of both worlds: **single-binary deployment like Rust, with development speed closer to Python.**
+
+## Quick Start
+
+::: code-group
+```bash [go install]
+go install github.com/strings77wzq/claude-code-Go/cmd/go-code@latest
+```
+
+```bash [Build from source]
+git clone https://github.com/strings77wzq/claude-code-Go.git
+cd claude-code-Go
+go build -o bin/go-code ./cmd/go-code
+```
+
+```bash [Pre-built binary]
+curl -fsSL https://github.com/strings77wzq/claude-code-Go/releases/latest/download/go-code-linux-amd64 -o go-code
+chmod +x go-code
+```
+:::
+
+Then set your API key and start:
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+./go-code
+```
