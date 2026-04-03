@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  go-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run tests with race detection
+        run: go test -race -v ./...
+
+      - name: Build binary
+        run: go build -o bin/go-code ./cmd/go-code
+
+  python-harness:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install -r harness/requirements.txt
+
+      - name: Build Go binary
+        run: go build -o bin/go-code ./cmd/go-code
+
+      - name: Run Python tests
+        working-directory: harness
+        run: python -m pytest -v
+
+  build-all:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build for linux/amd64
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o bin/go-code-linux-amd64 ./cmd/go-code
+
+      - name: Build for darwin/amd64
+        run: |
+          GOOS=darwin GOARCH=amd64 go build -o bin/go-code-darwin-amd64 ./cmd/go-code
+
+      - name: Build for darwin/arm64
+        run: |
+          GOOS=darwin GOARCH=arm64 go build -o bin/go-code-darwin-arm64 ./cmd/go-code
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: bin/
+          retention-days: 7

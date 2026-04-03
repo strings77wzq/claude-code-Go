@@ -1,0 +1,42 @@
+package init
+
+import (
+	"fmt"
+
+	"github.com/user/go-code/internal/tool"
+	"github.com/user/go-code/internal/tool/builtin"
+)
+
+func RegisterBuiltinTools(r *tool.Registry, workingDir string) error {
+	bashTool := builtin.NewBashTool(workingDir)
+	if err := r.Register(bashTool); err != nil {
+		return fmt.Errorf("failed to register bash tool: %w", err)
+	}
+
+	readTool := builtin.NewReadTool()
+	if err := r.Register(readTool); err != nil {
+		return fmt.Errorf("failed to register read tool: %w", err)
+	}
+
+	writeTool := builtin.NewWriteTool()
+	if err := r.Register(writeTool); err != nil {
+		return fmt.Errorf("failed to register write tool: %w", err)
+	}
+
+	editTool := builtin.NewEditTool()
+	if err := r.Register(editTool); err != nil {
+		return fmt.Errorf("failed to register edit tool: %w", err)
+	}
+
+	globTool := builtin.NewGlobTool()
+	if err := r.Register(globTool); err != nil {
+		return fmt.Errorf("failed to register glob tool: %w", err)
+	}
+
+	grepTool := builtin.NewGrepTool()
+	if err := r.Register(grepTool); err != nil {
+		return fmt.Errorf("failed to register grep tool: %w", err)
+	}
+
+	return nil
+}

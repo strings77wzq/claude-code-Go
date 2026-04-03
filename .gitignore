@@ -1,0 +1,37 @@
+# Go
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+go-code
+
+# Test
+*.test
+*.out
+
+# Python
+harness/__pycache__/
+harness/.pytest_cache/
+*.pyc
+__pycache__/
+.pytest_cache/
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# OpenCode analysis dirs (not part of the project)
+owncode-analysis/
+claw-code-parity/
+test/

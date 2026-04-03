@@ -1,0 +1,50 @@
+site_name: claude-code-Go
+site_description: Claude Code in Go — AI-powered coding assistant
+site_author: strings77wzq
+site_url: https://strings77wzq.github.io/claude-code-Go/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+    - scheme: slate
+      primary: blue
+      accent: blue
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.top
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Guide:
+    - Installation: guide/install.md
+    - Quick Start: guide/quick-start.md
+    - Configuration: guide/config.md
+    - Launch Guide: guide/launch.md
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Agent Loop: architecture/agent-loop.md
+    - Tools: architecture/tools.md
+  - Harness:
+    - Overview: harness/overview.md
+    - Mock Server: harness/mock-server.md
+
+repo_name: strings77wzq/claude-code-Go
+repo_url: https://github.com/strings77wzq/claude-code-Go
+edit_uri: edit/main/docs/
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+
+plugins:
+  - search:
+      separator: '[\s\-\.]+'
