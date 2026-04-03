@@ -4,12 +4,14 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/user/go-code/internal/agent"
 	"github.com/user/go-code/internal/api"
 	"github.com/user/go-code/internal/config"
 	"github.com/user/go-code/internal/permission"
+	"github.com/user/go-code/internal/skills"
 	"github.com/user/go-code/internal/tool"
 	toolinit "github.com/user/go-code/internal/tool/init"
 	"github.com/user/go-code/pkg/tty"
@@ -80,7 +82,19 @@ func main() {
 
 	// Step 7: Create REPL with version and model
 	logger.Info("Starting REPL")
-	repl := tty.NewREPL(agentInstance, version, cfg.Model)
+	skillsRegistry := skills.NewRegistry()
+	if homeDir, err := os.UserHomeDir(); err == nil {
+		skillsDir := filepath.Join(homeDir, ".go-code", "skills")
+		if loadedSkills, err := skills.LoadSkills(skillsDir); err == nil {
+			for _, s := range loadedSkills {
+				if err := skillsRegistry.Register(s); err != nil {
+					logger.Warn("Failed to register skill", "name", s.Name, "error", err)
+				}
+			}
+		}
+	}
+
+	repl := tty.NewREPL(agentInstance, version, cfg.Provider, cfg.Model, skillsRegistry, "~/.go-code/sessions/")
 
 	// Run REPL - this blocks until exit
 	repl.Run()

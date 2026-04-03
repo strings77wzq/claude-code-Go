@@ -34,7 +34,7 @@ func TestHandleSpecialCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repl := NewREPL(&mockAgent{}, "test", "test-model")
+			repl := NewREPL(&mockAgent{}, "test", "anthropic", "test-model", nil, "")
 			got := repl.handleSpecialCommand(tt.input)
 			if tt.wantStop && got {
 				t.Logf("handled special command: %s", tt.input)
@@ -44,7 +44,7 @@ func TestHandleSpecialCommand(t *testing.T) {
 }
 
 func TestHistory(t *testing.T) {
-	repl := NewREPL(&mockAgent{response: "test response"}, "test", "test-model")
+	repl := NewREPL(&mockAgent{response: "test response"}, "test", "anthropic", "test-model", nil, "")
 
 	repl.addToHistory("command 1")
 	repl.addToHistory("command 2")
@@ -54,7 +54,7 @@ func TestHistory(t *testing.T) {
 		t.Errorf("expected 3 history items, got %d", len(repl.history))
 	}
 
-	for i := 0; i < 150; i++ {
+	for range 150 {
 		repl.addToHistory("cmd")
 	}
 
@@ -71,7 +71,7 @@ func TestRendererOutput(t *testing.T) {
 
 	_ = old
 
-	r.PrintWelcome("1.0.0")
+	r.PrintWelcome("1.0.0", "anthropic")
 	r.PrintHelp()
 	r.PrintModel("test-model")
 	r.PrintError(nil)

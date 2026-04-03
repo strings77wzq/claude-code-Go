@@ -18,6 +18,8 @@ export default defineConfig({
           { text: 'Core Code', link: '/core-code/entry-point' },
           { text: 'Tools', link: '/tools/overview' },
           { text: 'MCP', link: '/architecture/mcp' },
+          { text: 'Roadmap', link: '/roadmap' },
+          { text: 'Community', link: '/community' },
           { text: 'GitHub', link: 'https://github.com/strings77wzq/claude-code-Go' }
         ],
         footer: {
@@ -38,6 +40,8 @@ export default defineConfig({
           { text: '核心代码', link: '/zh/core-code/entry-point' },
           { text: '工具', link: '/zh/tools/overview' },
           { text: 'MCP', link: '/zh/architecture/mcp' },
+          { text: '路线图', link: '/zh/roadmap' },
+          { text: '社区', link: '/zh/community' },
           { text: 'GitHub', link: 'https://github.com/strings77wzq/claude-code-Go' }
         ],
         footer: {
@@ -92,6 +96,14 @@ export default defineConfig({
           items: [
             { text: 'Integration', link: '/architecture/mcp' }
           ]
+        },
+        {
+          text: 'Resources',
+          collapsed: false,
+          items: [
+            { text: 'Roadmap', link: '/roadmap' },
+            { text: 'Community', link: '/community' }
+          ]
         }
       ],
       '/zh/': [
@@ -133,6 +145,14 @@ export default defineConfig({
           collapsed: false,
           items: [
             { text: '协议详解', link: '/zh/architecture/mcp' }
+          ]
+        },
+        {
+          text: '资源',
+          collapsed: false,
+          items: [
+            { text: '路线图', link: '/zh/roadmap' },
+            { text: '社区', link: '/zh/community' }
           ]
         }
       ]

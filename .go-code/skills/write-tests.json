@@ -1,0 +1,9 @@
+{
+  "name": "write-tests",
+  "description": "Write tests for code",
+  "prompt": "Write comprehensive unit tests for the following code. Include edge cases, error handling, and table-driven tests following Go best practices.",
+  "examples": [
+    "/write-tests",
+    "/write-tests --cover"
+  ]
+}

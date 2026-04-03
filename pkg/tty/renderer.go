@@ -19,7 +19,7 @@ func NewRenderer() *Renderer {
 	return &Renderer{}
 }
 
-func (r *Renderer) PrintWelcome(version string) {
+func (r *Renderer) PrintWelcome(version string, provider string) {
 	fmt.Println(ColorGreen + `
   ____   _    ____ ___ 
  |  _ \ / \  / ___|_ _|
@@ -28,6 +28,9 @@ func (r *Renderer) PrintWelcome(version string) {
  |_| /_/   \_\____/___|
 ` + ColorReset)
 	fmt.Printf(ColorGreen+"Welcome to go-code %s\n"+ColorReset, version)
+	if provider != "" {
+		fmt.Printf("Provider: %s\n", provider)
+	}
 	fmt.Println("Type /help for available commands")
 	fmt.Println()
 }
@@ -64,9 +67,14 @@ func (r *Renderer) PrintHelp() {
 	fmt.Println(ColorCyan + "Available commands:" + ColorReset)
 	fmt.Println("  /help   - Show this help message")
 	fmt.Println("  /clear  - Clear conversation history")
+	fmt.Println("  /compact - Compact conversation context now")
+	fmt.Println("  /update - Check for updates and download")
 	fmt.Println("  /exit   - Exit the program")
 	fmt.Println("  /quit   - Exit the program")
 	fmt.Println("  /model  - Show current model")
+	fmt.Println("  /skills - List available skills")
+	fmt.Println("  /sessions - List available sessions")
+	fmt.Println("  /resume <session-id> - Resume a saved session")
 }
 
 func (r *Renderer) PrintModel(model string) {

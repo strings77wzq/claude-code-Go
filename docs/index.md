@@ -28,6 +28,15 @@ features:
   - icon: 🔌
     title: Extensible Ecosystem
     details: MCP protocol, Hooks, and Skills — extend with custom tools and integrate with your workflow.
+  - icon: 🎯
+    title: Skills System
+    details: Custom commands and workflows. Define your own /review-pr, /deploy, or any reusable workflow.
+  - icon: 🔄
+    title: Multi-Provider
+    details: Support for Anthropic, OpenAI, and any OpenAI-compatible API. Switch models without changing your workflow.
+  - icon: 💾
+    title: Session Resume
+    details: Pick up where you left off. Load previous conversations and continue seamlessly.
 
 stats:
   - label: Source Files

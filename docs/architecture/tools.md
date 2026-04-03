@@ -96,20 +96,22 @@ Tools are registered during startup in `internal/tool/init/register.go`:
 
 ```go
 func RegisterBuiltinTools(r *Registry, workingDir string) error {
-    // Register all built-in tools
+    r.Register(builtin.NewBashTool(workingDir))
     r.Register(builtin.NewReadTool())
     r.Register(builtin.NewWriteTool())
     r.Register(builtin.NewEditTool())
     r.Register(builtin.NewGlobTool())
     r.Register(builtin.NewGrepTool())
-    r.Register(builtin.NewBashTool(workingDir))
+    r.Register(builtin.NewDiffTool())
+    r.Register(builtin.NewTreeTool())
+    r.Register(builtin.NewWebFetchTool())
     return nil
 }
 ```
 
 ## Built-in Tools Overview
 
-go-code provides six built-in tools that cover the essential operations for software development:
+go-code provides nine built-in tools that cover the essential operations for software development:
 
 ### 1. Read Tool
 
@@ -301,6 +303,100 @@ type BashTool struct {
 - Output truncation at 100KB
 - Working directory set to project root
 - Requires permission (can execute arbitrary commands)
+
+### 7. Diff Tool
+
+Compares two content strings and returns unified diff output.
+
+```go
+type DiffTool struct{}
+```
+
+**Input Schema:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "file_path": {
+      "type": "string",
+      "description": "Optional file path to include in diff header"
+    },
+    "old_content": {
+      "type": "string",
+      "description": "The original content to compare"
+    },
+    "new_content": {
+      "type": "string",
+      "description": "The new content to compare against"
+    }
+  },
+  "required": ["old_content", "new_content"]
+}
+```
+
+**Features:**
+- Uses diff command if available, falls back to pure Go implementation
+- Returns unified diff format
+- No permission required
+
+### 8. Tree Tool
+
+Displays directory tree structure as text.
+
+```go
+type TreeTool struct{}
+```
+
+**Input Schema:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string",
+      "description": "Root directory path (default: current directory)"
+    },
+    "max_depth": {
+      "type": "number",
+      "description": "Maximum depth to traverse (default: 3)"
+    }
+  },
+  "required": []
+}
+```
+
+**Features:**
+- Visual tree format with `├──` and `└──` connectors
+- Respects max_depth limit
+- No permission required
+
+### 9. WebFetch Tool
+
+Fetches a URL and returns readable text content with HTML tags stripped.
+
+```go
+type WebFetchTool struct{}
+```
+
+**Input Schema:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "url": {
+      "type": "string",
+      "description": "The URL to fetch"
+    }
+  },
+  "required": ["url"]
+}
+```
+
+**Features:**
+- Strips HTML tags, returns readable text
+- Limits output to 50KB
+- Returns error for non-200 status codes
+- Requires permission (network access)
 
 ## MCP Tool Adapter
 

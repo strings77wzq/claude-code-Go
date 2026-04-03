@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	envAPIKey  = "ANTHROPIC_API_KEY"
-	envBaseURL = "ANTHROPIC_BASE_URL"
+	envAPIKey      = "ANTHROPIC_API_KEY"
+	envBaseURL     = "ANTHROPIC_BASE_URL"
+	envLLMProvider = "LLM_PROVIDER"
 
 	settingsFileName = "settings.json"
 	configDirName    = ".go-code"
@@ -19,9 +20,10 @@ const (
 var ErrAPIKeyRequired = errors.New("API key is required")
 
 type CLIOverrides struct {
-	APIKey  string
-	BaseURL string
-	Model   string
+	APIKey   string
+	BaseURL  string
+	Model    string
+	Provider string
 }
 
 func Load(overrides *CLIOverrides) (*Config, error) {
@@ -46,6 +48,9 @@ func Load(overrides *CLIOverrides) (*Config, error) {
 		}
 		if overrides.Model != "" {
 			cfg.Model = overrides.Model
+		}
+		if overrides.Provider != "" {
+			cfg.Provider = overrides.Provider
 		}
 	}
 
@@ -101,6 +106,9 @@ func loadConfigFile(path string, cfg *Config) error {
 	if settings.Model != "" {
 		cfg.Model = settings.Model
 	}
+	if settings.Provider != "" {
+		cfg.Provider = settings.Provider
+	}
 
 	return nil
 }
@@ -111,5 +119,8 @@ func loadEnvConfig(cfg *Config) {
 	}
 	if baseURL := os.Getenv(envBaseURL); baseURL != "" {
 		cfg.BaseURL = baseURL
+	}
+	if provider := os.Getenv(envLLMProvider); provider != "" {
+		cfg.Provider = provider
 	}
 }

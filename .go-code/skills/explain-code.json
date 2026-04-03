@@ -1,0 +1,9 @@
+{
+  "name": "explain-code",
+  "description": "Explain how code works",
+  "prompt": "Explain the following code in detail, including its purpose, how it works, and any potential improvements.",
+  "examples": [
+    "/explain-code",
+    "/explain-code --verbose"
+  ]
+}

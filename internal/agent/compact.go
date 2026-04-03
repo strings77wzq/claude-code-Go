@@ -225,3 +225,10 @@ func CompactIfNeeded(history *History, config *ContextConfig) bool {
 	Compact(history, config)
 	return true
 }
+
+func (a *Agent) Compact() {
+	if a == nil || a.history == nil {
+		return
+	}
+	Compact(a.history, a.contextConfig)
+}

@@ -38,5 +38,20 @@ func RegisterBuiltinTools(r *tool.Registry, workingDir string) error {
 		return fmt.Errorf("failed to register grep tool: %w", err)
 	}
 
+	diffTool := builtin.NewDiffTool()
+	if err := r.Register(diffTool); err != nil {
+		return fmt.Errorf("failed to register diff tool: %w", err)
+	}
+
+	treeTool := builtin.NewTreeTool()
+	if err := r.Register(treeTool); err != nil {
+		return fmt.Errorf("failed to register tree tool: %w", err)
+	}
+
+	webFetchTool := builtin.NewWebFetchTool()
+	if err := r.Register(webFetchTool); err != nil {
+		return fmt.Errorf("failed to register webfetch tool: %w", err)
+	}
+
 	return nil
 }

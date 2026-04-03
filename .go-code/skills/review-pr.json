@@ -1,0 +1,9 @@
+{
+  "name": "review-pr",
+  "description": "Review a pull request",
+  "prompt": "Review the following PR and provide detailed feedback on code quality, potential bugs, security concerns, and performance implications.",
+  "examples": [
+    "/review-pr",
+    "/review-pr --verbose"
+  ]
+}

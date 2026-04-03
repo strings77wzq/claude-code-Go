@@ -106,7 +106,7 @@ This ensures thread-safe access during agent execution.
 
 ## Built-in Tools Table
 
-go-code provides six built-in tools that cover essential software development operations:
+go-code provides nine built-in tools that cover essential software development operations:
 
 | # | Tool Name | Purpose | Permission Required | Source File |
 |---|-----------|---------|---------------------|--------------|
@@ -116,6 +116,9 @@ go-code provides six built-in tools that cover essential software development op
 | 4 | **Glob** | Find files by glob patterns (`*`, `**`) | No | `internal/tool/builtin/glob.go` |
 | 5 | **Grep** | Search file contents using regular expressions | No | `internal/tool/builtin/grep.go` |
 | 6 | **Bash** | Execute shell commands | Yes | `internal/tool/builtin/bash.go` |
+| 7 | **Diff** | Compare two content strings and return unified diff output | No | `internal/tool/builtin/diff.go` |
+| 8 | **Tree** | Display directory tree structure as text | No | `internal/tool/builtin/tree.go` |
+| 9 | **WebFetch** | Fetch URL and return readable text (HTML stripped) | Yes | `internal/tool/builtin/webfetch.go` |
 
 ### Tool Details
 
@@ -172,6 +175,33 @@ type BashTool struct {
 - Output truncation at 100KB
 - Working directory set to project root
 - Requires permission
+
+#### Diff Tool
+```go
+type DiffTool struct{}
+```
+- Compares two content strings
+- Returns unified diff format
+- Uses diff command if available, falls back to pure Go
+- No permission required
+
+#### Tree Tool
+```go
+type TreeTool struct{}
+```
+- Displays directory tree structure
+- Configurable max depth (default: 3)
+- Visual format with `├──` and `└──` connectors
+- No permission required
+
+#### WebFetch Tool
+```go
+type WebFetchTool struct{}
+```
+- Fetches URLs and returns readable text
+- Strips HTML tags automatically
+- Output limited to 50KB
+- Requires permission (network access)
 
 ## How to Extend with Custom Tools
 

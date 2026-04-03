@@ -28,6 +28,15 @@ features:
   - icon: 🔌
     title: 可扩展生态
     details: MCP 协议、Hooks、Skills——通过自定义工具扩展能力，无缝集成你的工作流。
+  - icon: 🎯
+    title: Skills 系统
+    details: 自定义命令和工作流。定义你自己的 /review-pr、/deploy 或任何可重用的工作流。
+  - icon: 🔄
+    title: 多 Provider 支持
+    details: 支持 Anthropic、OpenAI 及任何 OpenAI 兼容 API。切换模型无需改变工作流。
+  - icon: 💾
+    title: 会话恢复
+    details: 从上次离开的地方继续。加载之前的对话并无缝衔接。
 
 stats:
   - label: 源代码文件
