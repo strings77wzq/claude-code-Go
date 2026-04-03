@@ -48,10 +48,12 @@ type AgentInterface interface {
 }
 
 var (
-	titleStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00ADD8"))
-	promptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#7ee787")).Bold(true)
-	errorStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff5f56"))
-	dimStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#8b949e"))
+	titleStyle     = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00ADD8"))
+	promptStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#7ee787")).Bold(true)
+	errorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff5f56"))
+	dimStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("#8b949e"))
+	assistantStyle = lipgloss.NewStyle().PaddingLeft(0)
+	separatorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#30363d"))
 )
 
 func NewModel(agent AgentInterface, version, provider, modelName string) model {
@@ -157,6 +159,7 @@ func (m model) runAgent(input string) tea.Cmd {
 	}()
 
 	return tea.Batch(
+		m.spinner.Tick,
 		func() tea.Msg {
 			for {
 				select {
@@ -220,16 +223,16 @@ func (m model) View() string {
 
 	s += titleStyle.Render("go-code "+m.version) + "\n"
 	s += dimStyle.Render("Model: "+m.modelName+" | Provider: "+m.provider) + "\n"
-	s += dimStyle.Render(strings.Repeat("─", 50)) + "\n\n"
+	s += separatorStyle.Render(strings.Repeat("─", 50)) + "\n\n"
 
 	for _, msg := range m.messages {
 		switch msg.role {
 		case "user":
-			s += promptStyle.Render("> ") + msg.content + "\n\n"
+			s += promptStyle.Render("❯ ") + msg.content + "\n\n"
 		case "assistant":
-			s += msg.content + "\n\n"
+			s += assistantStyle.Render(msg.content) + "\n\n"
 		case "error":
-			s += errorStyle.Render("Error: "+msg.content) + "\n\n"
+			s += errorStyle.Render("✗ Error: "+msg.content) + "\n\n"
 		case "system":
 			s += dimStyle.Render(msg.content) + "\n\n"
 		}

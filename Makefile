@@ -1,6 +1,6 @@
 # Makefile for go-code
 
-.PHONY: build test vet docs docs-build build-all clean help
+.PHONY: build test vet install docs docs-build build-all clean help
 
 # Default target
 build: go-build
@@ -36,6 +36,10 @@ build-all:
 	GOOS=darwin GOARCH=arm64 go build -o bin/go-code-darwin-arm64 ./cmd/go-code
 	GOOS=windows GOARCH=amd64 go build -o bin/go-code-windows-amd64.exe ./cmd/go-code
 
+# Install the application to $GOPATH/bin
+install:
+	go install ./cmd/go-code
+
 # Clean build artifacts
 clean:
 	rm -rf bin/
@@ -44,6 +48,7 @@ clean:
 help:
 	@echo "Available targets:"
 	@echo "  build       - Build the Go application (default)"
+	@echo "  install     - Install to \$GOPATH/bin (run as 'go-code')"
 	@echo "  test        - Run Go and Python tests"
 	@echo "  vet         - Run go vet for static analysis"
 	@echo "  docs        - Serve VitePress documentation locally"
