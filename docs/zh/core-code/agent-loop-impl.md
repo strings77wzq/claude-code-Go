@@ -241,7 +241,7 @@ MAX_TURNS 是电气安全意义上的**断路器**——旨在防止灾难性故
 
 ```go
 func (a *Agent) saveSession(turnCount, inputTokens, outputTokens int) {
-    // 保存到 ~/.claude-code-go/sessions/
+    // 保存到 ~/.go-code/sessions/
 }
 ```
 

@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/user/go-code/internal/api"
-	"github.com/user/go-code/internal/permission"
-	"github.com/user/go-code/internal/tool"
+	"github.com/strings77wzq/claude-code-Go/internal/api"
+	"github.com/strings77wzq/claude-code-Go/internal/permission"
+	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
 type mockApiClient struct {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/user/go-code/internal/tool"
+	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
 // McpToolAdapter wraps an MCP tool and implements the tool.Tool interface.

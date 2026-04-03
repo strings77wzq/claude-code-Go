@@ -1,3 +1,3 @@
-module github.com/user/go-code
+module github.com/strings77wzq/claude-code-Go
 
 go 1.23

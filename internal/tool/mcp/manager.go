@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/user/go-code/internal/tool"
+	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
 // McpManager manages MCP client connections and tool adapters.

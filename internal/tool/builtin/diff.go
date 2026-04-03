@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/user/go-code/internal/tool"
+	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
 type DiffTool struct{}

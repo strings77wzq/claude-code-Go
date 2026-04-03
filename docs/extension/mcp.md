@@ -332,7 +332,7 @@ MCP servers are configured in a JSON configuration file.
 
 ### Configuration File Location
 
-Default: `~/.config/go-code/mcp.json`
+Default: `~/.go-code/mcp.json`
 
 Or custom path via configuration.
 

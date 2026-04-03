@@ -13,7 +13,7 @@ go-code loads configuration from multiple locations with the following priority 
 
 1. **Environment variables** (highest priority)
 2. **Project config file**: `./.go-code/settings.json`
-3. **User config file**: `~/.config/go-code/settings.json`
+3. **User config file**: `~/.go-code/settings.json`
 
 This means you can set defaults in the user config and override them per-project or via environment variables.
 
@@ -33,7 +33,7 @@ Configuration files use JSON format:
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `apiKey` | string | (required) | Anthropic API key |
+| `apiKey` | string | (required) | API key |
 | `baseUrl` | string | `https://api.anthropic.com` | API endpoint URL |
 | `model` | string | `claude-sonnet-4-20250514` | Model to use |
 
@@ -41,7 +41,7 @@ Configuration files use JSON format:
 
 | Variable | Description |
 |----------|-------------|
-| `ANTHROPIC_API_KEY` | Your Anthropic API key |
+| `ANTHROPIC_API_KEY` | Your API key |
 | `ANTHROPIC_BASE_URL` | Override the default API endpoint |
 
 ### Example: Setting Environment Variables
@@ -71,7 +71,7 @@ go-code supports the Model Context Protocol (MCP) for extending capabilities wit
 MCP server configurations are stored in:
 
 ```
-~/.config/go-code/mcp.json
+~/.go-code/mcp.json
 ```
 
 ### MCP Configuration Format
@@ -127,7 +127,7 @@ This allows sensitive credentials to be passed from the host environment without
 
 Here's a complete example combining all configuration options:
 
-### User Config (~/.config/go-code/settings.json)
+### User Config (~/.go-code/settings.json)
 
 ```json
 {
@@ -147,7 +147,7 @@ Here's a complete example combining all configuration options:
 
 This project-specific config overrides the model while using the API key from the user config.
 
-### MCP Config (~/.config/go-code/mcp.json)
+### MCP Config (~/.go-code/mcp.json)
 
 ```json
 {
@@ -179,13 +179,13 @@ Verify the config file exists and has valid JSON:
 
 ```bash
 # Validate JSON syntax
-cat ~/.config/go-code/settings.json | python -m json.tool
+cat ~/.go-code/settings.json | python -m json.tool
 ```
 
 ### MCP Server Not Loading
 
 Check:
-1. MCP config file exists at `~/.config/go-code/mcp.json`
+1. MCP config file exists at `~/.go-code/mcp.json`
 2. The command executable is in your PATH
 3. Required dependencies are installed
 

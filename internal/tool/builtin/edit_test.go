@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/user/go-code/internal/tool"
+	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
 func TestEditToolBasic(t *testing.T) {

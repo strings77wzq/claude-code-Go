@@ -12,15 +12,13 @@ This guide walks you through running go-code for the first time.
 Before running go-code, ensure you have:
 
 1. A built binary (see [Installation Guide](installation.md))
-2. An Anthropic API key
+2. An API key (Anthropic, OpenAI, or compatible)
 
 ## Configure Your API Key
 
-go-code requires an Anthropic API key to communicate with Claude. You can set this in two ways:
+go-code requires an API key to communicate with the LLM. You can set this in two ways:
 
 ### Option 1: Environment Variable
-
-Set the `ANTHROPIC_API_KEY` environment variable:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-your-api-key-here
@@ -30,7 +28,7 @@ Add this to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.) for persistence.
 
 ### Option 2: Config File
 
-Create a configuration file at `~/.config/go-code/settings.json`:
+Create a configuration file at `~/.go-code/settings.json`:
 
 ```json
 {
@@ -39,7 +37,7 @@ Create a configuration file at `~/.config/go-code/settings.json`:
 ```
 
 The config loader searches in this order (later sources override earlier ones):
-1. User config: `~/.config/go-code/settings.json`
+1. User config: `~/.go-code/settings.json`
 2. Project config: `./.go-code/settings.json`
 3. Environment variables: `ANTHROPIC_API_KEY`
 
@@ -64,7 +62,7 @@ You should see the welcome screen:
  |  _ \ / \  / ___|_ _|
  | |_) / _ \ \___ \| | 
  |  __/ ___ \ ___) | | 
- |_| /_/   \_\____/___|
+ | |_| /_/   \_\____/___|
 
 Welcome to go-code 0.1.0
 Type /help for available commands
@@ -118,18 +116,20 @@ go-code [prompt]
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `ANTHROPIC_API_KEY` | Your Anthropic API key | Yes |
+| `ANTHROPIC_API_KEY` | Your API key | Yes |
 | `ANTHROPIC_BASE_URL` | Override default API endpoint (optional) | No |
-| `ANTHROPIC_MODEL` | Specify model (default: claude-3-5-sonnet-20241022) | No |
+| `ANTHROPIC_MODEL` | Specify model (default: claude-sonnet-4-20250514) | No |
 
 ### Configuration File
 
-Create `~/.config/go-code/config.yaml` for persistent settings:
+Create `~/.go-code/settings.json` for persistent settings:
 
-```yaml
-api_key: "sk-ant-your-api-key-here"
-model: "claude-3-5-sonnet-20241022"
-base_url: "https://api.anthropic.com"
+```json
+{
+  "apiKey": "sk-ant-your-api-key-here",
+  "model": "claude-sonnet-4-20250514",
+  "baseUrl": "https://api.anthropic.com"
+}
 ```
 
 ## Basic Usage Examples

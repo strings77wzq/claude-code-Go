@@ -11,11 +11,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/user/go-code/internal/agent"
-	"github.com/user/go-code/internal/api"
-	"github.com/user/go-code/internal/session"
-	"github.com/user/go-code/internal/skills"
-	"github.com/user/go-code/internal/update"
+	"github.com/strings77wzq/claude-code-Go/internal/agent"
+	"github.com/strings77wzq/claude-code-Go/internal/api"
+	"github.com/strings77wzq/claude-code-Go/internal/session"
+	"github.com/strings77wzq/claude-code-Go/internal/skills"
+	"github.com/strings77wzq/claude-code-Go/internal/update"
 )
 
 type AgentInterface interface {

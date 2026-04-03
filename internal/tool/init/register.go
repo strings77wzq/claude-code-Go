@@ -3,8 +3,8 @@ package init
 import (
 	"fmt"
 
-	"github.com/user/go-code/internal/tool"
-	"github.com/user/go-code/internal/tool/builtin"
+	"github.com/strings77wzq/claude-code-Go/internal/tool"
+	"github.com/strings77wzq/claude-code-Go/internal/tool/builtin"
 )
 
 func RegisterBuiltinTools(r *tool.Registry, workingDir string) error {

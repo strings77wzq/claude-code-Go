@@ -94,12 +94,12 @@ When a skill is invoked:
 
 1. **Create the skills directory** (if it doesn't exist):
    ```bash
-   mkdir -p ~/.config/go-code/skills
+   mkdir -p ~/.go-code/skills
    ```
 
 2. **Create a JSON file** for your skill:
    ```bash
-   touch ~/.config/go-code/skills/my-skill.json
+   touch ~/.go-code/skills/my-skill.json
    ```
 
 3. **Define the skill** with the JSON format:
@@ -116,7 +116,7 @@ When a skill is invoked:
 
 ### Example: Code Review Skill
 
-Create `~/.config/go-code/skills/review-pr.json`:
+Create `~/.go-code/skills/review-pr.json`:
 
 ```json
 {
@@ -129,7 +129,7 @@ Create `~/.config/go-code/skills/review-pr.json`:
 
 ### Example: Code Explanation Skill
 
-Create `~/.config/go-code/skills/explain-code.json`:
+Create `~/.go-code/skills/explain-code.json`:
 
 ```json
 {
@@ -142,7 +142,7 @@ Create `~/.config/go-code/skills/explain-code.json`:
 
 ### Example: Test Generation Skill
 
-Create `~/.config/go-code/skills/write-tests.json`:
+Create `~/.go-code/skills/write-tests.json`:
 
 ```json
 {
@@ -155,7 +155,7 @@ Create `~/.config/go-code/skills/write-tests.json`:
 
 ### Example: Refactoring Skill
 
-Create `~/.config/go-code/skills/refactor.json`:
+Create `~/.go-code/skills/refactor.json`:
 
 ```json
 {
@@ -215,7 +215,7 @@ Create `~/.config/go-code/skills/refactor.json`:
 │                                       ▼                              │
 │   ┌─────────────┐          ┌─────────────────┐                     │
 │   │   Agent     │◄─────────│  Skills Dir     │                     │
-│   │ (injected)  │          │ ~/.config/...   │                     │
+│   │ (injected)  │          │ ~/.go-code/skills │                     │
 │   └─────────────┘          └─────────────────┘                     │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘

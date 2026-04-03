@@ -171,7 +171,7 @@ package myprovider
 
 import (
     "context"
-    "github.com/user/go-code/internal/provider"
+    "github.com/strings77wzq/claude-code-Go/internal/provider"
 )
 
 type MyProvider struct {

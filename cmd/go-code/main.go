@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/user/go-code/internal/agent"
-	"github.com/user/go-code/internal/api"
-	"github.com/user/go-code/internal/config"
-	"github.com/user/go-code/internal/permission"
-	"github.com/user/go-code/internal/skills"
-	"github.com/user/go-code/internal/tool"
-	toolinit "github.com/user/go-code/internal/tool/init"
-	"github.com/user/go-code/pkg/tty"
+	"github.com/strings77wzq/claude-code-Go/internal/agent"
+	"github.com/strings77wzq/claude-code-Go/internal/api"
+	"github.com/strings77wzq/claude-code-Go/internal/config"
+	"github.com/strings77wzq/claude-code-Go/internal/permission"
+	"github.com/strings77wzq/claude-code-Go/internal/skills"
+	"github.com/strings77wzq/claude-code-Go/internal/tool"
+	toolinit "github.com/strings77wzq/claude-code-Go/internal/tool/init"
+	"github.com/strings77wzq/claude-code-Go/pkg/tty"
 )
 
 const version = "0.1.0"

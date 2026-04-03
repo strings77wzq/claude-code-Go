@@ -4,7 +4,7 @@ package agent
 import (
 	"fmt"
 
-	"github.com/user/go-code/internal/api"
+	"github.com/strings77wzq/claude-code-Go/internal/api"
 )
 
 // History manages the conversation history with strict user/assistant alternation.

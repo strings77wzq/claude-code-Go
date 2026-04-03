@@ -94,12 +94,12 @@ type Skill struct {
 
 1. **创建技能目录**（如果不存在）：
    ```bash
-   mkdir -p ~/.config/go-code/skills
+   mkdir -p ~/.go-code/skills
    ```
 
 2. **为技能创建 JSON 文件**：
    ```bash
-   touch ~/.config/go-code/skills/my-skill.json
+   touch ~/.go-code/skills/my-skill.json
    ```
 
 3. **使用 JSON 格式定义技能**：
@@ -116,7 +116,7 @@ type Skill struct {
 
 ### 示例：代码审查技能
 
-创建 `~/.config/go-code/skills/review-pr.json`：
+创建 `~/.go-code/skills/review-pr.json`：
 
 ```json
 {
@@ -129,7 +129,7 @@ type Skill struct {
 
 ### 示例：代码解释技能
 
-创建 `~/.config/go-code/skills/explain-code.json`:
+创建 `~/.go-code/skills/explain-code.json`:
 
 ```json
 {
@@ -142,7 +142,7 @@ type Skill struct {
 
 ### 示例：测试生成技能
 
-创建 `~/.config/go-code/skills/write-tests.json`:
+创建 `~/.go-code/skills/write-tests.json`:
 
 ```json
 {
@@ -155,7 +155,7 @@ type Skill struct {
 
 ### 示例：重构技能
 
-创建 `~/.config/go-code/skills/refactor.json`:
+创建 `~/.go-code/skills/refactor.json`:
 
 ```json
 {

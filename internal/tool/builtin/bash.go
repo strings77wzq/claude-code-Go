@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/user/go-code/internal/tool"
+	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
 const (

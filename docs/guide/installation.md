@@ -1,100 +1,87 @@
 ---
 title: Installation Guide
-description: Learn how to install go-code from source or pre-built binaries
+description: Learn how to install go-code — one-command install, go install, source build, or pre-built binaries
 ---
 
 # Installation Guide
 
-This guide covers how to install go-code, including building from source and using pre-built binaries.
+This guide covers all ways to install go-code on Linux, macOS, and Windows.
 
 ## Prerequisites
 
-Before installing go-code, ensure you have:
+- **Go 1.23+** — Only needed for building from source or `go install`
+- **An API key** — Anthropic, OpenAI, or any compatible provider
+- **Python 3.x** (optional) — Only for the test harness
 
-- **Go 1.23 or later** — Required for building from source
-- **An Anthropic API key** — Required for running the application
-- **Python 3.x** (optional) — Only needed if using the test harness
+## One-Command Install
 
-## Install via go install
-
-The fastest way to install go-code is using Go's built-in install command:
-
+**Linux / macOS:**
 ```bash
-go install github.com/strings77wzq/claude-code-go/cmd/go-code@latest
+curl -fsSL https://raw.githubusercontent.com/strings77wzq/claude-code-Go/main/install.sh | bash
 ```
 
-This installs the binary to `$GOPATH/bin` (typically `~/go/bin`). Ensure this directory is in your PATH.
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/strings77wzq/claude-code-Go/main/install.ps1 | iex
+```
+
+## Via go install
+
+```bash
+go install github.com/strings77wzq/claude-code-Go/cmd/go-code@latest
+```
+
+This installs the binary to `$GOPATH/bin` (typically `~/go/bin`). Ensure this directory is in your `PATH`.
 
 ## Build from Source
-
-### Clone the Repository
 
 ```bash
 git clone https://github.com/strings77wzq/claude-code-Go.git
 cd claude-code-Go
-```
-
-### Build the Binary
-
-Using the Makefile:
-
-```bash
 make build
+./bin/go-code
 ```
 
-This creates the binary at `bin/go-code`.
-
-Alternatively, build manually:
-
+Or build manually:
 ```bash
 go build -o bin/go-code ./cmd/go-code
 ```
 
-### Install to System PATH
-
-If you prefer to install globally:
-
-```bash
-go install ./cmd/go-code
-```
-
-This installs the binary to `$GOPATH/bin`.
-
 ## Pre-built Binaries
 
-For platforms without Go installed, pre-built binaries are available on the GitHub releases page:
+Download from [GitHub Releases](https://github.com/strings77wzq/claude-code-Go/releases):
 
-| Platform | Architecture | Filename |
-|----------|--------------|----------|
-| Linux    | amd64        | go-code-linux-amd64 |
-| macOS    | amd64        | go-code-darwin-amd64 |
-| macOS    | arm64        | go-code-darwin-arm64 |
+| Platform  | Architecture    | Binary                    |
+|-----------|-----------------|---------------------------|
+| Linux     | amd64           | `go-code-linux-amd64`     |
+| macOS     | amd64           | `go-code-darwin-amd64`    |
+| macOS     | arm64 (M1/M2)   | `go-code-darwin-arm64`    |
+| Windows   | amd64           | `go-code-windows-amd64.exe` |
 
-Download the appropriate binary and make it executable:
-
+### Linux / macOS
 ```bash
-# Example: Download and install Linux amd64
-curl -L -o go-code https://github.com/strings77wzq/claude-code-Go/releases/latest/download/go-code-linux-amd64
+curl -fsSL https://github.com/strings77wzq/claude-code-Go/releases/latest/download/go-code-linux-amd64 -o go-code
 chmod +x go-code
 sudo mv go-code /usr/local/bin/
 ```
 
+### Windows
+Download `go-code-windows-amd64.exe` from [Releases](https://github.com/strings77wzq/claude-code-Go/releases), rename to `go-code.exe`, and add to your `PATH`.
+
 ## Verify Installation
 
-After installation, verify the binary works:
-
 ```bash
-# Check the binary exists
-which go-code
-
-# Or if using bin/ directory
-ls -la bin/go-code
-
-# Run the help command (if supported)
 go-code --help
 ```
 
-You should see output indicating the version and available options.
+## Supported Platforms
+
+| OS      | Architecture | Build from Source | Pre-built Binary |
+|---------|-------------|-------------------|------------------|
+| Linux   | amd64       | ✅                | ✅               |
+| macOS   | amd64       | ✅                | ✅               |
+| macOS   | arm64       | ✅                | ✅               |
+| Windows | amd64       | ✅                | ✅               |
 
 ## Next Steps
 

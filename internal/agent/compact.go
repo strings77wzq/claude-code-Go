@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/user/go-code/internal/api"
+	"github.com/strings77wzq/claude-code-Go/internal/api"
 )
 
 const (

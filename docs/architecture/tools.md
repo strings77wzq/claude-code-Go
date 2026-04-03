@@ -404,7 +404,7 @@ The Model Context Protocol (MCP) integration allows go-code to use external tool
 
 ### MCP Configuration
 
-MCP servers are configured in `~/.config/go-code/mcp.json`:
+MCP servers are configured in `~/.go-code/mcp.json`:
 
 ```json
 {

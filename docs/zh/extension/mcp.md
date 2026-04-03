@@ -332,7 +332,7 @@ MCP 服务器在 JSON 配置文件中配置。
 
 ### 配置文件位置
 
-默认：`~/.config/go-code/mcp.json`
+默认：`~/.go-code/mcp.json`
 
 或通过配置自定义路径。
 

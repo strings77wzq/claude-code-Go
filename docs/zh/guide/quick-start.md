@@ -26,7 +26,7 @@ export ANTHROPIC_API_KEY=sk-ant-your-api-key-here
 
 ### 方式二：配置文件
 
-创建 `~/.config/go-code/settings.json`：
+创建 `~/.go-code/settings.json`：
 
 ```json
 {
@@ -35,7 +35,7 @@ export ANTHROPIC_API_KEY=sk-ant-your-api-key-here
 ```
 
 配置加载器按以下顺序搜索（后者覆盖前者）：
-1. 用户配置：`~/.config/go-code/settings.json`
+1. 用户配置：`~/.go-code/settings.json`
 2. 项目配置：`.go-code/settings.json`
 3. 环境变量：`ANTHROPIC_API_KEY`
 
@@ -116,12 +116,14 @@ go-code [prompt]
 
 ### 配置文件
 
-创建 `~/.config/go-code/config.yaml` 用于持久化配置：
+创建 `~/.go-code/settings.json` 用于持久化配置：
 
-```yaml
-api_key: "sk-ant-your-api-key-here"
-model: "claude-3-5-sonnet-20241022"
-base_url: "https://api.anthropic.com"
+```json
+{
+  "apiKey": "sk-ant-your-api-key-here",
+  "model": "claude-sonnet-4-20250514",
+  "baseUrl": "https://api.anthropic.com"
+}
 ```
 
 ## 会话示例

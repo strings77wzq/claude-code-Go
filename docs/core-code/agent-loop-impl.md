@@ -242,7 +242,7 @@ Each turn completes with session persistence:
 
 ```go
 func (a *Agent) saveSession(turnCount, inputTokens, outputTokens int) {
-    // Save to ~/.claude-code-go/sessions/
+    // Save to ~/.go-code/sessions/
 }
 ```
 

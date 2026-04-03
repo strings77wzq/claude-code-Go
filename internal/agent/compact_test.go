@@ -3,7 +3,7 @@ package agent
 import (
 	"testing"
 
-	"github.com/user/go-code/internal/api"
+	"github.com/strings77wzq/claude-code-Go/internal/api"
 )
 
 func TestEstimateTokens(t *testing.T) {

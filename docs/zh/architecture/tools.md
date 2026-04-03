@@ -189,17 +189,19 @@ go-code 内置六个核心工具，提供文件系统和命令执行能力。
 
 ### 配置 MCP 服务器
 
-在 `config.yaml` 中配置：
+在 `~/.go-code/mcp.json` 中配置：
 
-```yaml
-mcp_servers:
-  filesystem:
-    command: "npx"
-    args: ["-y", "@modelcontextprotocol/server-filesystem", "/path"]
-  github:
-    command: "python"
-    args: ["-m", "mcp.server.github", "--token", "your-token"]
-```
+```json
+{
+  "filesystem": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path"]
+  },
+  "github": {
+    "command": "python",
+    "args": ["-m", "mcp.server.github", "--token", "your-token"]
+  }
+}
 
 ### MCP 工具发现
 

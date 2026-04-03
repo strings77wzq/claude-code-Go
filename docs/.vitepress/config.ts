@@ -22,7 +22,7 @@ export default defineConfig({
         ],
         footer: {
           message: 'Released under the MIT License.',
-          copyright: 'Copyright © 2024-present claude-code-Go Contributors'
+          copyright: 'Copyright © 2026-present claude-code-Go Contributors'
         }
       }
     },
@@ -42,7 +42,7 @@ export default defineConfig({
         ],
         footer: {
           message: '基于 MIT 许可证发布',
-          copyright: 'Copyright © 2024-present claude-code-Go 贡献者'
+          copyright: 'Copyright © 2026-present claude-code-Go 贡献者'
         }
       }
     }
