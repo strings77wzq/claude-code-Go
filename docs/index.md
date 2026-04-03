@@ -18,22 +18,22 @@ hero:
       link: https://github.com/strings77wzq/claude-code-Go
 
 features:
-  - icon: <img src="/icons/agent-loop.svg" width="48" height="48">
+  - icon: 🔄
     title: Agent Loop
     details: Autonomous "think → act → observe" cycle driven by stop_reason dispatch. Handles tool_use, end_turn, and max_tokens seamlessly.
-  - icon: <img src="/icons/tools.svg" width="48" height="48">
+  - icon: 🛠️
     title: 6 Built-in Tools
     details: Read, Write, Edit, Glob, Grep, and Bash — a complete toolset for software engineering tasks out of the box.
-  - icon: <img src="/icons/permission.svg" width="48" height="48">
+  - icon: 🔒
     title: Permission System
     details: Three-tier permission model (ReadOnly / WorkspaceWrite / DangerFullAccess) with rule-based matching and session memory.
-  - icon: <img src="/icons/mcp.svg" width="48" height="48">
+  - icon: 🔌
     title: MCP Integration
     details: Model Context Protocol support with stdio transport, JSON-RPC client, and automatic tool discovery from external servers.
-  - icon: <img src="/icons/sse.svg" width="48" height="48">
+  - icon: 🌊
     title: SSE Streaming
     details: Real-time token-by-token response streaming with custom SSE parser. No external dependencies needed.
-  - icon: <img src="/icons/context.svg" width="48" height="48">
+  - icon: 🧠
     title: Context Management
     details: Intelligent token estimation and automatic conversation compaction. Preserves context while staying within model limits.
 

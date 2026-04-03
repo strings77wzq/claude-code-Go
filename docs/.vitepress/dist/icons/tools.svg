@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" stroke="#00ADD8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Wrench handle -->
+  <path d="M8 40 L20 28 L24 32 L32 24 L40 32"/>
+  <!-- Wrench head -->
+  <circle cx="8" cy="40" r="5"/>
+  <!-- Code brackets -->
+  <path d="M14 14 L8 20 L14 26"/>
+  <path d="M34 14 L40 20 L34 26"/>
+  <!-- Slash -->
+  <path d="M26 10 L22 38"/>
+</svg>
