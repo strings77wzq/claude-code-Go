@@ -35,3 +35,5 @@ Thumbs.db
 owncode-analysis/
 claw-code-parity/
 test/
+node_modules/
+.vitepress/dist/
