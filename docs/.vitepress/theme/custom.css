@@ -1,47 +1,150 @@
-/* Go brand colors */
 :root {
   --vp-c-brand-1: #00ADD8;
   --vp-c-brand-2: #00875a;
   --vp-c-brand-soft: rgba(0, 173, 216, 0.14);
+  --vp-c-bg: #0d1117;
+  --vp-c-bg-soft: #161b22;
+  --vp-c-bg-alt: #010409;
+  --vp-c-text-1: #e6edf3;
+  --vp-c-text-2: #8b949e;
+  --vp-c-divider: #30363d;
 }
 
-/* Custom styles for home page sections */
+.dark {
+  --vp-c-bg: #0d1117;
+  --vp-c-bg-soft: #161b22;
+  --vp-c-bg-alt: #010409;
+  --vp-c-text-1: #e6edf3;
+  --vp-c-text-2: #8b949e;
+  --vp-c-divider: #30363d;
+}
 
-/* Use Cases Section */
-.use-cases-section {
-  margin-top: 2rem;
-  padding-top: 3rem;
+.metrics-section {
+  margin: 3rem auto;
+  max-width: 960px;
+  padding: 0 1.5rem;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.metric-item {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: var(--vp-c-bg-soft);
+  border-radius: 12px;
+  border: 1px solid var(--vp-c-divider);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.metric-item:hover {
+  transform: translateY(-4px);
+  border-color: var(--vp-c-brand-1);
+}
+
+.metric-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--vp-c-brand-1);
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: var(--vp-c-text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.features-section,
+.architecture-section {
+  margin: 3rem auto;
+  max-width: 720px;
+  padding: 0 1.5rem;
+}
+
+.feature-block {
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-block:hover {
+  transform: translateY(-4px);
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 8px 24px rgba(0, 173, 216, 0.1);
+}
+
+.feature-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.feature-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  margin-bottom: 0.75rem;
+}
+
+.feature-desc {
+  font-size: 0.9375rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.feature-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 1rem;
   border-top: 1px solid var(--vp-c-divider);
 }
 
-/* CTA Section */
-.cta-section {
-  margin-top: 3rem;
-  padding-top: 2rem;
+.tag {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
 }
 
-/* Ensure smooth transitions */
-.use-case-card,
-.cta-button {
-  transition: all 0.2s ease;
+.terminal-section {
+  margin: 3rem auto;
+  max-width: 640px;
+  padding: 0 1.5rem;
 }
-
 
 .terminal-window {
   background: #0d1117;
   border: 1px solid #30363d;
   border-radius: 8px;
-  padding: 0;
   overflow: hidden;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 14px;
-  max-width: 600px;
-  margin: 2rem auto;
+  font-size: 13px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .terminal-header {
   background: #161b22;
-  padding: 8px 12px;
+  padding: 10px 14px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -58,13 +161,35 @@
 .terminal-dot.yellow { background: #ffbd2e; }
 .terminal-dot.green { background: #27c93f; }
 
+.terminal-title {
+  color: #8b949e;
+  font-size: 12px;
+  margin-left: auto;
+}
+
 .terminal-body {
   padding: 16px;
   color: #e6edf3;
-  line-height: 1.6;
+  line-height: 1.7;
+}
+
+.terminal-line {
+  margin-bottom: 2px;
 }
 
 .terminal-prompt {
+  color: #7ee787;
+}
+
+.terminal-cmd {
+  color: #e6edf3;
+}
+
+.terminal-output {
+  color: #8b949e;
+}
+
+.terminal-success {
   color: #7ee787;
 }
 
@@ -74,32 +199,87 @@
   height: 16px;
   background: #e6edf3;
   animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
 }
 
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
-.typewriter-code {
-  overflow: hidden;
-  white-space: nowrap;
-  border-right: 2px solid #e6edf3;
-  animation: typewriter 3s steps(40) 1s forwards, blink 0.75s step-end infinite;
-  width: 0;
+
+.cta-section {
+  margin: 4rem auto;
+  max-width: 640px;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, var(--vp-c-brand-1) 0%, var(--vp-c-brand-2) 100%);
+  border-radius: 16px;
+  color: white;
 }
 
-@keyframes typewriter {
-  from { width: 0; }
-  to { width: 100%; }
+.cta-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem 0;
 }
 
-.VPFeature {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.cta-desc {
+  font-size: 1.125rem;
+  opacity: 0.9;
+  margin: 0 0 2rem 0;
 }
 
-.VPFeature:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 173, 216, 0.15);
+.cta-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cta-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-size: 0.9375rem;
+}
+
+.cta-button.primary {
+  background: white;
+  color: var(--vp-c-brand-1);
+}
+
+.cta-button.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cta-button.secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.cta-button.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: white;
+}
+
+@media (max-width: 640px) {
+  .cta-section {
+    padding: 2rem 1.5rem;
+  }
+  .cta-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  .cta-button {
+    width: 100%;
+    max-width: 240px;
+    text-align: center;
+  }
 }
 
 .fade-in-section {
@@ -111,16 +291,4 @@
 .fade-in-section.is-visible {
   opacity: 1;
   transform: translateY(0);
-}
-
-.ascii-diagram {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 12px;
-  line-height: 1.4;
-  white-space: pre;
-  background: #161b22;
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid #30363d;
-  overflow-x: auto;
 }

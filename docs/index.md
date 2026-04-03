@@ -17,73 +17,123 @@ hero:
     - theme: alt
       text: View on GitHub
       link: https://github.com/strings77wzq/claude-code-Go
-
 ---
 
-<div class="terminal-window">
-  <div class="terminal-header">
-    <span class="terminal-dot red"></span>
-    <span class="terminal-dot yellow"></span>
-    <span class="terminal-dot green"></span>
-  </div>
-  <div class="terminal-body">
-    <div><span class="terminal-prompt">$</span> go-code "Hello, build me a REST API"</div>
-    <div style="margin-top: 8px;">Initializing agent loop...</div>
-    <div>Thinking... <span class="terminal-cursor"></span></div>
+<div class="metrics-section fade-in-section">
+  <div class="metrics-grid">
+    <div class="metric-item">
+      <div class="metric-value">50+</div>
+      <div class="metric-label">Source Files</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-value">8</div>
+      <div class="metric-label">Modules</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-value">9</div>
+      <div class="metric-label">Built-in Tools</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-value">7,000+</div>
+      <div class="metric-label">Lines of Code</div>
+    </div>
   </div>
 </div>
 
-features:
-  - icon: ⚡
-    title: Single Binary
-    details: Zero dependencies. One file runs everywhere — Linux, macOS, Windows. No runtime, no virtualenv, no node_modules.
-  - icon: 🔒
-    title: Reliability First
-    details: Permission system, timeout protection, session persistence. The harness ensures safety so the model can focus on intelligence.
-  - icon: 🔌
-    title: Extensible Ecosystem
-    details: MCP protocol, Hooks, and Skills — extend with custom tools and integrate with your workflow.
-  - icon: 🎯
-    title: Skills System
-    details: Custom commands and workflows. Define your own /review-pr, /deploy, or any reusable workflow.
-  - icon: 🔄
-    title: Multi-Provider
-    details: Support for Anthropic, OpenAI, and any OpenAI-compatible API. Switch models without changing your workflow.
-  - icon: 💾
-    title: Session Resume
-    details: Pick up where you left off. Load previous conversations and continue seamlessly.
+<div class="features-section fade-in-section">
+  <div class="feature-block">
+    <div class="feature-icon">⚡</div>
+    <div class="feature-title">Single Binary Deployment</div>
+    <div class="feature-desc">Zero dependencies. One file runs everywhere — Linux, macOS, Windows. No runtime, no virtualenv, no node_modules.</div>
+    <div class="feature-tags">
+      <span class="tag">Linux</span>
+      <span class="tag">macOS</span>
+      <span class="tag">Windows</span>
+    </div>
+  </div>
 
-stats:
-  - label: Source Files
-    value: 50+
-  - label: Modules
-    value: 8
-  - label: Built-in Tools
-    value: 6
-  - label: Lines of Code
-    value: 7,000+
----
+  <div class="feature-block">
+    <div class="feature-icon">🔒</div>
+    <div class="feature-title">Harness-First Reliability</div>
+    <div class="feature-desc">Permission control, timeout protection, session persistence. The harness ensures safety so the model can focus on intelligence.</div>
+    <div class="feature-tags">
+      <span class="tag">3-Tier Permissions</span>
+      <span class="tag">Glob Rules</span>
+      <span class="tag">Session Memory</span>
+    </div>
+  </div>
 
-## Architecture Philosophy
+  <div class="feature-block">
+    <div class="feature-icon">🔌</div>
+    <div class="feature-title">Extensible Ecosystem</div>
+    <div class="feature-desc">MCP protocol, Hooks, and Skills — extend with custom tools and integrate with your workflow.</div>
+    <div class="feature-tags">
+      <span class="tag">MCP</span>
+      <span class="tag">Hooks</span>
+      <span class="tag">Skills</span>
+    </div>
+  </div>
+</div>
 
-::: details 🧠 Model Provides Intelligence
-The LLM handles: understanding intent, deciding which tool to use, interpreting results, and planning next steps. It's the brain of the system.
-:::
+<div class="architecture-section fade-in-section">
+  <div class="feature-block">
+    <div class="feature-icon">🧠</div>
+    <div class="feature-title">Model Provides Intelligence</div>
+    <div class="feature-desc">The LLM handles: understanding intent, deciding which tool to use, interpreting results, and planning next steps. It's the brain of the system.</div>
+    <div class="feature-tags">
+      <span class="tag">Intent Understanding</span>
+      <span class="tag">Tool Selection</span>
+      <span class="tag">Result Interpretation</span>
+      <span class="tag">Next-Step Planning</span>
+    </div>
+  </div>
 
-::: details 🛡️ Harness Provides Reliability
-The runtime handles: permission control, timeout protection, output truncation, session persistence, and error recovery. It's the safety net that makes the system production-ready.
-:::
+  <div class="feature-block">
+    <div class="feature-icon">🛡️</div>
+    <div class="feature-title">Harness Provides Reliability</div>
+    <div class="feature-desc">The runtime handles: permission control, timeout protection, output truncation, session persistence, and error recovery. It's the safety net that makes the system production-ready.</div>
+    <div class="feature-tags">
+      <span class="tag">Permission Control</span>
+      <span class="tag">Timeout Protection</span>
+      <span class="tag">Output Truncation</span>
+      <span class="tag">Session Persistence</span>
+    </div>
+  </div>
+</div>
 
-::: details 🔌 Extensible Ecosystem
-MCP protocol for external tool discovery, Hooks for pre/post execution callbacks, and a clean Tool interface — just implement one interface to add new capabilities.
-:::
+<div class="terminal-section fade-in-section">
+  <div class="terminal-window">
+    <div class="terminal-header">
+      <span class="terminal-dot red"></span>
+      <span class="terminal-dot yellow"></span>
+      <span class="terminal-dot green"></span>
+      <span class="terminal-title">claude-code-Go</span>
+    </div>
+    <div class="terminal-body">
+      <div class="terminal-line"><span class="terminal-prompt">$</span> <span class="terminal-cmd">go-code</span></div>
+      <div class="terminal-line terminal-output">claude-code-Go v0.1.0</div>
+      <div class="terminal-line terminal-output">Type /help for commands, /exit to quit.</div>
+      <div class="terminal-line">&nbsp;</div>
+      <div class="terminal-line"><span class="terminal-prompt">go-code></span> <span class="terminal-cmd">write an HTTP server on port 8080</span></div>
+      <div class="terminal-line terminal-output">🔄 Agent thinking...</div>
+      <div class="terminal-line terminal-output">🛠️ Tool call: Write → main.go</div>
+      <div class="terminal-line terminal-output terminal-success">✓ File written</div>
+      <div class="terminal-line terminal-output">🔄 Agent continuing...</div>
+      <div class="terminal-line terminal-output">🛠️ Tool call: Bash → go run main.go</div>
+      <div class="terminal-line terminal-output terminal-success">✓ Server started on port 8080</div>
+      <div class="terminal-line terminal-output terminal-success">✓ Done! HTTP server created and running.</div>
+      <div class="terminal-line">&nbsp;</div>
+      <div class="terminal-line"><span class="terminal-prompt">go-code></span> <span class="terminal-cursor"></span></div>
+    </div>
+  </div>
+</div>
 
 ## Feature Highlights
 
 | Feature | Description |
 |---------|-------------|
 | 🔄 Agent Loop | Autonomous "think → act → observe" cycle driven by stop_reason dispatch |
-| 🛠️ 6 Built-in Tools | Read, Write, Edit, Glob, Grep, Bash — complete toolset out of the box |
+| 🛠️ 9 Built-in Tools | Read, Write, Edit, Glob, Grep, Bash, Diff, Tree, WebFetch |
 | 🔒 Permission System | Three-tier model with rule-based matching and session memory |
 | 🔌 MCP Integration | Model Context Protocol with stdio transport and JSON-RPC |
 | 🌊 SSE Streaming | Real-time token-by-token with custom parser, zero dependencies |
@@ -125,3 +175,13 @@ Then set your API key and start:
 export ANTHROPIC_API_KEY=sk-ant-...
 ./go-code
 ```
+
+<div class="cta-section fade-in-section">
+  <h2 class="cta-title">Ready to start?</h2>
+  <p class="cta-desc">Get started with claude-code-Go in seconds.</p>
+  <div class="cta-actions">
+    <a href="/guide/introduction" class="cta-button primary">Get Started</a>
+    <a href="/guide/quick-start" class="cta-button secondary">Quick Start</a>
+    <a href="https://github.com/strings77wzq/claude-code-Go" class="cta-button secondary">GitHub</a>
+  </div>
+</div>

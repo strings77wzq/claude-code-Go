@@ -5,7 +5,7 @@ titleTemplate: Go 语言实现的 AI 编程助手
 
 hero:
   name: claude-code-Go
-  text: 模型提供智能，harness 提供可靠性
+  text: 模型提供智能，Harness 提供可靠性
   tagline: 完整的 Agent Loop、工具执行、权限管理——纯 Go 打造的生产级 AI 编程助手。
   image:
     src: /logo.svg
@@ -17,73 +17,123 @@ hero:
     - theme: alt
       text: 查看源码
       link: https://github.com/strings77wzq/claude-code-Go
-
 ---
 
-<div class="terminal-window">
-  <div class="terminal-header">
-    <span class="terminal-dot red"></span>
-    <span class="terminal-dot yellow"></span>
-    <span class="terminal-dot green"></span>
-  </div>
-  <div class="terminal-body">
-    <div><span class="terminal-prompt">$</span> go-code "你好，给我写一个 REST API"</div>
-    <div style="margin-top: 8px;">初始化 Agent Loop...</div>
-    <div>思考中... <span class="terminal-cursor"></span></div>
+<div class="metrics-section fade-in-section">
+  <div class="metrics-grid">
+    <div class="metric-item">
+      <div class="metric-value">50+</div>
+      <div class="metric-label">源代码文件</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-value">8</div>
+      <div class="metric-label">模块数量</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-value">9</div>
+      <div class="metric-label">内置工具</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-value">7,000+</div>
+      <div class="metric-label">代码行数</div>
+    </div>
   </div>
 </div>
 
-features:
-  - icon: ⚡
-    title: 单二进制部署
-    details: 零依赖，一个文件跑遍全平台——Linux、macOS、Windows。无需运行时、无需虚拟环境、无需 node_modules。
-  - icon: 🔒
-    title: 可靠性优先
-    details: 权限控制、超时保护、会话持久化。Harness 保障安全，让模型专注于智能。
-  - icon: 🔌
-    title: 可扩展生态
-    details: MCP 协议、Hooks、Skills——通过自定义工具扩展能力，无缝集成你的工作流。
-  - icon: 🎯
-    title: Skills 系统
-    details: 自定义命令和工作流。定义你自己的 /review-pr、/deploy 或任何可重用的工作流。
-  - icon: 🔄
-    title: 多 Provider 支持
-    details: 支持 Anthropic、OpenAI 及任何 OpenAI 兼容 API。切换模型无需改变工作流。
-  - icon: 💾
-    title: 会话恢复
-    details: 从上次离开的地方继续。加载之前的对话并无缝衔接。
+<div class="features-section fade-in-section">
+  <div class="feature-block">
+    <div class="feature-icon">⚡</div>
+    <div class="feature-title">单二进制部署</div>
+    <div class="feature-desc">零依赖，一个文件跑遍全平台——Linux、macOS、Windows。无需运行时、无需虚拟环境、无需 node_modules。</div>
+    <div class="feature-tags">
+      <span class="tag">Linux</span>
+      <span class="tag">macOS</span>
+      <span class="tag">Windows</span>
+    </div>
+  </div>
 
-stats:
-  - label: 源代码文件
-    value: 50+
-  - label: 模块数量
-    value: 8
-  - label: 内置工具
-    value: 6
-  - label: 代码行数
-    value: 7,000+
----
+  <div class="feature-block">
+    <div class="feature-icon">🔒</div>
+    <div class="feature-title">Harness-First 可靠性</div>
+    <div class="feature-desc">权限控制、超时保护、会话持久化。Harness 保障安全，让模型专注于智能。</div>
+    <div class="feature-tags">
+      <span class="tag">三级权限</span>
+      <span class="tag">glob 规则</span>
+      <span class="tag">会话记忆</span>
+    </div>
+  </div>
 
-## 架构设计理念
+  <div class="feature-block">
+    <div class="feature-icon">🔌</div>
+    <div class="feature-title">可扩展生态</div>
+    <div class="feature-desc">MCP 协议、Hooks、Skills——通过自定义工具扩展能力，无缝集成你的工作流。</div>
+    <div class="feature-tags">
+      <span class="tag">MCP</span>
+      <span class="tag">Hooks</span>
+      <span class="tag">Skills</span>
+    </div>
+  </div>
+</div>
 
-::: details 🧠 模型提供智能
-LLM 负责：理解意图、决策使用哪个工具、解释结果、规划下一步。它是系统的大脑。
-:::
+<div class="architecture-section fade-in-section">
+  <div class="feature-block">
+    <div class="feature-icon">🧠</div>
+    <div class="feature-title">模型提供智能</div>
+    <div class="feature-desc">LLM 负责：理解意图、决策使用哪个工具、解释结果、规划下一步。它是系统的大脑。</div>
+    <div class="feature-tags">
+      <span class="tag">意图理解</span>
+      <span class="tag">工具选择</span>
+      <span class="tag">结果解释</span>
+      <span class="tag">下一步规划</span>
+    </div>
+  </div>
 
-::: details 🛡️ Harness 提供可靠性
-运行时负责：权限控制、超时保护、输出截断、会话持久化、错误恢复。它是让系统达到生产级别的安全网。
-:::
+  <div class="feature-block">
+    <div class="feature-icon">🛡️</div>
+    <div class="feature-title">Harness 提供可靠性</div>
+    <div class="feature-desc">运行时负责：权限控制、超时保护、输出截断、会话持久化、错误恢复。它是让系统达到生产级别的安全网。</div>
+    <div class="feature-tags">
+      <span class="tag">权限控制</span>
+      <span class="tag">超时保护</span>
+      <span class="tag">输出截断</span>
+      <span class="tag">会话持久化</span>
+    </div>
+  </div>
+</div>
 
-::: details 🔌 可扩展生态
-MCP 协议用于外部工具发现，Hooks 用于执行前后回调，简洁的 Tool 接口——只需实现一个接口即可添加新能力。
-:::
+<div class="terminal-section fade-in-section">
+  <div class="terminal-window">
+    <div class="terminal-header">
+      <span class="terminal-dot red"></span>
+      <span class="terminal-dot yellow"></span>
+      <span class="terminal-dot green"></span>
+      <span class="terminal-title">claude-code-Go</span>
+    </div>
+    <div class="terminal-body">
+      <div class="terminal-line"><span class="terminal-prompt">$</span> <span class="terminal-cmd">go-code</span></div>
+      <div class="terminal-line terminal-output">claude-code-Go v0.1.0</div>
+      <div class="terminal-line terminal-output">输入 /help 查看命令，/exit 退出。</div>
+      <div class="terminal-line">&nbsp;</div>
+      <div class="terminal-line"><span class="terminal-prompt">go-code></span> <span class="terminal-cmd">写一个 8080 端口的 HTTP 服务器</span></div>
+      <div class="terminal-line terminal-output">🔄 Agent 思考中...</div>
+      <div class="terminal-line terminal-output">🛠️ 调用工具: Write → main.go</div>
+      <div class="terminal-line terminal-output terminal-success">✓ 文件已写入</div>
+      <div class="terminal-line terminal-output">🔄 Agent 继续思考...</div>
+      <div class="terminal-line terminal-output">🛠️ 调用工具: Bash → go run main.go</div>
+      <div class="terminal-line terminal-output terminal-success">✓ 服务器启动在 8080 端口</div>
+      <div class="terminal-line terminal-output terminal-success">✓ 完成！HTTP 服务器已创建并运行。</div>
+      <div class="terminal-line">&nbsp;</div>
+      <div class="terminal-line"><span class="terminal-prompt">go-code></span> <span class="terminal-cursor"></span></div>
+    </div>
+  </div>
+</div>
 
 ## 功能特性
 
 | 功能 | 说明 |
 |------|------|
 | 🔄 Agent Loop | 基于 stop_reason 驱动的「思考→行动→观察」自主循环 |
-| 🛠️ 6 大内置工具 | Read、Write、Edit、Glob、Grep、Bash——开箱即用的完整工具集 |
+| 🛠️ 9 大内置工具 | Read、Write、Edit、Glob、Grep、Bash、Diff、Tree、WebFetch |
 | 🔒 权限系统 | 三级权限模型，支持 glob 规则匹配与会话记忆 |
 | 🔌 MCP 集成 | Model Context Protocol，stdio 传输、JSON-RPC 客户端 |
 | 🌊 SSE 流式 | 逐 token 实时流式响应，自研解析器，零外部依赖 |
@@ -125,3 +175,13 @@ chmod +x go-code
 export ANTHROPIC_API_KEY=sk-ant-...
 ./go-code
 ```
+
+<div class="cta-section fade-in-section">
+  <h2 class="cta-title">准备开始？</h2>
+  <p class="cta-desc">几秒钟即可开始使用 claude-code-Go。</p>
+  <div class="cta-actions">
+    <a href="/zh/guide/introduction" class="cta-button primary">快速开始</a>
+    <a href="/zh/guide/quick-start" class="cta-button secondary">安装指南</a>
+    <a href="https://github.com/strings77wzq/claude-code-Go" class="cta-button secondary">GitHub</a>
+  </div>
+</div>
