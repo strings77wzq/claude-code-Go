@@ -55,7 +55,7 @@ hero:
   <div class="feature-block">
     <div class="feature-icon">🔒</div>
     <div class="feature-title">Harness-First 可靠性</div>
-    <div class="feature-desc">权限控制、超时保护、会话持久化。Harness 保障安全，让模型专注于智能。</div>
+    <div class="feature-desc">权限控制、超时保护、会话持久化。Harness 保障安全，让模型专注于智能处理。</div>
     <div class="feature-tags">
       <span class="tag">三级权限</span>
       <span class="tag">glob 规则</span>
@@ -79,7 +79,7 @@ hero:
   <div class="feature-block">
     <div class="feature-icon">🧠</div>
     <div class="feature-title">模型提供智能</div>
-    <div class="feature-desc">LLM 负责：理解意图、决策使用哪个工具、解释结果、规划下一步。它是系统的大脑。</div>
+    <div class="feature-desc">LLM 负责：理解意图、决策使用哪个工具、解释结果、规划下一步。它充当系统的大脑。</div>
     <div class="feature-tags">
       <span class="tag">意图理解</span>
       <span class="tag">工具选择</span>
@@ -132,12 +132,12 @@ hero:
 
 | 功能 | 说明 |
 |------|------|
-| 🔄 Agent Loop | 基于 stop_reason 驱动的「思考→行动→观察」自主循环 |
+| 🔄 Agent Loop | 由 stop_reason 驱动的「思考→行动→观察」自主循环 |
 | 🛠️ 9 大内置工具 | Read、Write、Edit、Glob、Grep、Bash、Diff、Tree、WebFetch |
 | 🔒 权限系统 | 三级权限模型，支持 glob 规则匹配与会话记忆 |
 | 🔌 MCP 集成 | Model Context Protocol，stdio 传输、JSON-RPC 客户端 |
-| 🌊 SSE 流式 | 逐 token 实时流式响应，自研解析器，零外部依赖 |
-| 🧠 上下文管理 | 智能 token 估算与自动对话压缩 |
+| 🌊 SSE 流式 | 逐 token 实时流式输出，自研解析器，零外部依赖 |
+| 🧠 上下文管理 | 智能 token 用量估算与自动压缩对话 |
 
 ## 为什么选择 Go？
 

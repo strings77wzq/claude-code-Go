@@ -1,12 +1,12 @@
 ---
-title: 开发路线图
-description: claude-code-Go 开发路线图
+title: Roadmap
+description: claude-code-Go 项目 Roadmap
 
 ---
 
-# 开发路线图
+# Roadmap
 
-以下是 claude-code-Go 的开发路线图，分为三个阶段。
+以下是 claude-code-Go 的 Roadmap，分为三个阶段。
 
 ## 概览
 
@@ -24,11 +24,11 @@ description: claude-code-Go 开发路线图
 
 ### 已完成功能
 
-- **Agent Loop** — 基于 stop_reason 驱动的「思考→行动→观察」自主循环
+- **Agent Loop** — 由 stop_reason 驱动的「思考→行动→观察」自主循环
 - **9 大内置工具** — 6 个核心（Read、Write、Edit、Glob、Grep、Bash）+ 3 个增强（Diff view、Tree、WebFetch）
 - **权限系统** — 三级权限模型，支持 glob 规则匹配与会话记忆
 - **MCP 集成** — Model Context Protocol，stdio 传输、JSON-RPC
-- **SSE 流式** — 逐 token 实时流式响应
+- **SSE 流式** — 逐 token 实时流式输出
 - **会话持久化** — 保存和恢复对话状态
 - **Hooks 系统** — 执行前后回调，扩展能力
 

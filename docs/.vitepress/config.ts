@@ -50,6 +50,7 @@ export default defineConfig({
 
   themeConfig: {
     logo: '/logo.svg',
+    appearance: { label: '自动', value: 'auto' },
 
     sidebar: {
       '/': [
@@ -135,7 +136,7 @@ export default defineConfig({
           text: '资源',
           collapsed: false,
           items: [
-            { text: '路线图', link: '/zh/roadmap' },
+            { text: 'Roadmap', link: '/zh/roadmap' },
             { text: '反馈', link: '/zh/feedback' }
           ]
         }
