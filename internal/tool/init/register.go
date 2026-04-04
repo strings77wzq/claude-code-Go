@@ -53,5 +53,10 @@ func RegisterBuiltinTools(r *tool.Registry, workingDir string) error {
 		return fmt.Errorf("failed to register webfetch tool: %w", err)
 	}
 
+	todoTool := builtin.NewTodoTool()
+	if err := r.Register(todoTool); err != nil {
+		return fmt.Errorf("failed to register todo tool: %w", err)
+	}
+
 	return nil
 }

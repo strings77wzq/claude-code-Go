@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/strings77wzq/claude-code-Go/internal/permission"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
@@ -45,6 +46,10 @@ func (w *WebFetchTool) InputSchema() map[string]any {
 
 func (w *WebFetchTool) RequiresPermission() bool {
 	return true
+}
+
+func (w *WebFetchTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelReadOnly
 }
 
 func (w *WebFetchTool) Execute(ctx context.Context, input map[string]any) tool.Result {

@@ -26,6 +26,19 @@ func (r *Registry) Register(tool Tool) error {
 		return fmt.Errorf("tool already registered: %s", name)
 	}
 
+	desc := tool.Description()
+	if len(desc) > 250 {
+		return fmt.Errorf("tool description exceeds 250 characters: %d chars", len(desc))
+	}
+
+	schema := tool.InputSchema()
+	if schema == nil {
+		return fmt.Errorf("tool InputSchema is nil: %s", name)
+	}
+	if _, ok := schema["type"]; !ok {
+		return fmt.Errorf("tool InputSchema missing 'type' key: %s", name)
+	}
+
 	r.tools[name] = tool
 	return nil
 }

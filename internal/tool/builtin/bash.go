@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/strings77wzq/claude-code-Go/internal/permission"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
@@ -53,6 +54,10 @@ func (b *BashTool) InputSchema() map[string]any {
 
 func (b *BashTool) RequiresPermission() bool {
 	return true
+}
+
+func (b *BashTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelDangerFullAccess
 }
 
 func (b *BashTool) Execute(ctx context.Context, input map[string]any) tool.Result {

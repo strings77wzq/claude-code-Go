@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/strings77wzq/claude-code-Go/internal/permission"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
@@ -58,6 +59,10 @@ func (r *ReadTool) InputSchema() map[string]any {
 
 func (r *ReadTool) RequiresPermission() bool {
 	return false
+}
+
+func (r *ReadTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelReadOnly
 }
 
 func (r *ReadTool) Execute(ctx context.Context, input map[string]any) tool.Result {

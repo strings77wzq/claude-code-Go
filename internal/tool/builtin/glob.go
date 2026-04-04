@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/strings77wzq/claude-code-Go/internal/permission"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
@@ -39,6 +40,10 @@ func (g *GlobTool) InputSchema() map[string]any {
 
 func (g *GlobTool) RequiresPermission() bool {
 	return false
+}
+
+func (g *GlobTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelReadOnly
 }
 
 func (g *GlobTool) Execute(ctx context.Context, input map[string]any) tool.Result {

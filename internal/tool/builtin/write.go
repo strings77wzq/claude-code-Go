@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/strings77wzq/claude-code-Go/internal/permission"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
@@ -46,6 +47,10 @@ func (w *WriteTool) InputSchema() map[string]any {
 
 func (w *WriteTool) RequiresPermission() bool {
 	return true
+}
+
+func (w *WriteTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelWorkspaceWrite
 }
 
 func (w *WriteTool) Execute(ctx context.Context, input map[string]any) tool.Result {

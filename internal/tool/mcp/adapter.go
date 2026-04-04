@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/strings77wzq/claude-code-Go/internal/permission"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
@@ -34,6 +35,11 @@ func (a *McpToolAdapter) InputSchema() map[string]any {
 // RequiresPermission always returns true since external MCP tools require approval.
 func (a *McpToolAdapter) RequiresPermission() bool {
 	return true
+}
+
+// RequiredPermissionLevel returns DangerFullAccess since external MCP tools are unknown.
+func (a *McpToolAdapter) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelDangerFullAccess
 }
 
 // Execute delegates to McpClient.CallTool and returns a tool.Result.

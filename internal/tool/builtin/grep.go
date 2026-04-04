@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/strings77wzq/claude-code-Go/internal/permission"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
@@ -55,6 +56,10 @@ func (g *GrepTool) InputSchema() map[string]any {
 
 func (g *GrepTool) RequiresPermission() bool {
 	return false
+}
+
+func (g *GrepTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelReadOnly
 }
 
 func (g *GrepTool) Execute(ctx context.Context, input map[string]any) tool.Result {

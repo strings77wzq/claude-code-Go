@@ -1,7 +1,10 @@
-// Package tool provides the tool interface and implementations for the Claude Code clone.
 package tool
 
-import "context"
+import (
+	"context"
+
+	"github.com/strings77wzq/claude-code-Go/internal/permission"
+)
 
 // Tool represents an executable tool that can be called by the agent.
 type Tool interface {
@@ -16,6 +19,9 @@ type Tool interface {
 
 	// RequiresPermission returns true if the tool requires special permissions.
 	RequiresPermission() bool
+
+	// RequiredPermissionLevel returns the permission level required by this tool.
+	RequiredPermissionLevel() permission.PermissionLevel
 
 	// Execute runs the tool with the given input and returns a result.
 	Execute(ctx context.Context, input map[string]any) Result

@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/strings77wzq/claude-code-Go/internal/permission"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
@@ -48,6 +49,10 @@ func (d *DiffTool) InputSchema() map[string]any {
 
 func (d *DiffTool) RequiresPermission() bool {
 	return false
+}
+
+func (d *DiffTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelReadOnly
 }
 
 func (d *DiffTool) Execute(ctx context.Context, input map[string]any) tool.Result {
