@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -27,17 +28,22 @@ type message struct {
 	content string
 }
 
+type connectionStatusMsg struct {
+	text string
+}
+
 type model struct {
-	messages     []message
-	input        textinput.Model
-	spinner      spinner.Model
-	isLoading    bool
-	streamBuffer string
-	provider     string
-	modelName    string
-	version      string
-	quitting     bool
-	agent        AgentInterface
+	messages      []message
+	input         textinput.Model
+	spinner       spinner.Model
+	isLoading     bool
+	streamBuffer  string
+	connectionMsg string
+	provider      string
+	modelName     string
+	version       string
+	quitting      bool
+	agent         AgentInterface
 }
 
 type AgentInterface interface {
@@ -99,6 +105,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case streamMsg:
 		m.streamBuffer += msg.text
+		m.connectionMsg = ""
+		return m, nil
+
+	case connectionStatusMsg:
+		m.connectionMsg = msg.text
 		return m, nil
 
 	case doneMsg:
@@ -158,10 +169,28 @@ func (m model) runAgent(input string) tea.Cmd {
 		}
 	}()
 
+	startTime := time.Now()
+	var lastStatus string
+
 	return tea.Batch(
 		m.spinner.Tick,
 		func() tea.Msg {
 			for {
+				elapsed := time.Since(startTime)
+				var newStatus string
+				if elapsed > 30*time.Second {
+					newStatus = "Still connecting... check your network or API key"
+				} else if elapsed > 3*time.Second {
+					newStatus = "Connecting to API..."
+				}
+
+				if newStatus != "" && newStatus != lastStatus {
+					lastStatus = newStatus
+					return connectionStatusMsg{text: newStatus}
+				}
+
+				time.Sleep(500 * time.Millisecond)
+
 				select {
 				case msg := <-streamChan:
 					return msg
@@ -169,6 +198,7 @@ func (m model) runAgent(input string) tea.Cmd {
 					return msg
 				case msg := <-errChan:
 					return msg
+				default:
 				}
 			}
 		},
@@ -239,7 +269,11 @@ func (m model) View() string {
 	}
 
 	if m.isLoading {
-		s += m.spinner.View() + " Thinking...\n\n"
+		s += m.spinner.View() + " Thinking...\n"
+		if m.connectionMsg != "" {
+			s += dimStyle.Render("  "+m.connectionMsg) + "\n"
+		}
+		s += "\n"
 	} else if m.streamBuffer != "" {
 		s += m.streamBuffer + "\n\n"
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -30,6 +31,9 @@ const systemPrompt = "You are an interactive agent that helps users with softwar
 func main() {
 	legacyRepl := flag.Bool("legacy-repl", false, "Use the old bufio-based REPL")
 	setupMode := flag.Bool("setup", false, "Run setup wizard")
+	prompt := flag.String("p", "", "Run a single prompt and exit (non-interactive mode)")
+	outputFormat := flag.String("f", "text", "Output format for non-interactive mode (text, json)")
+	quiet := flag.Bool("q", false, "Hide spinner in non-interactive mode")
 	flag.Parse()
 
 	if *setupMode {
@@ -96,13 +100,38 @@ func main() {
 
 	// Create permission policy
 	logger.Info("Creating permission policy")
-	policy := permission.NewPolicy(permission.WorkspaceWrite)
+	policy := permission.NewPolicy(permission.DangerFullAccess)
 	logger.Info("Permission policy created")
 
 	// Create agent
 	logger.Info("Creating agent")
 	agentInstance := agent.NewAgent(client, registry, policy, systemPrompt, cfg.Model)
 	logger.Info("Agent started", "model", cfg.Model)
+
+	// Non-interactive mode: run single prompt and exit
+	if *prompt != "" {
+		result, err := agentInstance.Run(ctx, *prompt, func(text string) {
+			if !*quiet {
+				fmt.Print(text)
+			}
+		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		switch *outputFormat {
+		case "json":
+			output := map[string]string{"result": result}
+			data, _ := json.Marshal(output)
+			fmt.Println(string(data))
+		default:
+			if !*quiet {
+				fmt.Println()
+			}
+		}
+		return
+	}
 
 	// Load skills
 	skillsRegistry := skills.NewRegistry()

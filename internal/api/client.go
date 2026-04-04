@@ -18,6 +18,85 @@ const (
 	retryDelayBase   = time.Second
 )
 
+type ErrorType string
+
+const (
+	ErrorAuth       ErrorType = "auth"
+	ErrorRateLimit  ErrorType = "rate_limit"
+	ErrorServer     ErrorType = "server"
+	ErrorTimeout    ErrorType = "timeout"
+	ErrorNetwork    ErrorType = "network"
+	ErrorUnexpected ErrorType = "unexpected"
+)
+
+type APIError struct {
+	Type    ErrorType
+	Code    int
+	Message string
+}
+
+func (e *APIError) Error() string {
+	return e.Message
+}
+
+func classifyError(statusCode int, body string, originalErr error) *APIError {
+	if originalErr != nil {
+		if netErr, ok := originalErr.(interface{ Timeout() bool }); ok && netErr.Timeout() {
+			return &APIError{
+				Type:    ErrorTimeout,
+				Message: "Request timed out. Please check your network connection and API key.",
+			}
+		}
+		return &APIError{
+			Type:    ErrorNetwork,
+			Message: "Network error. Please check your internet connection.",
+		}
+	}
+
+	switch statusCode {
+	case http.StatusUnauthorized:
+		return &APIError{
+			Type:    ErrorAuth,
+			Code:    401,
+			Message: "Invalid API key. Please check your ANTHROPIC_API_KEY.",
+		}
+	case http.StatusForbidden:
+		return &APIError{
+			Type:    ErrorAuth,
+			Code:    403,
+			Message: "API access denied. Check your API key permissions.",
+		}
+	case http.StatusTooManyRequests:
+		return &APIError{
+			Type:    ErrorRateLimit,
+			Code:    429,
+			Message: "Rate limited. Retrying automatically...",
+		}
+	}
+
+	if statusCode >= 500 {
+		return &APIError{
+			Type:    ErrorServer,
+			Code:    statusCode,
+			Message: "Server error. Please try again later.",
+		}
+	}
+
+	return &APIError{
+		Type:    ErrorUnexpected,
+		Code:    statusCode,
+		Message: fmt.Sprintf("Unexpected error (%d): %s", statusCode, body),
+	}
+}
+
+type ConnectionStatus int
+
+const (
+	ConnConnecting ConnectionStatus = iota
+	ConnConnected
+	ConnTimeout
+)
+
 type Client struct {
 	apiKey     string
 	baseURL    string
@@ -70,33 +149,32 @@ func (c *Client) SendMessage(ctx context.Context, req *ApiRequest) (*ApiResponse
 
 		resp, err := c.httpClient.Do(httpReq)
 		if err != nil {
-			lastErr = err
-			continue
+			return nil, classifyError(0, "", err)
 		}
 
 		defer resp.Body.Close()
 
-		if resp.StatusCode == http.StatusTooManyRequests {
-			lastErr = fmt.Errorf("rate limited (429)")
-			continue
-		}
-
 		if resp.StatusCode == http.StatusUnauthorized {
-			return nil, fmt.Errorf("unauthorized (401): invalid API key")
+			return nil, classifyError(http.StatusUnauthorized, "", nil)
 		}
 
 		if resp.StatusCode == http.StatusForbidden {
-			return nil, fmt.Errorf("forbidden (403): access denied")
+			return nil, classifyError(http.StatusForbidden, "", nil)
+		}
+
+		if resp.StatusCode == http.StatusTooManyRequests {
+			lastErr = classifyError(http.StatusTooManyRequests, "", nil)
+			continue
 		}
 
 		if resp.StatusCode >= 500 {
-			lastErr = fmt.Errorf("server error (%d)", resp.StatusCode)
+			lastErr = classifyError(resp.StatusCode, "", nil)
 			continue
 		}
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
-			return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+			return nil, classifyError(resp.StatusCode, string(body), nil)
 		}
 
 		var apiResp ApiResponse
@@ -140,33 +218,32 @@ func (c *Client) SendMessageStream(ctx context.Context, req *ApiRequest, onTextD
 
 		resp, err := c.httpClient.Do(httpReq)
 		if err != nil {
-			lastErr = err
-			continue
+			return nil, classifyError(0, "", err)
 		}
 
 		defer resp.Body.Close()
 
-		if resp.StatusCode == http.StatusTooManyRequests {
-			lastErr = fmt.Errorf("rate limited (429)")
-			continue
-		}
-
 		if resp.StatusCode == http.StatusUnauthorized {
-			return nil, fmt.Errorf("unauthorized (401): invalid API key")
+			return nil, classifyError(http.StatusUnauthorized, "", nil)
 		}
 
 		if resp.StatusCode == http.StatusForbidden {
-			return nil, fmt.Errorf("forbidden (403): access denied")
+			return nil, classifyError(http.StatusForbidden, "", nil)
+		}
+
+		if resp.StatusCode == http.StatusTooManyRequests {
+			lastErr = classifyError(http.StatusTooManyRequests, "", nil)
+			continue
 		}
 
 		if resp.StatusCode >= 500 {
-			lastErr = fmt.Errorf("server error (%d)", resp.StatusCode)
+			lastErr = classifyError(resp.StatusCode, "", nil)
 			continue
 		}
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
-			return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+			return nil, classifyError(resp.StatusCode, string(body), nil)
 		}
 
 		return parseStreamResponse(resp.Body, onTextDelta)
