@@ -104,6 +104,9 @@ func (m *mockTool) Name() string                { return m.name }
 func (m *mockTool) Description() string         { return m.description }
 func (m *mockTool) InputSchema() map[string]any { return m.inputSchema }
 func (m *mockTool) RequiresPermission() bool    { return false }
+func (m *mockTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelReadOnly
+}
 func (m *mockTool) Execute(ctx context.Context, input map[string]any) tool.Result {
 	return m.result
 }

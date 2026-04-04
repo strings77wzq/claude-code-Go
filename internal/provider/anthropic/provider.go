@@ -14,7 +14,7 @@ type AnthropicProvider struct {
 
 func NewProvider(apiKey, baseURL, model string) *AnthropicProvider {
 	return &AnthropicProvider{
-		client: api.NewClient(apiKey, baseURL, model),
+		client: api.NewClient(apiKey, baseURL, model, false),
 	}
 }
 

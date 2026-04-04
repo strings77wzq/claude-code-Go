@@ -40,7 +40,7 @@ func TestSendMessage_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	resp, err := client.SendMessage(context.Background(), &ApiRequest{
 		Messages:  []Message{{Role: "user", Content: "Hi"}},
 		MaxTokens: 100,
@@ -62,7 +62,7 @@ func TestSendMessage_Unauthorized(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("invalid-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("invalid-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	_, err := client.SendMessage(context.Background(), &ApiRequest{
 		Messages:  []Message{{Role: "user", Content: "Hi"}},
 		MaxTokens: 100,
@@ -81,7 +81,7 @@ func TestSendMessage_Forbidden(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	_, err := client.SendMessage(context.Background(), &ApiRequest{
 		Messages:  []Message{{Role: "user", Content: "Hi"}},
 		MaxTokens: 100,
@@ -115,7 +115,7 @@ func TestSendMessage_Retry429(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	_, err := client.SendMessage(context.Background(), &ApiRequest{
 		Messages:  []Message{{Role: "user", Content: "Hi"}},
 		MaxTokens: 100,
@@ -134,7 +134,7 @@ func TestSendMessage_ServerError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	_, err := client.SendMessage(context.Background(), &ApiRequest{
 		Messages:  []Message{{Role: "user", Content: "Hi"}},
 		MaxTokens: 100,
@@ -185,7 +185,7 @@ func TestSendMessageStream_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	var accumulatedText strings.Builder
 
 	resp, err := client.SendMessageStream(context.Background(), &ApiRequest{
@@ -217,7 +217,7 @@ func TestSendMessageStream_Unauthorized(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("invalid-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("invalid-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	_, err := client.SendMessageStream(context.Background(), &ApiRequest{
 		Messages:  []Message{{Role: "user", Content: "Hi"}},
 		MaxTokens: 100,
@@ -236,7 +236,7 @@ func TestSendMessageStream_Forbidden(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	_, err := client.SendMessageStream(context.Background(), &ApiRequest{
 		Messages:  []Message{{Role: "user", Content: "Hi"}},
 		MaxTokens: 100,
@@ -271,7 +271,7 @@ func TestSendMessageStream_Retry429(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -319,7 +319,7 @@ func TestSendMessageStream_ToolUse(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	var accumulatedText strings.Builder
 
 	resp, err := client.SendMessageStream(context.Background(), &ApiRequest{
@@ -374,7 +374,7 @@ func TestSendMessageStream_MultiLineData(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	var accumulatedText strings.Builder
 
 	resp, err := client.SendMessageStream(context.Background(), &ApiRequest{
@@ -401,7 +401,7 @@ func TestSendMessage_Timeout(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
@@ -425,7 +425,7 @@ func TestSendMessage_InvalidResponse(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022")
+	client := NewClient("test-key", server.URL, "claude-3-5-sonnet-20241022", false)
 	_, err := client.SendMessage(context.Background(), &ApiRequest{
 		Messages:  []Message{{Role: "user", Content: "Hi"}},
 		MaxTokens: 100,
