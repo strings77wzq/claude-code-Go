@@ -70,8 +70,8 @@ func TestSendMessage_Unauthorized(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for 401")
 	}
-	if !strings.Contains(err.Error(), "401") {
-		t.Errorf("expected 401 error, got: %v", err)
+	if !strings.Contains(err.Error(), "Invalid API key") {
+		t.Errorf("expected auth error, got: %v", err)
 	}
 }
 
@@ -89,8 +89,8 @@ func TestSendMessage_Forbidden(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for 403")
 	}
-	if !strings.Contains(err.Error(), "403") {
-		t.Errorf("expected 403 error, got: %v", err)
+	if !strings.Contains(err.Error(), "access denied") {
+		t.Errorf("expected forbidden error, got: %v", err)
 	}
 }
 
@@ -225,8 +225,8 @@ func TestSendMessageStream_Unauthorized(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for 401")
 	}
-	if !strings.Contains(err.Error(), "401") {
-		t.Errorf("expected 401 error, got: %v", err)
+	if !strings.Contains(err.Error(), "Invalid API key") {
+		t.Errorf("expected auth error, got: %v", err)
 	}
 }
 
@@ -244,8 +244,8 @@ func TestSendMessageStream_Forbidden(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for 403")
 	}
-	if !strings.Contains(err.Error(), "403") {
-		t.Errorf("expected 403 error, got: %v", err)
+	if !strings.Contains(err.Error(), "access denied") {
+		t.Errorf("expected forbidden error, got: %v", err)
 	}
 }
 
@@ -412,8 +412,8 @@ func TestSendMessage_Timeout(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected timeout error")
 	}
-	if !strings.Contains(err.Error(), "context") && !strings.Contains(err.Error(), "timeout") {
-		t.Errorf("expected context timeout error, got: %v", err)
+	if !strings.Contains(err.Error(), "timed out") && !strings.Contains(err.Error(), "timeout") {
+		t.Errorf("expected timeout error, got: %v", err)
 	}
 }
 
