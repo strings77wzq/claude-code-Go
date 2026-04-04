@@ -1,52 +1,39 @@
-# go-code — Go implementation of Claude Code
+# claude-code-Go — AI Coding Agent in Go
 
-[![Go Version](https://img.shields.io/badge/Go-1.23+-blue)](https://go.dev/doc/install)
+[![Go Version](https://img.shields.io/badge/Go-1.24+-blue)](https://go.dev/doc/install)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/strings77wzq/claude-code-Go/releases)
 
-A Go implementation of Anthropic's Claude Code agent system. Full agent loop with built-in tools, permission system, MCP support, and SSE streaming — in a single binary.
+> **Model provides intelligence, Harness provides reliability.**
+
+A production-grade AI coding assistant with full agent loop, tool execution, permission management, and SSE streaming — in a single Go binary.
 
 ## Installation
 
-### One-Command Install
-
-**Linux / macOS:**
-```bash
-curl -fsSL https://raw.githubusercontent.com/strings77wzq/claude-code-Go/main/install.sh | bash
-```
-
-**Windows (PowerShell):**
-```powershell
-irm https://raw.githubusercontent.com/strings77wzq/claude-code-Go/main/install.ps1 | iex
-```
-
-### Via go install
+### Via go install (Recommended)
 
 ```bash
 go install github.com/strings77wzq/claude-code-Go/cmd/go-code@latest
 ```
 
-The binary installs to `$GOPATH/bin` (typically `~/go/bin`). Make sure it's in your `PATH`.
+The binary installs to `$GOPATH/bin` (typically `~/go/bin`). Make sure it's in your `PATH`:
+
+```bash
+export PATH="$HOME/go/bin:$PATH"
+```
 
 ### Build from Source
 
 ```bash
 git clone https://github.com/strings77wzq/claude-code-Go.git
 cd claude-code-Go
-make build
-./bin/go-code
+make install
+go-code
 ```
 
 ### Pre-built Binaries
 
 Download from [GitHub Releases](https://github.com/strings77wzq/claude-code-Go/releases):
-
-| Platform  | Architecture    | Binary                    |
-|-----------|-----------------|---------------------------|
-| Linux     | amd64           | `go-code-linux-amd64`     |
-| macOS     | amd64           | `go-code-darwin-amd64`    |
-| macOS     | arm64 (M1/M2)   | `go-code-darwin-arm64`    |
-| Windows   | amd64           | `go-code-windows-amd64.exe` |
 
 ```bash
 # Example: Linux amd64
@@ -57,21 +44,23 @@ sudo mv go-code /usr/local/bin/
 
 ## Quick Start
 
-### For AI Agents
-
-If you're using an AI coding assistant, paste this URL into its session:
-[Installation Guide for Agents](https://github.com/strings77wzq/claude-code-Go/blob/main/docs/guide/installation-for-agents.md)
-
 ### 1. Set your API key
 
 ```bash
+# Anthropic
 export ANTHROPIC_API_KEY=sk-ant-...
+
+# Or Tencent Cloud Coding Plan
+export ANTHROPIC_API_KEY=sk-sp-...
+export ANTHROPIC_BASE_URL=https://api.lkeap.cloud.tencent.com/coding/anthropic
+export ANTHROPIC_MODEL=tc-code-latest
 ```
 
 Or create `~/.go-code/settings.json`:
 ```json
 {
-  "apiKey": "sk-ant-..."
+  "apiKey": "sk-ant-...",
+  "model": "claude-sonnet-4-20250514"
 }
 ```
 
@@ -81,30 +70,38 @@ Or create `~/.go-code/settings.json`:
 # Interactive REPL
 go-code
 
-# Or with a direct prompt
-go-code "Explain the agent loop architecture"
+# Single prompt (non-interactive)
+go-code -p "Explain the agent loop architecture"
+
+# JSON output (for scripting)
+go-code -p "List files in current directory" -f json
+
+# Quiet mode (no spinner)
+go-code -p "What is 2+2?" -q
 ```
 
 ## Features
 
-- **Agent Loop**: Full "think → act → observe" cycle with message history and context compaction
-- **6 Built-in Tools**: `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`
-- **Permission System**: 3-tier model (ReadOnly / WorkspaceWrite / DangerFullAccess)
+- **Agent Loop**: Full "think → act → observe" cycle with stop_reason-driven state machine
+- **9 Built-in Tools**: `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, `Diff`, `Tree`, `WebFetch`
+- **Permission System**: 3-tier model (ReadOnly / WorkspaceWrite / DangerFullAccess) with glob rules and session memory
 - **MCP Support**: Model Context Protocol with stdio transport
-- **SSE Streaming**: Real-time token-by-token output
-- **Session Persistence**: Auto-save and resume conversations
+- **SSE Streaming**: Real-time token-by-token output with custom parser
+- **Session Persistence**: Auto-save and resume conversations (JSONL format)
 - **Skills System**: Custom commands and reusable workflows
 - **Multi-Provider**: Anthropic, OpenAI, and any OpenAI-compatible API
+- **Runtime Model Switching**: Change models mid-session with `/model <name>`
+- **Auto-Update**: Check and download latest version with `/update`
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        go-code                              │
+│                    claude-code-Go                            │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌──────────────┐    ┌──────────────┐    ┌───────────────┐  │
-│  │   CLI/RePL   │───▶│ Agent Loop   │───▶│ Tool Registry │  │
-│  │   (pkg/tty)  │    │   + Context  │    │               │  │
+│  │  Bubbletea   │───▶│ Agent Loop   │───▶│ Tool Registry │  │
+│  │     TUI      │    │   + Context  │    │               │  │
 │  └──────────────┘    └──────────────┘    └───────────────┘  │
 │                            │                    │            │
 │                            ▼                    ▼            │
@@ -121,11 +118,20 @@ go-code "Explain the agent loop architecture"
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### Design Philosophy
+
+**Model provides intelligence, Harness provides reliability.**
+
+| Layer | Responsibility |
+|-------|---------------|
+| **Model (LLM)** | Intent understanding, tool selection, result interpretation, next-step planning |
+| **Harness (Runtime)** | Permission control, timeout protection, output truncation, session persistence, error recovery |
+
 ### Go Runtime vs Python Harness
 
 The main `go-code` binary is a pure Go implementation:
-- Direct Anthropic API communication
-- Local tool execution
+- Direct API communication with SSE streaming
+- Local tool execution with safety guards
 - Agent state and context management
 
 The Python harness (`harness/`) is optional:
@@ -140,19 +146,26 @@ claude-code-Go/
 ├── cmd/go-code/          # Main entry point
 ├── internal/
 │   ├── agent/            # Agent loop + context management
-│   ├── api/              # Anthropic API client + SSE
+│   ├── api/              # API client + SSE streaming
 │   ├── config/           # Multi-source config loader
 │   ├── permission/       # 3-tier permission system
 │   ├── tool/             # Tool interface + builtins
-│   │   ├── builtin/      # Bash, Read, Write, Edit, Glob, Grep
+│   │   ├── builtin/      # Bash, Read, Write, Edit, Glob, Grep, Diff, Tree, WebFetch
 │   │   ├── mcp/          # MCP integration
 │   │   └── init/         # Tool registration
-│   └── hooks/            # Pre/post execution hooks
-├── pkg/tty/              # REPL + terminal rendering
+│   ├── hooks/            # Pre/post execution hooks
+│   ├── skills/           # Custom skills system
+│   ├── session/          # Session persistence + resume
+│   └── update/           # Auto-update checker
+├── pkg/
+│   ├── tty/              # Legacy REPL (use --legacy-repl)
+│   └── tui/              # Bubbletea TUI (default)
 ├── harness/              # Python test harness (optional)
-├── docs/                 # Documentation
-│   └── guide/            # User guides
-└── .github/workflows/   # CI/CD
+├── docs/                 # VitePress documentation
+│   ├── guide/            # User guides
+│   ├── architecture/     # Architecture docs
+│   └── extension/        # Skills, MCP, Hooks docs
+└── .github/workflows/    # CI/CD
 ```
 
 ## Development
@@ -160,6 +173,11 @@ claude-code-Go/
 ### Build
 ```bash
 make build
+```
+
+### Install
+```bash
+make install
 ```
 
 ### Test
@@ -173,18 +191,23 @@ go test -v ./...   # Go tests only
 make build-all     # Linux amd64, macOS amd64/arm64, Windows amd64
 ```
 
-Output binaries are placed in `bin/`.
-
-### Clean
-```bash
-make clean
-```
-
 ### Documentation
 ```bash
 make docs           # Serve docs locally
 make docs-build     # Build for production
 ```
+
+## Supported Providers
+
+| Provider | Setup |
+|----------|-------|
+| **Anthropic** | Set `ANTHROPIC_API_KEY` |
+| **Tencent Cloud Coding Plan** | Set `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL` |
+| **OpenAI** | Set `ANTHROPIC_API_KEY` + compatible `ANTHROPIC_BASE_URL` |
+
+## Documentation
+
+📖 Full documentation: [https://strings77wzq.github.io/claude-code-Go/](https://strings77wzq.github.io/claude-code-Go/)
 
 ---
 

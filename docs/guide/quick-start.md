@@ -82,13 +82,26 @@ The agent will use its tools to explore the filesystem and provide an answer.
 
 ### Single Command Mode
 
-For one-off commands, pass the prompt as an argument:
+For one-off commands, use the `-p` flag:
 
 ```bash
-./bin/go-code "Create a hello world program in Go"
+go-code -p "Create a hello world program in Go"
 ```
 
 This executes the command and exits when complete.
+
+#### Output Formats
+
+```bash
+# Plain text (default)
+go-code -p "Explain the agent loop"
+
+# JSON output (for scripting)
+go-code -p "Explain the agent loop" -f json
+
+# Quiet mode (no spinner, for scripts)
+go-code -p "What is 2+2?" -q
+```
 
 ## Available Commands
 
@@ -101,6 +114,12 @@ In interactive mode, you can use these special commands:
 | `/exit` | Exit the program |
 | `/quit` | Exit the program (same as /exit) |
 | `/model` | Show current model |
+| `/model <name>` | Switch to a different model |
+| `/models` | List all available models |
+| `/sessions` | List saved sessions |
+| `/resume <id>` | Resume a saved session |
+| `/compact` | Compact conversation context |
+| `/update` | Check for updates |
 
 ## Startup Parameters
 
@@ -121,6 +140,15 @@ go-code [prompt]
 | `ANTHROPIC_API_KEY` | Your API key | Yes |
 | `ANTHROPIC_BASE_URL` | Override default API endpoint (optional) | No |
 | `ANTHROPIC_MODEL` | Specify model (default: claude-sonnet-4-20250514) | No |
+
+### Startup Parameters
+
+| Flag | Description |
+|------|-------------|
+| `-p "prompt"` | Run a single prompt and exit |
+| `-f json` | Output in JSON format (use with `-p`) |
+| `-q` | Quiet mode, no spinner (use with `-p`) |
+| `--legacy-repl` | Use the old REPL instead of bubbletea TUI |
 
 ### Configuration File
 
