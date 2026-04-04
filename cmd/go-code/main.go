@@ -34,6 +34,8 @@ func main() {
 	prompt := flag.String("p", "", "Run a single prompt and exit (non-interactive mode)")
 	outputFormat := flag.String("f", "text", "Output format for non-interactive mode (text, json)")
 	quiet := flag.Bool("q", false, "Hide spinner in non-interactive mode")
+	debug := flag.Bool("debug", false, "Enable debug logging to stderr")
+	traceHTTP := flag.Bool("trace-http", false, "Log full HTTP request/response bodies")
 	flag.Parse()
 
 	if *setupMode {
@@ -45,8 +47,12 @@ func main() {
 	}
 
 	// Initialize structured logging
+	logLevel := slog.LevelInfo
+	if *debug {
+		logLevel = slog.LevelDebug
+	}
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: logLevel,
 	}))
 	slog.SetDefault(logger)
 
@@ -78,7 +84,7 @@ func main() {
 
 	// Create API client
 	logger.Info("Creating API client")
-	client := api.NewClient(cfg.APIKey, cfg.BaseURL, cfg.Model)
+	client := api.NewClient(cfg.APIKey, cfg.BaseURL, cfg.Model, *traceHTTP)
 	logger.Info("API client created")
 
 	// Create tool registry
@@ -154,7 +160,7 @@ func main() {
 		repl.Run()
 	} else {
 		logger.Info("Starting bubbletea TUI")
-		tuiModel := tui.NewModel(agentInstance, version, cfg.Provider, cfg.Model)
+		tuiModel := tui.NewModel(agentInstance, version, cfg.Provider, cfg.Model, *debug)
 		p := tea.NewProgram(tuiModel, tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			logger.Error("TUI error", "error", err)

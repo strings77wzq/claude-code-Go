@@ -103,16 +103,18 @@ type Client struct {
 	model      string
 	httpClient *http.Client
 	mu         sync.RWMutex
+	traceHTTP  bool
 }
 
-func NewClient(apiKey, baseURL, model string) *Client {
+func NewClient(apiKey, baseURL, model string, traceHTTP bool) *Client {
 	if baseURL == "" {
 		baseURL = defaultBaseURL
 	}
 	return &Client{
-		apiKey:  apiKey,
-		baseURL: baseURL,
-		model:   model,
+		apiKey:    apiKey,
+		baseURL:   baseURL,
+		model:     model,
+		traceHTTP: traceHTTP,
 		httpClient: &http.Client{
 			Timeout: 5 * time.Minute,
 		},

@@ -112,3 +112,15 @@ func readSessionMeta(filePath string) (SessionInfo, error) {
 		Model:     meta.Model,
 	}, nil
 }
+
+// GetLastSessionFilePath returns the file path of the most recent session.
+func GetLastSessionFilePath(dir string) (string, error) {
+	sessions, err := ListSessions(dir)
+	if err != nil {
+		return "", err
+	}
+	if len(sessions) == 0 {
+		return "", fmt.Errorf("no sessions found")
+	}
+	return sessions[0].FilePath, nil
+}

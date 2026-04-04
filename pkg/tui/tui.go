@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -29,7 +30,8 @@ type message struct {
 }
 
 type connectionStatusMsg struct {
-	text string
+	text       string
+	elapsedStr string
 }
 
 type model struct {
@@ -39,11 +41,20 @@ type model struct {
 	isLoading     bool
 	streamBuffer  string
 	connectionMsg string
+	elapsedTime   string
 	provider      string
 	modelName     string
 	version       string
 	quitting      bool
 	agent         AgentInterface
+	debug         bool
+	latency       time.Duration
+	tokenUsage    TokenUsage
+}
+
+type TokenUsage struct {
+	InputTokens  int
+	OutputTokens int
 }
 
 type AgentInterface interface {
@@ -62,7 +73,7 @@ var (
 	separatorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#30363d"))
 )
 
-func NewModel(agent AgentInterface, version, provider, modelName string) model {
+func NewModel(agent AgentInterface, version, provider, modelName string, debug bool) model {
 	ti := textinput.New()
 	ti.Placeholder = "Type a message or /help for commands..."
 	ti.Prompt = promptStyle.Render("go-code> ")
@@ -82,6 +93,7 @@ func NewModel(agent AgentInterface, version, provider, modelName string) model {
 		provider:  provider,
 		modelName: modelName,
 		version:   version,
+		debug:     debug,
 	}
 }
 
@@ -110,6 +122,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case connectionStatusMsg:
 		m.connectionMsg = msg.text
+		m.elapsedTime = msg.elapsedStr
 		return m, nil
 
 	case doneMsg:
@@ -120,10 +133,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.streamBuffer = ""
 		m.isLoading = false
+		m.elapsedTime = ""
 		return m, nil
 
 	case errorMsg:
-		m.messages = append(m.messages, message{role: "error", content: msg.err.Error()})
+		errStr := msg.err.Error()
+		if msg.err == context.DeadlineExceeded {
+			errStr = "Request timed out after 5 minutes. Check your network connection and API key."
+		}
+		m.messages = append(m.messages, message{role: "error", content: errStr})
 		m.streamBuffer = ""
 		m.isLoading = false
 		return m, nil
@@ -158,8 +176,11 @@ func (m model) runAgent(input string) tea.Cmd {
 	doneChan := make(chan doneMsg, 1)
 	errChan := make(chan errorMsg, 1)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
 	go func() {
-		result, err := m.agent.Run(context.Background(), input, func(text string) {
+		result, err := m.agent.Run(ctx, input, func(text string) {
 			streamChan <- streamMsg{text: text}
 		})
 		if err != nil {
@@ -170,27 +191,13 @@ func (m model) runAgent(input string) tea.Cmd {
 	}()
 
 	startTime := time.Now()
-	var lastStatus string
+	ticker := time.NewTicker(500 * time.Millisecond)
 
 	return tea.Batch(
 		m.spinner.Tick,
 		func() tea.Msg {
+			defer ticker.Stop()
 			for {
-				elapsed := time.Since(startTime)
-				var newStatus string
-				if elapsed > 30*time.Second {
-					newStatus = "Still connecting... check your network or API key"
-				} else if elapsed > 3*time.Second {
-					newStatus = "Connecting to API..."
-				}
-
-				if newStatus != "" && newStatus != lastStatus {
-					lastStatus = newStatus
-					return connectionStatusMsg{text: newStatus}
-				}
-
-				time.Sleep(500 * time.Millisecond)
-
 				select {
 				case msg := <-streamChan:
 					return msg
@@ -198,7 +205,18 @@ func (m model) runAgent(input string) tea.Cmd {
 					return msg
 				case msg := <-errChan:
 					return msg
-				default:
+				case <-ticker.C:
+					elapsed := time.Since(startTime)
+					elapsedStr := elapsed.Round(time.Second).String()
+					if elapsed > 5*time.Minute {
+						return errorMsg{err: context.DeadlineExceeded}
+					} else if elapsed > 30*time.Second {
+						return connectionStatusMsg{text: "Still connecting... check your network or API key", elapsedStr: elapsedStr}
+					} else if elapsed > 3*time.Second {
+						return connectionStatusMsg{text: "Connecting to API...", elapsedStr: elapsedStr}
+					} else if elapsed > 500*time.Millisecond {
+						return connectionStatusMsg{text: "", elapsedStr: elapsedStr}
+					}
 				}
 			}
 		},
@@ -269,7 +287,11 @@ func (m model) View() string {
 	}
 
 	if m.isLoading {
-		s += m.spinner.View() + " Thinking...\n"
+		loadingText := "Thinking..."
+		if m.elapsedTime != "" {
+			loadingText += " (" + m.elapsedTime + ")"
+		}
+		s += m.spinner.View() + " " + loadingText + "\n"
 		if m.connectionMsg != "" {
 			s += dimStyle.Render("  "+m.connectionMsg) + "\n"
 		}
@@ -279,6 +301,19 @@ func (m model) View() string {
 	}
 
 	s += m.input.View()
+
+	// Debug status bar
+	if m.debug {
+		s += "\n" + separatorStyle.Render(strings.Repeat("─", 50)) + "\n"
+		debugInfo := "DEBUG | Model: " + m.modelName
+		if m.isLoading && m.latency > 0 {
+			debugInfo += " | Latency: " + m.latency.Round(time.Millisecond).String()
+		}
+		if m.tokenUsage.InputTokens > 0 || m.tokenUsage.OutputTokens > 0 {
+			debugInfo += fmt.Sprintf(" | Tokens: in=%d out=%d", m.tokenUsage.InputTokens, m.tokenUsage.OutputTokens)
+		}
+		s += dimStyle.Render(debugInfo)
+	}
 
 	return s
 }

@@ -49,6 +49,105 @@ type messageLine struct {
 	Timestamp int64  `json:"timestamp_ms"`
 }
 
+// traceRequestLine is the JSONL line type for API request traces.
+type traceRequestLine struct {
+	Type          string `json:"type"`
+	Model         string `json:"model"`
+	MessagesCount int    `json:"messages_count"`
+	Timestamp     int64  `json:"timestamp_ms"`
+}
+
+// traceResponseLine is the JSONL line type for API response traces.
+type traceResponseLine struct {
+	Type         string `json:"type"`
+	StopReason   string `json:"stop_reason"`
+	InputTokens  int    `json:"input_tokens"`
+	OutputTokens int    `json:"output_tokens"`
+	Timestamp    int64  `json:"timestamp_ms"`
+}
+
+// traceToolLine is the JSONL line type for tool execution traces.
+type traceToolLine struct {
+	Type       string      `json:"type"`
+	Name       string      `json:"name"`
+	Input      interface{} `json:"input"`
+	Output     string      `json:"output"`
+	DurationMs int64       `json:"duration_ms"`
+	Timestamp  int64       `json:"timestamp_ms"`
+}
+
+// traceErrorLine is the JSONL line type for error traces.
+type traceErrorLine struct {
+	Type      string `json:"type"`
+	Message   string `json:"message"`
+	Timestamp int64  `json:"timestamp_ms"`
+}
+
+// AppendTraceRequest appends a request trace line to the session file.
+func AppendTraceRequest(filepath, model string, messagesCount int) error {
+	return appendTraceLine(filepath, traceRequestLine{
+		Type:          "request",
+		Model:         model,
+		MessagesCount: messagesCount,
+		Timestamp:     time.Now().UnixMilli(),
+	})
+}
+
+// AppendTraceResponse appends a response trace line to the session file.
+func AppendTraceResponse(filepath, stopReason string, inputTokens, outputTokens int) error {
+	return appendTraceLine(filepath, traceResponseLine{
+		Type:         "response",
+		StopReason:   stopReason,
+		InputTokens:  inputTokens,
+		OutputTokens: outputTokens,
+		Timestamp:    time.Now().UnixMilli(),
+	})
+}
+
+// AppendTraceTool appends a tool execution trace line to the session file.
+func AppendTraceTool(filepath, name string, input interface{}, output string, durationMs int64) error {
+	return appendTraceLine(filepath, traceToolLine{
+		Type:       "tool",
+		Name:       name,
+		Input:      input,
+		Output:     output,
+		DurationMs: durationMs,
+		Timestamp:  time.Now().UnixMilli(),
+	})
+}
+
+// AppendTraceError appends an error trace line to the session file.
+func AppendTraceError(filepath, message string) error {
+	return appendTraceLine(filepath, traceErrorLine{
+		Type:      "error",
+		Message:   message,
+		Timestamp: time.Now().UnixMilli(),
+	})
+}
+
+// appendTraceLine appends a JSON line to the session file.
+func appendTraceLine(filepath string, v interface{}) error {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return fmt.Errorf("failed to marshal trace line: %w", err)
+	}
+
+	f, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open session file: %w", err)
+	}
+	defer f.Close()
+
+	if _, err := f.Write(data); err != nil {
+		return fmt.Errorf("failed to write trace line: %w", err)
+	}
+	if _, err := f.WriteString("\n"); err != nil {
+		return fmt.Errorf("failed to write newline: %w", err)
+	}
+
+	return nil
+}
+
 // SaveSession saves a session and its messages to a JSONL file.
 // The file is written atomically: first to a temp file, then renamed to the final path.
 // Filename format: {dir}/session-{timestamp}.jsonl
