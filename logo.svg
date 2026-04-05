@@ -1,20 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="goGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#00ADD8"/>
       <stop offset="100%" style="stop-color:#007A99"/>
     </linearGradient>
   </defs>
   
   <!-- Background circle -->
-  <circle cx="32" cy="32" r="30" fill="url(#grad)"/>
+  <circle cx="32" cy="32" r="30" fill="url(#goGrad)"/>
   
-  <!-- Code bracket < -->
-  <path d="M18 20 L10 32 L18 44" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Left code bracket < -->
+  <path d="M22 18 L12 32 L22 46" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   
-  <!-- C letter -->
-  <path d="M40 22 C32 18, 24 24, 24 32 C24 40, 32 46, 40 42" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <!-- Go text -->
+  <text x="32" y="38" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="700" fill="white" text-anchor="middle">Go</text>
   
-  <!-- Code bracket > -->
-  <path d="M46 20 L54 32 L46 44" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Right code bracket > -->
+  <path d="M42 18 L52 32 L42 46" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
