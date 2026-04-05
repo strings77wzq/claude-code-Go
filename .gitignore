@@ -37,3 +37,4 @@ claw-code-parity/
 test/
 node_modules/
 .vitepress/dist/
+docs/node_modules/
