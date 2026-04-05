@@ -58,5 +58,10 @@ func RegisterBuiltinTools(r *tool.Registry, workingDir string) error {
 		return fmt.Errorf("failed to register todo tool: %w", err)
 	}
 
+	notebookTool := builtin.NewNotebookTool(workingDir)
+	if err := r.Register(notebookTool); err != nil {
+		return fmt.Errorf("failed to register notebook tool: %w", err)
+	}
+
 	return nil
 }

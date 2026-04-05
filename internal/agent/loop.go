@@ -53,6 +53,7 @@ type Agent struct {
 	sessionID        string
 	startTime        time.Time
 	traceFilePath    string
+	recoveryManager  *RecoveryManager
 }
 
 // NewAgent creates a new Agent with the given dependencies.
@@ -73,6 +74,7 @@ func NewAgent(
 		history:          NewHistory(),
 		contextConfig:    DefaultContextConfig(),
 		hooksRegistry:    hooks.NewRegistry(),
+		recoveryManager:  NewRecoveryManager(),
 	}
 }
 
@@ -102,9 +104,22 @@ func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(s
 		req := a.buildRequest()
 		a.traceRequest(req.Model, len(req.Messages))
 
-		resp, err := a.apiClient.SendMessageStream(ctx, req, outputCallback)
+		recoveryCtx := &RecoveryContext{
+			Manager:    a.recoveryManager,
+			Agent:      a,
+			RetryCount: 0,
+		}
+
+		var resp *api.ApiResponse
+		var err error
+
+		err = recoveryCtx.ExecuteWithRecovery(ctx, func() error {
+			resp, err = a.apiClient.SendMessageStream(ctx, req, outputCallback)
+			return err
+		})
+
 		if err != nil {
-			a.traceError(fmt.Sprintf("API call failed: %v", err))
+			a.traceError(fmt.Sprintf("API call failed after recovery: %v", err))
 			a.saveSession(turns, totalInputTokens, totalOutputTokens)
 			return "", fmt.Errorf("API call failed: %w", err)
 		}

@@ -1,0 +1,20 @@
+project_name: go-code
+builds:
+  - id: go-code
+    main: ./cmd/go-code
+    binary: go-code
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    env: [CGO_ENABLED=0]
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: "checksums.txt"
+release:
+  github:
+    owner: strings77wzq
+    name: claude-code-Go

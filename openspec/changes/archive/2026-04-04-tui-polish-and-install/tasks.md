@@ -7,10 +7,10 @@
 ## 2. 安装优化
 
 - [x] 2.1 Makefile 添加 install 目标
-- [ ] 2.2 README 更新安装说明（go install 为主）
+- [x] 2.2 README 更新安装说明（go install 为主）
 
 ## 3. 官网更新
 
-- [ ] 3.1 英文安装文档更新（go install 方式）
-- [ ] 3.2 中文安装文档更新
-- [ ] 3.3 官网 TUI 截图更新
+- [x] 3.1 英文安装文档更新（go install 方式）
+- [x] 3.2 中文安装文档更新
+- [x] 3.3 官网 TUI 截图更新
