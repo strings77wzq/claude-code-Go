@@ -13,6 +13,7 @@ import (
 
 	"github.com/strings77wzq/claude-code-Go/internal/agent"
 	"github.com/strings77wzq/claude-code-Go/internal/api"
+	"github.com/strings77wzq/claude-code-Go/internal/provider/registry"
 	"github.com/strings77wzq/claude-code-Go/internal/session"
 	"github.com/strings77wzq/claude-code-Go/internal/skills"
 	"github.com/strings77wzq/claude-code-Go/internal/update"
@@ -394,22 +395,20 @@ func (r *REPL) expandSessionsDir() string {
 }
 
 func (r *REPL) printAvailableModels() {
+	models := registry.GetSupportedModels()
+
 	fmt.Println("Available models:")
 	fmt.Println()
-	fmt.Println("  Anthropic:")
-	fmt.Println("    claude-sonnet-4-20250514 (default)")
-	fmt.Println("    claude-opus-4-20250514")
-	fmt.Println("    claude-haiku-4-20250514")
-	fmt.Println()
-	fmt.Println("  Tencent Coding Plan:")
-	fmt.Println("    tc-code-latest (Auto)")
-	fmt.Println("    hunyuan-2.0-instruct")
-	fmt.Println("    hunyuan-2.0-thinking")
-	fmt.Println("    minimax-m2.5")
-	fmt.Println("    kimi-k2.5")
-	fmt.Println("    glm-5")
-	fmt.Println("    hunyuan-t1")
-	fmt.Println("    hunyuan-turbos")
+
+	currentProvider := ""
+	for _, m := range models {
+		if m.Provider != currentProvider {
+			currentProvider = m.Provider
+			fmt.Printf("  %s:\n", strings.Title(currentProvider))
+		}
+		fmt.Printf("    %s - %s\n", m.Name, m.Description)
+	}
+
 	fmt.Println()
 	fmt.Println("Switch model: /model <model-name>")
 }

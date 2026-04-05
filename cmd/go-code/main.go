@@ -14,9 +14,10 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/strings77wzq/claude-code-Go/internal/agent"
-	"github.com/strings77wzq/claude-code-Go/internal/api"
 	"github.com/strings77wzq/claude-code-Go/internal/config"
 	"github.com/strings77wzq/claude-code-Go/internal/permission"
+	"github.com/strings77wzq/claude-code-Go/internal/provider"
+	"github.com/strings77wzq/claude-code-Go/internal/provider/registry"
 	"github.com/strings77wzq/claude-code-Go/internal/skills"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 	toolinit "github.com/strings77wzq/claude-code-Go/internal/tool/init"
@@ -35,7 +36,6 @@ func main() {
 	outputFormat := flag.String("f", "text", "Output format for non-interactive mode (text, json)")
 	quiet := flag.Bool("q", false, "Hide spinner in non-interactive mode")
 	debug := flag.Bool("debug", false, "Enable debug logging to stderr")
-	traceHTTP := flag.Bool("trace-http", false, "Log full HTTP request/response bodies")
 	flag.Parse()
 
 	if *setupMode {
@@ -82,14 +82,15 @@ func main() {
 	}
 	logger.Info("Configuration loaded", "model", cfg.Model, "baseURL", cfg.BaseURL)
 
-	// Create API client
+	// Create API client via provider registry
 	logger.Info("Creating API client")
-	client := api.NewClient(cfg.APIKey, cfg.BaseURL, cfg.Model, *traceHTTP)
-	logger.Info("API client created")
+	apiClient := registry.SelectProvider(cfg.APIKey, cfg.BaseURL, cfg.Model)
+	client := provider.NewApiClientAdapter(apiClient)
+	logger.Info("API client created", "provider", apiClient.Name())
 
 	// Create tool registry
 	logger.Info("Creating tool registry")
-	registry := tool.NewRegistry()
+	toolRegistry := tool.NewRegistry()
 	logger.Info("Tool registry created")
 
 	// Register builtin tools
@@ -98,11 +99,11 @@ func main() {
 	if wd == "" {
 		wd, _ = os.Getwd()
 	}
-	if err := toolinit.RegisterBuiltinTools(registry, wd); err != nil {
+	if err := toolinit.RegisterBuiltinTools(toolRegistry, wd); err != nil {
 		logger.Error("Failed to register builtin tools", "error", err)
 		os.Exit(1)
 	}
-	logger.Info("Builtin tools registered", "count", len(registry.GetAllDefinitions()))
+	logger.Info("Builtin tools registered", "count", len(toolRegistry.GetAllDefinitions()))
 
 	// Create permission policy
 	logger.Info("Creating permission policy")
@@ -111,7 +112,7 @@ func main() {
 
 	// Create agent
 	logger.Info("Creating agent")
-	agentInstance := agent.NewAgent(client, registry, policy, systemPrompt, cfg.Model)
+	agentInstance := agent.NewAgent(client, toolRegistry, policy, systemPrompt, cfg.Model)
 	logger.Info("Agent started", "model", cfg.Model)
 
 	// Non-interactive mode: run single prompt and exit

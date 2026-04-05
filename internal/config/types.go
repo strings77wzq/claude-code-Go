@@ -15,7 +15,7 @@ type Config struct {
 func DefaultConfig() *Config {
 	return &Config{
 		BaseURL:   "https://api.anthropic.com",
-		Model:     "claude-sonnet-4-20250514",
+		Model:     "claude-sonnet-4-6-20251001",
 		MaxTokens: 8192,
 		Provider:  "anthropic",
 	}

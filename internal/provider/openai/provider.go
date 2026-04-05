@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/strings77wzq/claude-code-Go/internal/api"
 	"github.com/strings77wzq/claude-code-Go/internal/provider"
 )
 
@@ -44,12 +45,13 @@ func (p *OpenAIProvider) Name() string {
 	return "openai"
 }
 
-func (p *OpenAIProvider) DefaultModel() string {
-	return "gpt-4o"
-}
+func (p *OpenAIProvider) SendMessage(ctx context.Context, req *api.ApiRequest) (*api.ApiResponse, error) {
+	model := req.Model
+	if model == "" {
+		model = p.model
+	}
 
-func (p *OpenAIProvider) SendMessage(ctx context.Context, req *provider.Request) (*provider.Response, error) {
-	openaiReq := convertToOpenAIRequest(req)
+	openaiReq := convertToOpenAIRequest(req, model)
 	body, err := json.Marshal(openaiReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
@@ -101,14 +103,19 @@ func (p *OpenAIProvider) SendMessage(ctx context.Context, req *provider.Request)
 		if err := json.NewDecoder(resp.Body).Decode(&openaiResp); err != nil {
 			return nil, fmt.Errorf("failed to decode response: %w", err)
 		}
-		return convertToProviderResponse(&openaiResp), nil
+		return convertToApiResponse(&openaiResp), nil
 	}
 
 	return nil, fmt.Errorf("request failed after %d retries: %w", maxRetries, lastErr)
 }
 
-func (p *OpenAIProvider) SendMessageStream(ctx context.Context, req *provider.Request, onTextDelta func(text string)) (*provider.Response, error) {
-	openaiReq := convertToOpenAIRequest(req)
+func (p *OpenAIProvider) SendMessageStream(ctx context.Context, req *api.ApiRequest, onTextDelta func(text string)) (*api.ApiResponse, error) {
+	model := req.Model
+	if model == "" {
+		model = p.model
+	}
+
+	openaiReq := convertToOpenAIRequest(req, model)
 	openaiReq.Stream = true
 
 	body, err := json.Marshal(openaiReq)
@@ -169,7 +176,7 @@ func (p *OpenAIProvider) setHeaders(req *http.Request) {
 	req.Header.Set("Content-Type", "application/json")
 }
 
-func (p *OpenAIProvider) parseStreamResponse(body io.Reader, onTextDelta func(text string)) (*provider.Response, error) {
+func (p *OpenAIProvider) parseStreamResponse(body io.Reader, onTextDelta func(text string)) (*api.ApiResponse, error) {
 	data, err := io.ReadAll(body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
@@ -177,8 +184,9 @@ func (p *OpenAIProvider) parseStreamResponse(body io.Reader, onTextDelta func(te
 
 	lines := strings.Split(string(data), "\n")
 
-	var response provider.Response
-	var content strings.Builder
+	var contentBlocks []api.ContentBlock
+	var stopReason string
+	var outputTokens int
 
 	for _, line := range lines {
 		line = strings.TrimRight(line, "\r")
@@ -199,28 +207,43 @@ func (p *OpenAIProvider) parseStreamResponse(body io.Reader, onTextDelta func(te
 			continue
 		}
 
-		if len(chunk.Choices) > 0 && chunk.Choices[0].Delta.Content != "" {
-			text := chunk.Choices[0].Delta.Content
-			content.WriteString(text)
-			if onTextDelta != nil {
-				onTextDelta(text)
+		if len(chunk.Choices) > 0 {
+			if chunk.Choices[0].Delta.Content != "" {
+				contentBlocks = append(contentBlocks, api.ContentBlock{
+					Type: "text",
+					Text: chunk.Choices[0].Delta.Content,
+				})
+				if onTextDelta != nil {
+					onTextDelta(chunk.Choices[0].Delta.Content)
+				}
 			}
-		}
 
-		if chunk.Choices[0].FinishReason != "" {
-			response.StopReason = chunk.Choices[0].FinishReason
+			if chunk.Choices[0].FinishReason != "" {
+				stopReason = chunk.Choices[0].FinishReason
+			}
 		}
 	}
 
-	response.Content = content.String()
-	return &response, nil
+	return &api.ApiResponse{
+		ID:         "stream",
+		Type:       "message",
+		Role:       "assistant",
+		Content:    contentBlocks,
+		StopReason: stopReason,
+		Usage: api.Usage{
+			InputTokens:  0,
+			OutputTokens: outputTokens,
+		},
+	}, nil
 }
 
 type openAIChatRequest struct {
-	Model    string          `json:"model"`
-	Messages []openAIMessage `json:"messages"`
-	Stream   bool            `json:"stream,omitempty"`
-	Tools    []openAITool    `json:"tools,omitempty"`
+	Model       string          `json:"model"`
+	Messages    []openAIMessage `json:"messages"`
+	Stream      bool            `json:"stream,omitempty"`
+	Tools       []openAITool    `json:"tools,omitempty"`
+	MaxTokens   int             `json:"max_tokens,omitempty"`
+	Temperature float64         `json:"temperature,omitempty"`
 }
 
 type openAIMessage struct {
@@ -259,18 +282,34 @@ type openAIStreamChunk struct {
 	Choices []openAIChoice `json:"choices"`
 }
 
-func convertToOpenAIRequest(req *provider.Request) *openAIChatRequest {
-	model := req.Model
-	if model == "" {
-		model = "gpt-4o"
+func convertToOpenAIRequest(req *api.ApiRequest, model string) *openAIChatRequest {
+	messages := make([]openAIMessage, 0, len(req.Messages))
+
+	if req.System != "" {
+		messages = append(messages, openAIMessage{
+			Role:    "system",
+			Content: req.System,
+		})
 	}
 
-	messages := make([]openAIMessage, len(req.Messages))
-	for i, msg := range req.Messages {
-		messages[i] = openAIMessage{
-			Role:    msg.Role,
-			Content: msg.Content,
+	for _, msg := range req.Messages {
+		content := ""
+		switch c := msg.Content.(type) {
+		case string:
+			content = c
+		case []api.ContentBlock:
+			var sb strings.Builder
+			for _, block := range c {
+				if block.Type == "text" {
+					sb.WriteString(block.Text)
+				}
+			}
+			content = sb.String()
 		}
+		messages = append(messages, openAIMessage{
+			Role:    msg.Role,
+			Content: content,
+		})
 	}
 
 	return &openAIChatRequest{
@@ -280,21 +319,35 @@ func convertToOpenAIRequest(req *provider.Request) *openAIChatRequest {
 	}
 }
 
-func convertToProviderResponse(openaiResp *openAIChatResponse) *provider.Response {
+func convertToApiResponse(openaiResp *openAIChatResponse) *api.ApiResponse {
 	if len(openaiResp.Choices) == 0 {
-		return &provider.Response{
+		return &api.ApiResponse{
 			ID:      openaiResp.ID,
-			Content: "",
+			Type:    "message",
+			Role:    "assistant",
+			Content: []api.ContentBlock{},
 		}
 	}
 
-	return &provider.Response{
+	content := openaiResp.Choices[0].Message.Content
+	contentBlocks := []api.ContentBlock{
+		{
+			Type: "text",
+			Text: content,
+		},
+	}
+
+	return &api.ApiResponse{
 		ID:         openaiResp.ID,
-		Content:    openaiResp.Choices[0].Message.Content,
+		Type:       "message",
+		Role:       "assistant",
+		Content:    contentBlocks,
 		StopReason: openaiResp.Choices[0].FinishReason,
-		Usage: provider.Usage{
+		Usage: api.Usage{
 			InputTokens:  openaiResp.Usage.PromptTokens,
 			OutputTokens: openaiResp.Usage.CompletionTokens,
 		},
 	}
 }
+
+var _ provider.Provider = (*OpenAIProvider)(nil)
