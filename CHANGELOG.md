@@ -21,25 +21,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.1.0] - 2026-04-05
 
 ### Added
-- Full agent loop implementation with think → act → observe cycle
+- Full Agent Loop with stop_reason-driven state machine
 - 10 built-in tools: Read, Write, Edit, Glob, Grep, Bash, Diff, Tree, WebFetch, TodoWrite
-- 3-tier permission system (ReadOnly, WorkspaceWrite, DangerFullAccess) with glob rules
+- 3-tier permission system (ReadOnly / WorkspaceWrite / DangerFullAccess)
 - MCP (Model Context Protocol) support with stdio transport
-- SSE streaming for real-time token-by-token output
-- Session persistence with auto-save and resume (JSONL format)
-- Skills system for custom commands and reusable workflows
-- Multi-provider support: Anthropic, Tencent Cloud Coding Plan, OpenAI-compatible APIs
+- SSE streaming with custom parser
+- Session persistence and resume (JSONL format)
+- Skills system for custom commands and workflows
+- Multi-Provider support (Anthropic, OpenAI-compatible: DeepSeek, Qwen, GLM)
 - Runtime model switching with `/model` command
-- Auto-update checker with `/update` command
-- Bubbletea TUI with interactive prompts
-- Complete VitePress documentation site
-
-### Changed
-- Project structure refactored for better organization
-- Tool interface standardized across all implementations
-
-### Removed
-- Legacy CLI-only mode (replaced with TUI)
+- LSP integration (symbols, references, diagnostics, definition, hover)
+- Auto-recovery mechanism (API timeout, rate limit, tool error, context full)
+- Bubbletea TUI with dark/light theme
+- Bash semantic validation (937 LOC,对标 Claw Code 1004 LOC)
+- File boundary guards (binary detection, size limit, symlink escape)
+- Cost tracking and estimation
+- Auto-update checker
+- VitePress documentation site (English + Chinese)
+- Python Harness (Mock API, evaluators, replay, parity tests)
+- GoReleaser configuration for multi-platform releases
+- GitHub Actions CI/CD
+- Open source community files (CONTRIBUTING, SECURITY, CODE_OF_CONDUCT)
 
 ---
 

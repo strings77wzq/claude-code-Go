@@ -33,12 +33,15 @@ We'd love to hear your ideas for new features:
 
 For code contributions:
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature-name`
-3. Make your changes following our code guidelines
-4. Run tests to ensure everything passes
-5. Commit your changes with clear commit messages
-6. Push to your fork and submit a pull request
+1. **Fork the repository** — Click the "Fork" button on GitHub
+2. **Clone your fork**: `git clone https://github.com/YOUR_USERNAME/claude-code-Go.git`
+3. **Add upstream remote**: `git remote add upstream https://github.com/strings77wzq/claude-code-Go.git`
+4. **Create a feature branch**: `git checkout -b feature/your-feature-name`
+5. **Make your changes** following our code guidelines
+6. **Run tests** to ensure everything passes: `go test -v ./...`
+7. **Commit your changes** with clear commit messages
+8. **Push to your fork**: `git push origin feature/your-feature-name`
+9. **Submit a pull request** from your fork to the main repository
 
 ## Development Setup
 

@@ -63,7 +63,7 @@ Or create `~/.go-code/settings.json`:
 ```json
 {
   "apiKey": "sk-ant-...",
-  "model": "claude-sonnet-4-20250514"
+  "model": "claude-sonnet-4-6-20251001"
 }
 ```
 
@@ -86,13 +86,15 @@ go-code -p "What is 2+2?" -q
 ## Features
 
 - **Agent Loop**: Full "think → act → observe" cycle with stop_reason-driven state machine
-- **9 Built-in Tools**: `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, `Diff`, `Tree`, `WebFetch`
+- **10 Built-in Tools**: `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, `Diff`, `Tree`, `WebFetch`, `TodoWrite`
 - **Permission System**: 3-tier model (ReadOnly / WorkspaceWrite / DangerFullAccess) with glob rules and session memory
 - **MCP Support**: Model Context Protocol with stdio transport
 - **SSE Streaming**: Real-time token-by-token output with custom parser
 - **Session Persistence**: Auto-save and resume conversations (JSONL format)
 - **Skills System**: Custom commands and reusable workflows
-- **Multi-Provider**: Anthropic, OpenAI, and any OpenAI-compatible API
+- **Multi-Provider**: Anthropic, OpenAI, and any OpenAI-compatible API (DeepSeek, Qwen, GLM)
+- **LSP Integration**: Language Server Protocol for code symbols, references, diagnostics
+- **Auto-Recovery**: Automatic retry on API timeout, rate limit, and context full
 - **Runtime Model Switching**: Change models mid-session with `/model <name>`
 - **Auto-Update**: Check and download latest version with `/update`
 
@@ -149,25 +151,28 @@ claude-code-Go/
 ├── cmd/go-code/          # Main entry point
 ├── internal/
 │   ├── agent/            # Agent loop + context management
-│   ├── api/              # API client + SSE streaming
 │   ├── config/           # Multi-source config loader
+│   ├── cost/             # Cost tracking and estimation
+│   ├── hooks/            # Pre/post execution hooks
+│   ├── lsp/              # Language Server Protocol client
 │   ├── permission/       # 3-tier permission system
+│   ├── provider/         # Multi-provider abstraction
+│   │   ├── anthropic/    # Anthropic API provider
+│   │   ├── openai/       # OpenAI-compatible provider
+│   │   └── registry/     # Provider auto-selection
+│   ├── session/          # Session persistence + resume
+│   ├── skills/           # Custom skills system
 │   ├── tool/             # Tool interface + builtins
-│   │   ├── builtin/      # Bash, Read, Write, Edit, Glob, Grep, Diff, Tree, WebFetch
+│   │   ├── builtin/      # 10 built-in tools
 │   │   ├── mcp/          # MCP integration
 │   │   └── init/         # Tool registration
-│   ├── hooks/            # Pre/post execution hooks
-│   ├── skills/           # Custom skills system
-│   ├── session/          # Session persistence + resume
 │   └── update/           # Auto-update checker
 ├── pkg/
 │   ├── tty/              # Legacy REPL (use --legacy-repl)
 │   └── tui/              # Bubbletea TUI (default)
-├── harness/              # Python test harness (optional)
+├── harness/              # Python test harness
 ├── docs/                 # VitePress documentation
-│   ├── guide/            # User guides
-│   ├── architecture/     # Architecture docs
-│   └── extension/        # Skills, MCP, Hooks docs
+├── scripts/              # Install and launch scripts
 └── .github/workflows/    # CI/CD
 ```
 
@@ -205,8 +210,11 @@ make docs-build     # Build for production
 | Provider | Setup |
 |----------|-------|
 | **Anthropic** | Set `ANTHROPIC_API_KEY` |
-| **Tencent Cloud Coding Plan** | Set `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL` |
-| **OpenAI** | Set `ANTHROPIC_API_KEY` + compatible `ANTHROPIC_BASE_URL` |
+| **OpenAI** | Set `ANTHROPIC_API_KEY` + `ANTHROPIC_BASE_URL=https://api.openai.com/v1` |
+| **DeepSeek** | Set `ANTHROPIC_BASE_URL=https://api.deepseek.com` |
+| **Qwen** | Set `ANTHROPIC_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| **GLM** | Set `ANTHROPIC_BASE_URL=https://open.bigmodel.cn/api/paas/v4` |
+| **Tencent Cloud** | Set `ANTHROPIC_BASE_URL=https://api.lkeap.cloud.tencent.com/coding/anthropic` |
 
 ## Documentation
 
