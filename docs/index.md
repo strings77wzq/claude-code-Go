@@ -102,30 +102,7 @@ hero:
 </div>
 
 <div class="terminal-section fade-in-section">
-  <div class="terminal-window">
-    <div class="terminal-header">
-      <span class="terminal-dot red"></span>
-      <span class="terminal-dot yellow"></span>
-      <span class="terminal-dot green"></span>
-      <span class="terminal-title">claude-code-Go</span>
-    </div>
-    <div class="terminal-body">
-      <div class="terminal-line"><span class="terminal-prompt">$</span> <span class="terminal-cmd">go-code</span></div>
-      <div class="terminal-line terminal-output">claude-code-Go v0.1.0</div>
-      <div class="terminal-line terminal-output">Type /help for commands, /exit to quit.</div>
-      <div class="terminal-line">&nbsp;</div>
-      <div class="terminal-line"><span class="terminal-prompt">go-code></span> <span class="terminal-cmd">write an HTTP server on port 8080</span></div>
-      <div class="terminal-line terminal-output">🔄 Agent thinking...</div>
-      <div class="terminal-line terminal-output">🛠️ Tool call: Write → main.go</div>
-      <div class="terminal-line terminal-output terminal-success">✓ File written</div>
-      <div class="terminal-line terminal-output">🔄 Agent continuing...</div>
-      <div class="terminal-line terminal-output">🛠️ Tool call: Bash → go run main.go</div>
-      <div class="terminal-line terminal-output terminal-success">✓ Server started on port 8080</div>
-      <div class="terminal-line terminal-output terminal-success">✓ Done! HTTP server created and running.</div>
-      <div class="terminal-line">&nbsp;</div>
-      <div class="terminal-line"><span class="terminal-prompt">go-code></span> <span class="terminal-cursor"></span></div>
-    </div>
-  </div>
+  <TerminalTypewriter />
 </div>
 
 ## Feature Highlights
@@ -139,15 +116,94 @@ hero:
 | 🌊 SSE Streaming | Real-time token-by-token with custom parser, zero dependencies |
 | 🧠 Context Management | Intelligent token estimation and automatic conversation compaction |
 
+## Choose Your Role
+
+<div class="role-cards">
+  <a href="/guide/quick-start" class="role-card">
+    <div class="role-icon">👨‍💻</div>
+    <div class="role-title">Full-stack Developer</div>
+    <div class="role-desc">Build real applications with hands-on guides. From REPL to production, learn by doing.</div>
+    <div class="role-link">Quick start guide →</div>
+  </a>
+
+  <a href="/architecture/overview" class="role-card">
+    <div class="role-icon">🏗️</div>
+    <div class="role-title">Architect</div>
+    <div class="role-desc">Deep dive into the agent loop, tool registry, and permission system. Design extensible systems.</div>
+    <div class="role-link">Architecture deep dive →</div>
+  </a>
+
+  <a href="/guide/introduction" class="role-card">
+    <div class="role-icon">🎓</div>
+    <div class="role-title">Student</div>
+    <div class="role-desc">Learn the core principles: how AI agents reason, plan, and execute tools safely.</div>
+    <div class="role-link">Learn the principles →</div>
+  </a>
+</div>
+
+<style>
+.role-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.role-card {
+  display: block;
+  padding: 1.5rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  background: var(--vp-c-bg-soft);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.role-card:hover {
+  border-color: var(--vp-c-brand);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.role-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.role-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  margin-bottom: 0.5rem;
+}
+
+.role-desc {
+  font-size: 0.9rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.role-link {
+  font-size: 0.85rem;
+  color: var(--vp-c-brand);
+  font-weight: 500;
+}
+</style>
+
 ## Why Go?
 
-| | Go | Python | Rust |
-|---|---|---|---|
-| **Deployment** | Single binary | Requires runtime | Single binary |
-| **Dependencies** | Zero | pip install | Cargo build |
-| **Cross-compile** | `GOOS=linux go build` | Platform-specific | Cross-toolchain needed |
-| **Concurrency** | Goroutines (built-in) | asyncio (library) | async/await |
-| **Learning curve** | Moderate | Easy | Steep |
+<div class="comparison-table">
+
+| Feature | Go | Python | Rust | TypeScript |
+|---------|-----|--------|------|------------|
+| **Single binary** | ✅ | ❌ | ✅ | ❌ |
+| **Zero runtime deps** | ✅ | ❌ | ✅ | ❌ |
+| **Concurrency** | ✅ Goroutines | ❌ asyncio | ✅ async/await | ✅ event loop |
+| **Deployment** | `go install` | `pip install` | `cargo build` | `npm install` |
+| **Learning curve** | Moderate | Easy | Steep | Moderate |
+
+</div>
 
 Go gives you the best of both worlds: **single-binary deployment like Rust, with development speed closer to Python.**
 

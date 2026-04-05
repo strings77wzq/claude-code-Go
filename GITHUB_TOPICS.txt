@@ -1,0 +1,3 @@
+ai-agent, claude-code, go, coding-assistant, mcp, llm, terminal, bubbletea,
+agent-loop, permission-system, sse-streaming, session-persistence,
+skills-system, multi-provider, lsp, notebook-edit, auto-recovery

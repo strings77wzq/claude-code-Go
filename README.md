@@ -1,12 +1,15 @@
 # claude-code-Go — AI Coding Agent in Go
 
-[![Go Version](https://img.shields.io/badge/Go-1.24+-blue)](https://go.dev/doc/install)
+[![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev/doc/install)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/strings77wzq/claude-code-Go/releases)
+[![Stars](https://img.shields.io/github/stars/strings77wzq/claude-code-Go?style=social)](https://github.com/strings77wzq/claude-code-Go/stargazers)
+[![CI](https://github.com/strings77wzq/claude-code-Go/actions/workflows/ci.yml/badge.svg)](https://github.com/strings77wzq/claude-code-Go/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/strings77wzq/claude-code-Go)](https://goreportcard.com/report/github.com/strings77wzq/claude-code-Go)
 
 > **Model provides intelligence, Harness provides reliability.**
 
-A production-grade AI coding assistant with full agent loop, tool execution, permission management, and SSE streaming — in a single Go binary.
+A production-grade AI coding assistant with full agent loop, tool execution, permission management, SSE streaming, LSP integration, and auto-recovery — in a single Go binary.
 
 ## Installation
 
