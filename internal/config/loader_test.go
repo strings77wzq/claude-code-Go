@@ -221,7 +221,7 @@ func TestDefaults(t *testing.T) {
 	if cfg.BaseURL != "https://api.anthropic.com" {
 		t.Errorf("expected default BaseURL, got '%s'", cfg.BaseURL)
 	}
-	if cfg.Model != "claude-sonnet-4-20250514" {
+	if cfg.Model != "claude-sonnet-4-6-20251001" {
 		t.Errorf("expected default Model, got '%s'", cfg.Model)
 	}
 	if cfg.MaxTokens != 8192 {
