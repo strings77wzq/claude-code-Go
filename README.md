@@ -11,6 +11,14 @@
 
 A production-grade AI coding assistant with full agent loop, tool execution, permission management, SSE streaming, LSP integration, and auto-recovery — in a single Go binary.
 
+## Demo
+
+![Demo](docs/public/demo.gif)
+
+See the tool in action — autonomous file reading, intelligent tool selection, and real-time streaming output.
+
+> Note: Demo GIF is a placeholder. Record actual usage with [asciinema](https://asciinema.org/) or [terminalizer](https://github.com/faressoft/terminalizer).
+
 ## Installation
 
 ### Via go install (Recommended)
