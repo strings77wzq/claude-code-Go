@@ -30,7 +30,6 @@ jobs:
 
   python-harness:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,14 +46,15 @@ jobs:
           python-version: '3.12'
 
       - name: Install Python dependencies
-        run: pip install -r harness/requirements.txt
+        run: |
+          pip install -r harness/requirements.txt
+          pip install -e .
 
       - name: Build Go binary
         run: go build -o bin/go-code ./cmd/go-code
 
       - name: Run Python tests
-        working-directory: harness
-        run: python -m pytest -v --tb=short 2>&1 || echo "Some harness tests may need a running mock server"
+        run: pytest harness/ -v --tb=short
 
   build-all:
     runs-on: ubuntu-latest

@@ -1,10 +1,15 @@
 """Pytest fixtures for the Go CLI test harness."""
 
 import os
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
+
+_project_root = Path(__file__).parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
 
 from harness.mock_server.server import MockServer
 

@@ -1,3 +1,31 @@
+Metadata-Version: 2.4
+Name: claude-code-harness
+Version: 0.1.0
+Summary: Python test harness for claude-code-Go
+Author: claude-code-Go contributors
+License: MIT
+Keywords: testing,harness,claude,ai,cli
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Requires-Dist: httpx
+Requires-Dist: pytest
+Requires-Dist: pytest-asyncio
+Provides-Extra: dev
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Dynamic: license-file
+
 # Python Harness
 
 ## 什么是 Harness？
