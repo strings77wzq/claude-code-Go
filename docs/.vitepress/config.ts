@@ -13,11 +13,29 @@ export default defineConfig({
       description: 'Claude Code in Go — AI-powered coding assistant',
       themeConfig: {
         nav: [
+          { text: 'Home', link: '/' },
           { text: 'Guide', link: '/guide/introduction' },
+          { 
+            text: 'Tutorials',
+            items: [
+              { text: 'Quick Start', link: '/guide/tutorials/01-quickstart' },
+              { text: 'First Tool Call', link: '/guide/tutorials/02-first-tool-call' },
+              { text: 'Agent Loop', link: '/guide/tutorials/03-agent-loop' },
+              { text: 'All Tutorials', link: '/guide/tutorials/' }
+            ]
+          },
           { text: 'Architecture', link: '/architecture/overview' },
           { text: 'API', link: '/api/tools' },
-          { text: 'Resources', link: '/roadmap' },
-          { text: 'GitHub', link: 'https://github.com/strings77wzq/claude-code-Go' }
+          { 
+            text: 'Resources',
+            items: [
+              { text: 'Roadmap', link: '/roadmap' },
+              { text: 'Troubleshooting', link: '/troubleshooting/common-issues' },
+              { text: 'Benchmarks', link: '/benchmark' },
+              { text: 'Showcase', link: '/showcase' }
+            ]
+          },
+          { text: 'GitHub ⭐', link: 'https://github.com/strings77wzq/claude-code-Go' }
         ],
         footer: {
           message: 'Released under the MIT License.',

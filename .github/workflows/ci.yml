@@ -25,6 +25,9 @@ jobs:
       - name: Run tests
         run: go test -v ./...
 
+      - name: Run benchmarks
+        run: go test -bench=. -benchtime=1s ./tests/integration/...
+
       - name: Build binary
         run: go build -o bin/go-code ./cmd/go-code
 

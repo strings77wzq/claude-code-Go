@@ -2,6 +2,13 @@ import DefaultTheme from 'vitepress/theme'
 import Layout from './Layout.vue'
 import CustomHome from './CustomHome.vue'
 import TerminalTypewriter from './components/TerminalTypewriter.vue'
+import TypedText from './components/TypedText.vue'
+import CodePreview from './components/CodePreview.vue'
+import AnimatedButton from './components/AnimatedButton.vue'
+import Playground from './components/Playground.vue'
+import GitHubStars from './components/GitHubStars.vue'
+import ThemeToggle from './components/ThemeToggle.vue'
+import Testimonials from './components/Testimonials.vue'
 import './custom.css'
 
 export default {
@@ -10,6 +17,13 @@ export default {
   enhanceApp({ app }) {
     app.component('CustomHome', CustomHome)
     app.component('TerminalTypewriter', TerminalTypewriter)
+    app.component('TypedText', TypedText)
+    app.component('CodePreview', CodePreview)
+    app.component('AnimatedButton', AnimatedButton)
+    app.component('Playground', Playground)
+    app.component('GitHubStars', GitHubStars)
+    app.component('ThemeToggle', ThemeToggle)
+    app.component('Testimonials', Testimonials)
     
     if (typeof window !== 'undefined') {
       window.addEventListener('DOMContentLoaded', () => {

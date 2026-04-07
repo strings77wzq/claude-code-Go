@@ -22,7 +22,7 @@ hero:
 <div class="metrics-section fade-in-section">
   <div class="metrics-grid">
     <div class="metric-item">
-      <div class="metric-value">50+</div>
+      <div class="metric-value">82</div>
       <div class="metric-label">Source Files</div>
     </div>
     <div class="metric-item">
@@ -30,14 +30,18 @@ hero:
       <div class="metric-label">Modules</div>
     </div>
     <div class="metric-item">
-      <div class="metric-value">9</div>
+      <div class="metric-value">10</div>
       <div class="metric-label">Built-in Tools</div>
     </div>
     <div class="metric-item">
-      <div class="metric-value">7,000+</div>
+      <div class="metric-value">14,000+</div>
       <div class="metric-label">Lines of Code</div>
     </div>
   </div>
+</div>
+
+<div class="code-preview-section fade-in-section">
+  <CodePreview />
 </div>
 
 <div class="features-section fade-in-section">
@@ -110,11 +114,39 @@ hero:
 | Feature | Description |
 |---------|-------------|
 | 🔄 Agent Loop | Autonomous "think → act → observe" cycle driven by stop_reason dispatch |
-| 🛠️ 9 Built-in Tools | Read, Write, Edit, Glob, Grep, Bash, Diff, Tree, WebFetch |
+| 🛠️ 10 Built-in Tools | Read, Write, Edit, Glob, Grep, Bash, Diff, Tree, WebFetch, TodoWrite |
 | 🔒 Permission System | Three-tier model with rule-based matching and session memory |
 | 🔌 MCP Integration | Model Context Protocol with stdio transport and JSON-RPC |
 | 🌊 SSE Streaming | Real-time token-by-token with custom parser, zero dependencies |
 | 🧠 Context Management | Intelligent token estimation and automatic conversation compaction |
+
+<div class="playground-section fade-in-section">
+  <Playground />
+</div>
+
+<div class="quick-start-section fade-in-section">
+  <div class="quick-start-header">
+    <h2 class="quick-start-title">🚀 5 Minutes to Get Started</h2>
+    <p class="quick-start-subtitle">Three simple steps to start coding with AI assistance</p>
+  </div>
+  <div class="quick-start-steps">
+    <div class="quick-start-step">
+      <div class="step-number">1</div>
+      <div class="step-title">Install</div>
+      <div class="step-desc">One command installation with <code>go install</code>. No dependencies needed.</div>
+    </div>
+    <div class="quick-start-step">
+      <div class="step-number">2</div>
+      <div class="step-title">Configure</div>
+      <div class="step-desc">Set your API key. Support for Anthropic, OpenAI, and compatible providers.</div>
+    </div>
+    <div class="quick-start-step">
+      <div class="step-number">3</div>
+      <div class="step-title">Start Coding</div>
+      <div class="step-desc">Launch go-code and start building. The agent handles the rest.</div>
+    </div>
+  </div>
+</div>
 
 ## Choose Your Role
 
@@ -139,6 +171,14 @@ hero:
     <div class="role-desc">Learn the core principles: how AI agents reason, plan, and execute tools safely.</div>
     <div class="role-link">Learn the principles →</div>
   </a>
+</div>
+
+<div class="testimonials-section-wrapper fade-in-section">
+  <div class="testimonials-header">
+    <h2 class="testimonials-title">💬 What Users Say</h2>
+    <p class="testimonials-subtitle">Trusted by developers worldwide</p>
+  </div>
+  <Testimonials />
 </div>
 
 <style>
