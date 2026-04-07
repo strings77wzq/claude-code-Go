@@ -175,11 +175,11 @@ func UserFriendlyError(err error) string {
 }
 ```
 
-## Examples
+## 示例文档
 
-See the [examples/error-handling/](.) directory for complete examples:
+查看完整的错误处理示例文档：
 
-- `api_errors.go` - Handling API errors
-- `permission_errors.go` - Handling permission errors
-- `tool_errors.go` - Handling tool execution errors
-- `timeout_errors.go` - Handling timeout errors
+- [api-errors.md](./api-errors.md) - API 错误处理
+- [permission-errors.md](./permission-errors.md) - 权限错误处理
+- [tool-errors.md](./tool-errors.md) - 工具执行错误处理
+- [timeout-errors.md](./timeout-errors.md) - 超时错误处理

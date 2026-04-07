@@ -1,3 +1,17 @@
+# 权限错误处理示例
+
+本文档展示如何在 claude-code-Go 中处理权限错误。
+
+## 权限系统概述
+
+claude-code-Go 使用三层权限模型：
+- **ReadOnly**: 只允许读取操作
+- **WorkspaceWrite**: 允许在工作区内写入
+- **DangerFullAccess**: 完全访问权限（包括系统命令）
+
+## 权限错误处理示例
+
+```go
 package main
 
 import (
@@ -6,7 +20,6 @@ import (
 	"github.com/strings77wzq/claude-code-Go/internal/permission"
 )
 
-// PermissionErrorExample demonstrates how to handle permission errors
 func main() {
 	// Setup permission enforcer
 	enforcer := permission.NewEnforcer(
@@ -36,3 +49,34 @@ func main() {
 
 	fmt.Println("Permission granted!")
 }
+```
+
+## 处理权限错误的最佳实践
+
+### 1. 清晰告知用户
+
+```go
+if permErr, ok := err.(*permission.Error); ok {
+    fmt.Println("Permission denied:", permErr.Resource)
+    fmt.Println("Run '/allow read", permErr.Resource, "' to grant access")
+}
+```
+
+### 2. 提供替代方案
+
+```go
+fmt.Println("\nTo allow this action:")
+fmt.Println("1. Add an exception: /allow read <file>")
+fmt.Println("2. Switch mode with /mode")
+fmt.Println("3. Update glob rules in settings")
+```
+
+### 3. 记录权限检查
+
+```go
+log.Infow("Permission check",
+    "resource", target,
+    "mode", currentMode,
+    "allowed", err == nil,
+)
+```

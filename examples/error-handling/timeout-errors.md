@@ -1,3 +1,17 @@
+# 超时错误处理示例
+
+本文档展示如何在 claude-code-Go 中处理超时错误。
+
+## 超时处理策略
+
+1. **指数退避重试**
+2. **将复杂任务分解为更小的步骤**
+3. **使用异步执行处理长时间运行的任务**
+4. **在设置中增加超时时间**
+
+## 超时错误处理示例
+
+```go
 package main
 
 import (
@@ -8,7 +22,6 @@ import (
 	"github.com/strings77wzq/claude-code-Go/internal/api"
 )
 
-// TimeoutErrorExample demonstrates how to handle timeout errors
 func main() {
 	// Configure with short timeout for demonstration
 	client := api.NewClient(api.Config{
@@ -64,3 +77,51 @@ func main() {
 
 	fmt.Println("Success:", response)
 }
+```
+
+## 重试模式
+
+### 指数退避
+
+```go
+func retryWithBackoff(operation func() error, maxRetries int) error {
+    for i := 0; i < maxRetries; i++ {
+        if err := operation(); err != nil {
+            if !isTimeout(err) {
+                return err // 非超时错误不重试
+            }
+            // 指数退避等待
+            time.Sleep(time.Duration(1<<i) * time.Second)
+            continue
+        }
+        return nil
+    }
+    return fmt.Errorf("failed after %d retries", maxRetries)
+}
+```
+
+### 带上下文检查的重试
+
+```go
+for retries := 0; retries < maxRetries; retries++ {
+    result, err := operation(ctx)
+    if err == nil {
+        return result, nil
+    }
+    
+    if ctx.Err() == context.DeadlineExceeded {
+        // 创建新上下文
+        ctx, cancel = context.WithTimeout(context.Background(), newTimeout)
+        defer cancel()
+    }
+}
+```
+
+## 用户建议
+
+当遇到超时时，向用户提供以下建议：
+
+1. **检查网络连接**
+2. **简化提示词**
+3. **增加超时设置**: `export GO_CODE_TIMEOUT=60s`
+4. **尝试响应更快的模型**
