@@ -39,6 +39,32 @@ func TestBashToolExitCode(t *testing.T) {
 	}
 }
 
+func TestBashToolBlocksDestructiveCommand(t *testing.T) {
+	tmpDir := t.TempDir()
+	bashTool := NewBashTool(tmpDir)
+
+	result := bashTool.Execute(context.Background(), map[string]any{
+		"command": "rm -rf /",
+	})
+
+	if !result.IsError {
+		t.Fatalf("expected destructive command to be blocked")
+	}
+}
+
+func TestBashToolBlocksRedirectEscape(t *testing.T) {
+	tmpDir := t.TempDir()
+	bashTool := NewBashTool(tmpDir)
+
+	result := bashTool.Execute(context.Background(), map[string]any{
+		"command": "echo hello > /etc/go-code-test",
+	})
+
+	if !result.IsError {
+		t.Fatalf("expected redirect outside workspace to be blocked")
+	}
+}
+
 func TestBashToolTimeout(t *testing.T) {
 	tmpDir := t.TempDir()
 	bashTool := NewBashTool(tmpDir)

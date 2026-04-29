@@ -65,6 +65,9 @@ func (b *BashTool) Execute(ctx context.Context, input map[string]any) tool.Resul
 	if !ok || command == "" {
 		return tool.Error("command is required")
 	}
+	if ok, reason, _ := permission.NewSemanticValidator(b.workingDir).ValidateFullCommand(command); !ok {
+		return tool.Error(fmt.Sprintf("command blocked by semantic validation: %s", reason))
+	}
 
 	timeout := defaultTimeout
 	if t, ok := input["timeout"]; ok {

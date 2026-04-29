@@ -13,10 +13,10 @@ import (
 
 	"github.com/strings77wzq/claude-code-Go/internal/agent"
 	"github.com/strings77wzq/claude-code-Go/internal/api"
+	"github.com/strings77wzq/claude-code-Go/internal/command"
 	"github.com/strings77wzq/claude-code-Go/internal/provider/registry"
 	"github.com/strings77wzq/claude-code-Go/internal/session"
 	"github.com/strings77wzq/claude-code-Go/internal/skills"
-	"github.com/strings77wzq/claude-code-Go/internal/update"
 )
 
 type AgentInterface interface {
@@ -122,106 +122,27 @@ func (r *REPL) handleSpecialCommand(input string) bool {
 		return true
 	}
 
-	if input == "/sessions" {
-		r.handleSessionsCommand()
+	if r.handleSkillCommand(input) {
 		return true
 	}
 
-	if remainder, ok := strings.CutPrefix(input, "/resume"); ok {
-		sessionID := strings.TrimSpace(remainder)
-		if sessionID == "" {
-			fmt.Println("Usage: /resume <session-id>")
-			return true
+	if strings.HasPrefix(input, "/") {
+		result := command.Handler{
+			Agent:       r.agent,
+			Version:     r.version,
+			Model:       r.model,
+			SessionsDir: r.sessionsDir,
+		}.Handle(input)
+		if result.Model != "" {
+			r.model = result.Model
 		}
-		r.handleResumeCommand(sessionID)
-		return true
+		if result.Message != "" {
+			fmt.Println(result.Message)
+		}
+		return !result.Quit
 	}
 
-	switch input {
-	case "/help":
-		r.renderer.PrintHelp()
-		return true
-	case "/clear":
-		// Clear the agent's history if it has a Clear method
-		if ah, ok := r.agent.(interface{ GetHistory() *agent.History }); ok {
-			ah.GetHistory().Clear()
-		}
-		fmt.Println("Conversation history cleared")
-		return true
-	case "/compact":
-		if c, ok := r.agent.(interface{ Compact() }); ok {
-			c.Compact()
-			fmt.Println("Conversation compacted")
-		} else {
-			fmt.Println("Compact is not available for the current agent")
-		}
-		return true
-	case "/update":
-		latestVersion, downloadURL, needsUpdate, err := update.CheckLatest(r.version)
-		if err != nil {
-			r.renderer.PrintError(err)
-			return true
-		}
-
-		if !needsUpdate {
-			fmt.Printf("Already up to date (%s)\n", r.version)
-			return true
-		}
-
-		if downloadURL == "" {
-			fmt.Printf("Update available (%s) but no download URL found\n", latestVersion)
-			return true
-		}
-
-		answer, err := r.promptLine(fmt.Sprintf("Update available: %s -> %s. Download and replace binary? [y/N]: ", r.version, latestVersion))
-		if err != nil {
-			r.renderer.PrintError(err)
-			return true
-		}
-
-		answer = strings.TrimSpace(strings.ToLower(answer))
-		if answer != "y" && answer != "yes" {
-			fmt.Println("Update canceled")
-			return true
-		}
-
-		binaryPath, err := os.Executable()
-		if err != nil {
-			r.renderer.PrintError(fmt.Errorf("failed to resolve current binary path: %w", err))
-			return true
-		}
-
-		if err := update.DownloadAndUpdate(downloadURL, binaryPath); err != nil {
-			r.renderer.PrintError(err)
-			return true
-		}
-
-		fmt.Println("Update successful. Please restart go-code.")
-		return true
-	case "/exit", "/quit":
-		return false
-	case "/model":
-		if remainder := strings.TrimSpace(strings.TrimPrefix(input, "/model")); remainder != "" {
-			if setter, ok := r.agent.(interface{ SetModel(string) }); ok {
-				setter.SetModel(remainder)
-				r.model = remainder
-				fmt.Printf("Model switched to: %s\n", remainder)
-			} else {
-				fmt.Println("Model switching is not supported for the current agent")
-			}
-		} else {
-			r.renderer.PrintModel(r.model)
-		}
-		return true
-	case "/models":
-		r.printAvailableModels()
-		return true
-	default:
-		if r.handleSkillCommand(input) {
-			return true
-		}
-		return false
-	}
+	return false
 }
 
 func (r *REPL) processInput(input string) {

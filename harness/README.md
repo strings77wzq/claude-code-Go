@@ -45,8 +45,11 @@ python -m harness.mock_server
 ### 运行测试
 
 ```bash
-cd harness
-python -m pytest -v
+# From project root; builds bin/go-code first
+./scripts/run-harness.sh
+
+# Or run pytest directly after the binary exists
+python -m pytest harness/ -v
 ```
 
 ### 会话回放
@@ -64,9 +67,17 @@ GitHub Actions 会自动运行 Harness 测试：
 
 ```yaml
 - name: Run Python tests
-  working-directory: harness
-  run: python -m pytest -v --tb=short
+  run: pytest harness/ -v --tb=short
 ```
+
+失败时 CI 会上传 `harness/logs/pytest.log`，用于定位具体 scenario。
+
+## 添加新 Scenario
+
+1. 在 `harness/mock_server/scenarios.py` 添加一个 `Scenario`。
+2. 如果需要自动路由，在 `harness/mock_server/app.py` 的 `select_scenario_name` 中加入触发条件。
+3. 在 `harness/test_scenarios.py` 增加断言，优先使用 `go-code -p ... -q -f json` 的非交互入口。
+4. 本地运行 `./scripts/run-harness.sh`，确认不依赖真实 API key。
 
 ---
 

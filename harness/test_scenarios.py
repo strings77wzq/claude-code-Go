@@ -1,13 +1,7 @@
 """Test scenarios for the Go CLI with mock server."""
 
-import json
 import os
 import subprocess
-import time
-
-import pytest
-
-from harness.mock_server import registry, Scenario
 
 
 def run_go_cli(binary, base_url, input_text, env_overrides=None, timeout=30):
@@ -15,45 +9,21 @@ def run_go_cli(binary, base_url, input_text, env_overrides=None, timeout=30):
     env = {
         "ANTHROPIC_API_KEY": "test",
         "ANTHROPIC_BASE_URL": base_url,
+        "ANTHROPIC_MODEL": "claude-sonnet-4-6-20251001",
+        "LLM_PROVIDER": "anthropic",
     }
     if env_overrides:
         env.update(env_overrides)
 
-    process = subprocess.Popen(
-        [str(binary)],
-        stdin=subprocess.PIPE,
+    completed = subprocess.run(
+        [str(binary), "-p", input_text, "-q", "-f", "json"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        env={**os.environ, **env},
+        env={**os.environ, **env, "HOME": os.environ.get("HOME", "")},
         text=True,
+        timeout=timeout,
     )
-
-    stdout, stderr = process.communicate(input=input_text, timeout=timeout)
-    return stdout, stderr, process.returncode
-
-
-def set_mock_scenario(scenario_name: str):
-    """Configure the mock server's default scenario before starting."""
-    import harness.mock_server.app as app_module
-    
-    # Store the default scenario name in a module-level variable that app.py can check
-    app_module._default_scenario = scenario_name
-
-
-# Patch the app.py to use the configurable default scenario
-import harness.mock_server.app as app_module
-_original_get_scenario = app_module.registry.get_scenario
-
-def _patched_get_scenario(self, name):
-    # Check if there's a default scenario set
-    default_scenario = getattr(app_module, '_default_scenario', None)
-    if default_scenario:
-        return _original_get_scenario(self, default_scenario)
-    return _original_get_scenario(self, name)
-
-app_module.registry.get_scenario = _patched_get_scenario.__get__(
-    app_module.registry, type(app_module.registry)
-)
+    return completed.stdout, completed.stderr, completed.returncode
 
 
 class TestStreamingText:
@@ -62,8 +32,8 @@ class TestStreamingText:
     def test_streaming_text(self, mock_server, go_binary):
         """Test that streaming text response is received from CLI."""
         # The default scenario is "streaming_text"
-        input_text = "Hello\n"
-        
+        input_text = "Hello"
+
         stdout, stderr, returncode = run_go_cli(
             go_binary, 
             mock_server, 
@@ -72,6 +42,7 @@ class TestStreamingText:
         )
 
         # Verify output contains streamed text
+        assert returncode == 0, stderr
         assert "Hello" in stdout or "Claude" in stdout, f"Expected streaming text in output, got: {stdout}"
 
 
@@ -80,12 +51,9 @@ class TestToolRoundtrip:
 
     def test_tool_roundtrip_read(self, mock_server, go_binary, test_file):
         """Test that Read tool works via CLI."""
-        # Configure mock server to use tool_use_read scenario
-        set_mock_scenario("tool_use_read")
-        
         # The mock server will respond with a tool_use for Read
-        input_text = f"Read the file at {test_file}\n"
-        
+        input_text = f"Read the file at {test_file}"
+
         stdout, stderr, returncode = run_go_cli(
             go_binary,
             mock_server,
@@ -94,15 +62,13 @@ class TestToolRoundtrip:
         )
 
         # Verify the output mentions file content or the tool was called
-        assert "Hello World" in stdout or "test.txt" in stdout, f"Expected file read in output, got: {stdout}"
+        assert returncode == 0, stderr
+        assert "Hello World" in stdout or "file contains" in stdout, f"Expected file read in output, got: {stdout}"
 
     def test_tool_roundtrip_bash(self, mock_server, go_binary):
         """Test that Bash tool works via CLI."""
-        # Configure mock server to use tool_use_bash scenario
-        set_mock_scenario("tool_use_bash")
-        
-        input_text = "run echo hello\n"
-        
+        input_text = "run bash echo hello"
+
         stdout, stderr, returncode = run_go_cli(
             go_binary,
             mock_server,
@@ -110,5 +76,29 @@ class TestToolRoundtrip:
             timeout=30
         )
 
-        # Verify the output mentions the command result
-        assert "hello" in stdout.lower() or "echo" in stdout, f"Expected bash output in output, got: {stdout}"
+        assert returncode == 0, stderr
+        assert "total" in stdout.lower() or "command" in stdout.lower(), f"Expected bash scenario output, got: {stdout}"
+
+    def test_permission_denial_scenario(self, mock_server, go_binary):
+        """Test that permission denial is represented as a deterministic scenario."""
+        stdout, stderr, returncode = run_go_cli(
+            go_binary,
+            mock_server,
+            "Please test permission denial for rm -rf",
+            timeout=30,
+        )
+
+        assert returncode == 0, stderr
+        assert "denied" in stdout.lower() or "permission" in stdout.lower(), stdout
+
+    def test_malformed_stream_does_not_panic(self, mock_server, go_binary):
+        """Malformed stream events should fail cleanly, not panic."""
+        stdout, stderr, returncode = run_go_cli(
+            go_binary,
+            mock_server,
+            "malformed stream please",
+            timeout=30,
+        )
+
+        combined = stdout + stderr
+        assert "panic" not in combined.lower(), combined

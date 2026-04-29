@@ -4,6 +4,7 @@ import socket
 import subprocess
 import sys
 import time
+from pathlib import Path
 from typing import Any
 
 
@@ -50,7 +51,7 @@ class MockServer:
                 "--port", str(self._port),
                 "--log-level", "error",
             ],
-            cwd="/home/strin/go/src/devLearn/aiLab/claude_code_Go",
+            cwd=Path(__file__).resolve().parents[2],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"flag"
@@ -30,6 +31,13 @@ const version = "0.1.0"
 const systemPrompt = "You are an interactive agent that helps users with software engineering tasks. You have access to tools for reading files, editing files, executing shell commands, searching code, and more. Use your tools to complete tasks efficiently and accurately."
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "doctor" {
+		os.Exit(runDoctorCommand(os.Args[2:], os.Stdout, os.Stderr))
+	}
+	if len(os.Args) > 1 && os.Args[1] == "replay" {
+		os.Exit(runReplayCommand(os.Args[2:], os.Stdout, os.Stderr))
+	}
+
 	legacyRepl := flag.Bool("legacy-repl", false, "Use the old bufio-based REPL")
 	setupMode := flag.Bool("setup", false, "Run setup wizard")
 	prompt := flag.String("p", "", "Run a single prompt and exit (non-interactive mode)")
@@ -84,8 +92,23 @@ func main() {
 
 	// Create API client via provider registry
 	logger.Info("Creating API client")
-	apiClient := registry.SelectProvider(cfg.APIKey, cfg.BaseURL, cfg.Model)
-	client := provider.NewApiClientAdapter(apiClient)
+	resolvedProvider, err := registry.ResolveConfig(cfg.Provider, cfg.BaseURL, cfg.Model, cfg.APIKey)
+	if err != nil {
+		logger.Error("Invalid provider configuration", "error", err)
+		os.Exit(1)
+	}
+	cfg.Provider = resolvedProvider.Provider
+	cfg.BaseURL = resolvedProvider.BaseURL
+	cfg.Model = resolvedProvider.Model
+	apiClient := registry.SelectProviderFor(cfg.Provider, cfg.APIKey, cfg.BaseURL, cfg.Model)
+	client := provider.NewApiClientAdapter(apiClient, func(model string) provider.Provider {
+		targetProvider := registry.DetectProvider(model)
+		baseURL := cfg.BaseURL
+		if targetProvider != cfg.Provider {
+			baseURL = registry.DefaultBaseURL(targetProvider)
+		}
+		return registry.SelectProviderFor(targetProvider, cfg.APIKey, baseURL, model)
+	})
 	logger.Info("API client created", "provider", apiClient.Name())
 
 	// Create tool registry
@@ -107,12 +130,13 @@ func main() {
 
 	// Create permission policy
 	logger.Info("Creating permission policy")
-	policy := permission.NewPolicy(permission.DangerFullAccess)
+	policy := permission.NewPolicy(permission.WorkspaceWrite)
 	logger.Info("Permission policy created")
 
 	// Create agent
 	logger.Info("Creating agent")
 	agentInstance := agent.NewAgent(client, toolRegistry, policy, systemPrompt, cfg.Model)
+	agentInstance.SetPermissionPrompter(permission.NewStdinPrompter(bufio.NewReader(os.Stdin), os.Stdout))
 	logger.Info("Agent started", "model", cfg.Model)
 
 	// Non-interactive mode: run single prompt and exit
@@ -156,7 +180,7 @@ func main() {
 	// Use legacy REPL or new bubbletea TUI
 	if *legacyRepl {
 		logger.Info("Starting legacy REPL")
-		repl := tty.NewREPL(agentInstance, version, cfg.Provider, cfg.Model, skillsRegistry, "~/.go-code/sessions/")
+		repl := tty.NewREPL(agentInstance, version, cfg.Provider, cfg.Model, skillsRegistry, "~/.claude-code-go/sessions/")
 		repl.SetExternalContext(ctx)
 		repl.Run()
 	} else {

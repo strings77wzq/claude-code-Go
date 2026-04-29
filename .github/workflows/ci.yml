@@ -54,7 +54,17 @@ jobs:
         run: go build -o bin/go-code ./cmd/go-code
 
       - name: Run Python tests
-        run: pytest harness/ -v --tb=short
+        run: |
+          mkdir -p harness/logs
+          pytest harness/ -v --tb=short | tee harness/logs/pytest.log
+
+      - name: Upload harness logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harness-logs
+          path: harness/logs/
+          retention-days: 7
 
   build-all:
     runs-on: ubuntu-latest

@@ -44,5 +44,10 @@ func (p *AnthropicProvider) SendMessageStream(ctx context.Context, req *api.ApiR
 	return p.client.SendMessageStream(ctx, req, onTextDelta)
 }
 
+func (p *AnthropicProvider) SetModel(model string) {
+	p.model = model
+	p.client.SetModel(model)
+}
+
 // Ensure AnthropicProvider implements the Provider interface
 var _ provider.Provider = (*AnthropicProvider)(nil)

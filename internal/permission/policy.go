@@ -18,6 +18,10 @@ type Decision string
 const (
 	// Allow permits the operation
 	Allow Decision = "Allow"
+	// AllowOnce permits only the current operation
+	AllowOnce Decision = "AllowOnce"
+	// AllowForSession permits the current operation and matching future operations in this session
+	AllowForSession Decision = "AllowForSession"
 	// Deny blocks the operation
 	Deny Decision = "Deny"
 	// Ask prompts the user for a decision
@@ -62,6 +66,11 @@ func (p *Policy) AddDenyRule(rule Rule) {
 // SetSessionMemory stores a decision in session memory
 func (p *Policy) SetSessionMemory(key string, decision Decision) {
 	p.sessionMemory[key] = decision
+}
+
+// RememberDecision stores a decision for matching future operations.
+func (p *Policy) RememberDecision(toolName string, input map[string]any, decision Decision) {
+	p.SetSessionMemory(p.generateMemoryKey(toolName, input), decision)
 }
 
 // GetSessionMemory retrieves a decision from session memory

@@ -48,11 +48,11 @@ func (p *TerminalPrompter) Decide(toolName string, input map[string]any, reason 
 
 		switch line {
 		case "y", "yes":
-			return Allow
+			return AllowOnce
 		case "n", "no":
 			return Deny
 		case "a", "always":
-			return Allow
+			return AllowForSession
 		}
 	}
 }
@@ -138,11 +138,11 @@ func (p *StdinPrompter) Decide(toolName string, input map[string]any, reason str
 
 		switch line {
 		case "y", "yes":
-			return Allow
+			return AllowOnce
 		case "n", "no":
 			return Deny
 		case "a", "always":
-			return Allow
+			return AllowForSession
 		}
 	}
 }

@@ -34,6 +34,59 @@ def get_current_response(scenario: Scenario) -> dict[str, Any] | None:
     return scenario.messages[turn_index]
 
 
+def select_scenario_name(request_body: dict[str, Any], requested: str) -> str:
+    """Select a deterministic scenario from request text when no header is set."""
+    if requested and requested != "streaming_text":
+        return requested
+
+    for message in request_body.get("messages", []):
+        content = message.get("content", "")
+        if not isinstance(content, list):
+            continue
+        for block in content:
+            if not isinstance(block, dict) or block.get("type") != "tool_use":
+                continue
+            tool_name = str(block.get("name", "")).lower()
+            if tool_name == "read":
+                return "tool_use_read"
+            if tool_name == "bash":
+                command = str(block.get("input", {}).get("command", "")).lower()
+                if "rm -rf" in command:
+                    return "permission_denial"
+                return "tool_use_bash"
+            if tool_name == "edit":
+                return "tool_use_edit"
+
+    user_parts: list[str] = []
+    for message in request_body.get("messages", []):
+        if message.get("role") != "user":
+            continue
+        content = message.get("content", "")
+        if isinstance(content, str):
+            user_parts.append(content)
+        elif isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict) and block.get("type") == "text":
+                    user_parts.append(str(block.get("text", "")))
+                    user_parts.append(str(block.get("content", "")))
+    serialized = " ".join(user_parts).lower()
+    if "malformed" in serialized:
+        return "malformed_stream_event"
+    if "permission" in serialized or "deny" in serialized or "rm -rf" in serialized:
+        return "permission_denial"
+    if "retry" in serialized or "rate limit" in serialized:
+        return "retryable_provider_error"
+    if "context" in serialized:
+        return "context_pressure"
+    if "edit" in serialized:
+        return "tool_use_edit"
+    if "bash" in serialized or "echo" in serialized or "shell" in serialized:
+        return "tool_use_bash"
+    if "read" in serialized or "file" in serialized:
+        return "tool_use_read"
+    return "streaming_text"
+
+
 def build_message_start_event(message_id: str) -> str:
     """Build the message_start SSE event."""
     data = {
@@ -134,6 +187,13 @@ def build_message_stop_event() -> str:
 
 def generate_sse_events(response: dict[str, Any], message_id: str) -> list[str]:
     """Generate SSE events for a response block."""
+    if response.get("type") == "malformed":
+        return [
+            build_message_start_event(message_id),
+            "event: content_block_delta\ndata: {not valid json}\n\n",
+            build_message_stop_event(),
+        ]
+
     events = []
 
     # message_start
@@ -163,7 +223,8 @@ def generate_sse_events(response: dict[str, Any], message_id: str) -> list[str]:
     events.append(build_content_block_stop_event(0))
 
     # message_delta
-    events.append(build_message_delta_event())
+    stop_reason = "tool_use" if block_type == "tool_use" else "end_turn"
+    events.append(build_message_delta_event(stop_reason=stop_reason))
 
     # message_stop
     events.append(build_message_stop_event())
@@ -189,15 +250,15 @@ async def create_message(request: Request):
     # Record the request
     recorder.record(body)
 
-    # Get scenario from X-Scenario header or default to streaming_text
-    scenario_name = request.headers.get("X-Scenario", "streaming_text")
+    # Get scenario from X-Scenario header or infer one from request text.
+    scenario_name = select_scenario_name(body, request.headers.get("X-Scenario", "streaming_text"))
     scenario = registry.get_scenario(scenario_name)
 
     if not scenario:
         scenario = registry.get_scenario("streaming_text")
 
     # Record this request for turn tracking
-    registry.record_request(scenario_name, body)
+    registry.record_request(scenario.name, body)
 
     # Get current response
     response = get_current_response(scenario)

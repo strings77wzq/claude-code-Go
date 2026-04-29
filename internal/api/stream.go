@@ -19,10 +19,11 @@ type contentBlockDeltaEvent struct {
 }
 
 type delta struct {
-	Type       string `json:"type"`
-	Text       string `json:"text,omitempty"`
-	InputJSON  string `json:"input_json,omitempty"`
-	StopReason string `json:"stop_reason,omitempty"`
+	Type        string `json:"type"`
+	Text        string `json:"text,omitempty"`
+	InputJSON   string `json:"input_json,omitempty"`
+	PartialJSON string `json:"partial_json,omitempty"`
+	StopReason  string `json:"stop_reason,omitempty"`
 }
 
 type messageDeltaEvent struct {
@@ -74,6 +75,7 @@ func parseStreamResponse(body io.Reader, onTextDelta func(text string)) (*ApiRes
 					Data  struct {
 						Type string `json:"type"`
 						ID   string `json:"id,omitempty"`
+						Name string `json:"name,omitempty"`
 					} `json:"content_block"`
 				}
 				if err := json.Unmarshal([]byte(data), &blockEvent); err == nil {
@@ -81,6 +83,7 @@ func parseStreamResponse(body io.Reader, onTextDelta func(text string)) (*ApiRes
 					contentBlock := ContentBlock{
 						Type: blockEvent.Data.Type,
 						ID:   blockEvent.Data.ID,
+						Name: blockEvent.Data.Name,
 					}
 					if blockEvent.Data.Type == "tool_use" {
 						contentBlock.ToolUseID = blockEvent.Data.ID
@@ -96,6 +99,8 @@ func parseStreamResponse(body io.Reader, onTextDelta func(text string)) (*ApiRes
 					if deltaType == "input_json_delta" {
 						if inputJSON, ok := deltaObj["input_json"].(string); ok {
 							currentInputJSON.WriteString(inputJSON)
+						} else if partialJSON, ok := deltaObj["partial_json"].(string); ok {
+							currentInputJSON.WriteString(partialJSON)
 						}
 					} else if deltaType == "text_delta" {
 						if text, ok := deltaObj["text"].(string); ok {
@@ -159,6 +164,7 @@ func parseStreamResponse(body io.Reader, onTextDelta func(text string)) (*ApiRes
 				Data  struct {
 					Type string `json:"type"`
 					ID   string `json:"id,omitempty"`
+					Name string `json:"name,omitempty"`
 				} `json:"content_block"`
 			}
 			if err := json.Unmarshal([]byte(data), &blockEvent); err == nil {
@@ -166,6 +172,7 @@ func parseStreamResponse(body io.Reader, onTextDelta func(text string)) (*ApiRes
 				contentBlock := ContentBlock{
 					Type: blockEvent.Data.Type,
 					ID:   blockEvent.Data.ID,
+					Name: blockEvent.Data.Name,
 				}
 				if blockEvent.Data.Type == "tool_use" {
 					contentBlock.ToolUseID = blockEvent.Data.ID
@@ -182,6 +189,9 @@ func parseStreamResponse(body io.Reader, onTextDelta func(text string)) (*ApiRes
 				}
 				if deltaEvent.Delta.InputJSON != "" {
 					currentInputJSON.WriteString(deltaEvent.Delta.InputJSON)
+				}
+				if deltaEvent.Delta.PartialJSON != "" {
+					currentInputJSON.WriteString(deltaEvent.Delta.PartialJSON)
 				}
 				if len(contentBlocks) > currentBlockIndex {
 					contentBlocks[currentBlockIndex].Text += deltaEvent.Delta.Text

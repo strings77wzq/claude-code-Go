@@ -3,6 +3,7 @@ package session
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -228,5 +229,64 @@ func TestSaveSessionCreatesDirectory(t *testing.T) {
 	}
 	if len(files) != 1 {
 		t.Fatalf("expected 1 session file, got %d", len(files))
+	}
+}
+
+func TestTraceReplayAndResumeSchema(t *testing.T) {
+	tmpDir := t.TempDir()
+	sessionFile := filepath.Join(tmpDir, "session-123.jsonl")
+
+	meta := `{"type":"meta","session_id":"sess_trace","model":"test-model","start_time_ms":1234567890,"end_time_ms":0,"turn_count":0,"input_tokens":0,"output_tokens":0,"status":"running"}`
+	if err := os.WriteFile(sessionFile, []byte(meta+"\n"), 0644); err != nil {
+		t.Fatalf("failed to write trace file: %v", err)
+	}
+
+	if err := AppendTraceRequest(sessionFile, "test-model", 2); err != nil {
+		t.Fatalf("failed to append request: %v", err)
+	}
+	if err := AppendTraceTool(sessionFile, "Read", map[string]any{"file_path": "README.md"}, "ok", 4); err != nil {
+		t.Fatalf("failed to append tool: %v", err)
+	}
+	if err := AppendTracePermission(sessionFile, "Bash", "Deny", "rm -rf /"); err != nil {
+		t.Fatalf("failed to append permission: %v", err)
+	}
+	if err := AppendSessionMessages(sessionFile, []SessionMessage{
+		{Type: "message", Role: "user", Content: "hello", Timestamp: time.UnixMilli(1234567891)},
+		{Type: "message", Role: "assistant", Content: "[tool result: ok]", Timestamp: time.UnixMilli(1234567892)},
+	}); err != nil {
+		t.Fatalf("failed to append messages: %v", err)
+	}
+	if err := AppendTraceStatus(sessionFile, "completed", 1, 10, 5); err != nil {
+		t.Fatalf("failed to append status: %v", err)
+	}
+
+	loaded, messages, err := LoadSession(sessionFile)
+	if err != nil {
+		t.Fatalf("LoadSession() error = %v", err)
+	}
+	if loaded.Status != "completed" || loaded.TurnCount != 1 {
+		t.Fatalf("loaded status/turns = %s/%d", loaded.Status, loaded.TurnCount)
+	}
+	if len(messages) != 2 {
+		t.Fatalf("messages = %d, want 2", len(messages))
+	}
+
+	events, err := ReplaySessionFile(sessionFile)
+	if err != nil {
+		t.Fatalf("ReplaySessionFile() error = %v", err)
+	}
+	replay := FormatReplay(events)
+	for _, want := range []string{"session sess_trace", "request model=test-model", "tool Read", "permission Bash", "status completed"} {
+		if !strings.Contains(replay, want) {
+			t.Fatalf("replay missing %q:\n%s", want, replay)
+		}
+	}
+
+	sessions, err := ListSessions(tmpDir)
+	if err != nil {
+		t.Fatalf("ListSessions() error = %v", err)
+	}
+	if len(sessions) != 1 || sessions[0].TurnCount != 1 || sessions[0].Status != "completed" {
+		t.Fatalf("unexpected session info: %#v", sessions)
 	}
 }

@@ -174,8 +174,8 @@ func TestTerminalPrompterAcceptsYes(t *testing.T) {
 	input := map[string]any{"command": "ls"}
 	decision := prompter.Decide("Bash", input, "test")
 
-	if decision != Allow {
-		t.Errorf("Expected Allow, got %v", decision)
+	if decision != AllowOnce {
+		t.Errorf("Expected AllowOnce, got %v", decision)
 	}
 }
 
@@ -200,8 +200,8 @@ func TestTerminalPrompterAcceptsAlways(t *testing.T) {
 	input := map[string]any{"command": "ls"}
 	decision := prompter.Decide("Bash", input, "test")
 
-	if decision != Allow {
-		t.Errorf("Expected Allow for always, got %v", decision)
+	if decision != AllowForSession {
+		t.Errorf("Expected AllowForSession for always, got %v", decision)
 	}
 }
 
@@ -213,7 +213,7 @@ func TestTerminalPrompterRejectsInvalidInput(t *testing.T) {
 	input := map[string]any{"command": "ls"}
 	decision := prompter.Decide("Bash", input, "test")
 
-	if decision != Allow {
-		t.Errorf("Expected Allow after invalid input, got %v", decision)
+	if decision != AllowOnce {
+		t.Errorf("Expected AllowOnce after invalid input, got %v", decision)
 	}
 }

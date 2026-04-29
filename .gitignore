@@ -46,3 +46,6 @@ docs/node_modules/
 
 # Scripts directory (tracked - do NOT ignore)
 # scripts/ is intentionally tracked - contains install scripts
+.omx/
+.omc/
+.claude/

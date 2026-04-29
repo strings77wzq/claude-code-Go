@@ -66,6 +66,42 @@ func TestReadToolFileNotFound(t *testing.T) {
 	}
 }
 
+func TestReadToolBlocksSymlinkEscape(t *testing.T) {
+	tmpDir := t.TempDir()
+	outsideDir := t.TempDir()
+	outsideFile := filepath.Join(outsideDir, "secret.txt")
+	os.WriteFile(outsideFile, []byte("secret"), 0644)
+
+	linkPath := filepath.Join(tmpDir, "secret-link.txt")
+	if err := os.Symlink(outsideFile, linkPath); err != nil {
+		t.Skipf("symlink unavailable: %v", err)
+	}
+
+	readTool := NewReadTool(tmpDir)
+	result := readTool.Execute(context.Background(), map[string]any{
+		"file_path": linkPath,
+	})
+
+	if !result.IsError {
+		t.Fatalf("expected symlink escape to be blocked")
+	}
+}
+
+func TestReadToolBlocksBinaryFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "payload.bin")
+	os.WriteFile(tmpFile, []byte{0x00, 0x01, 0x02}, 0644)
+
+	readTool := NewReadTool(tmpDir)
+	result := readTool.Execute(context.Background(), map[string]any{
+		"file_path": tmpFile,
+	})
+
+	if !result.IsError {
+		t.Fatalf("expected binary file read to be blocked")
+	}
+}
+
 func TestReadToolDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 	readTool := NewReadTool(tmpDir)

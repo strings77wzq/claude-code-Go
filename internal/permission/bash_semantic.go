@@ -771,6 +771,7 @@ func (sv *SemanticValidator) AnalyzeSemantics(command string) *SemanticAnalysis 
 	}
 
 	analysis := &SemanticAnalysis{
+		IsValid:   true,
 		Pipes:     sv.ParsePipes(command),
 		Redirects: sv.ParseRedirects(command),
 		Subshells: sv.ParseSubshells(command),

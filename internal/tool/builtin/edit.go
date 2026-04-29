@@ -67,7 +67,8 @@ func (e *EditTool) Execute(ctx context.Context, input map[string]any) tool.Resul
 		return tool.Error("file_path is required")
 	}
 
-	if err := ValidatePath(filePath, e.workingDir); err != nil {
+	resolvedPath, err := ResolvePath(filePath, e.workingDir)
+	if err != nil {
 		return tool.Error(err.Error())
 	}
 
@@ -88,7 +89,14 @@ func (e *EditTool) Execute(ctx context.Context, input map[string]any) tool.Resul
 		}
 	}
 
-	content, err := os.ReadFile(filePath)
+	if _, err := permission.CheckFileSize(resolvedPath); err != nil {
+		return tool.Error(fmt.Sprintf("file too large: %s", filePath))
+	}
+	if permission.IsBinaryFile(resolvedPath) {
+		return tool.Error(fmt.Sprintf("refusing to edit binary file: %s", filePath))
+	}
+
+	content, err := os.ReadFile(resolvedPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return tool.Error(fmt.Sprintf("file not found: %s", filePath))
@@ -109,7 +117,11 @@ func (e *EditTool) Execute(ctx context.Context, input map[string]any) tool.Resul
 
 	newContent := strings.Replace(fileContent, oldString, newString, -1)
 
-	if err := os.WriteFile(filePath, []byte(newContent), 0644); err != nil {
+	if int64(len(newContent)) > permission.MaxFileSize {
+		return tool.Error(fmt.Sprintf("edited content exceeds maximum allowed size (%d bytes)", permission.MaxFileSize))
+	}
+
+	if err := os.WriteFile(resolvedPath, []byte(newContent), 0644); err != nil {
 		return tool.Error(fmt.Sprintf("failed to write file: %v", err))
 	}
 

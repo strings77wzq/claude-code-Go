@@ -19,6 +19,7 @@ type Session struct {
 	TurnCount    int       `json:"turn_count"`
 	InputTokens  int       `json:"input_tokens"`
 	OutputTokens int       `json:"output_tokens"`
+	Status       string    `json:"status,omitempty"`
 }
 
 // SessionMessage represents a single message within a session.
@@ -39,6 +40,7 @@ type sessionMetaLine struct {
 	TurnCount    int    `json:"turn_count"`
 	InputTokens  int    `json:"input_tokens"`
 	OutputTokens int    `json:"output_tokens"`
+	Status       string `json:"status,omitempty"`
 }
 
 // messageLine is the JSONL line type for messages.
@@ -83,6 +85,24 @@ type traceErrorLine struct {
 	Timestamp int64  `json:"timestamp_ms"`
 }
 
+// tracePermissionLine is the JSONL line type for permission decisions.
+type tracePermissionLine struct {
+	Type      string `json:"type"`
+	Tool      string `json:"tool"`
+	Decision  string `json:"decision"`
+	Summary   string `json:"summary"`
+	Timestamp int64  `json:"timestamp_ms"`
+}
+
+type traceStatusLine struct {
+	Type         string `json:"type"`
+	Status       string `json:"status"`
+	TurnCount    int    `json:"turn_count"`
+	InputTokens  int    `json:"input_tokens"`
+	OutputTokens int    `json:"output_tokens"`
+	Timestamp    int64  `json:"timestamp_ms"`
+}
+
 // AppendTraceRequest appends a request trace line to the session file.
 func AppendTraceRequest(filepath, model string, messagesCount int) error {
 	return appendTraceLine(filepath, traceRequestLine{
@@ -123,6 +143,43 @@ func AppendTraceError(filepath, message string) error {
 		Message:   message,
 		Timestamp: time.Now().UnixMilli(),
 	})
+}
+
+// AppendTracePermission appends a permission decision trace line to the session file.
+func AppendTracePermission(filepath, toolName, decision, summary string) error {
+	return appendTraceLine(filepath, tracePermissionLine{
+		Type:      "permission",
+		Tool:      toolName,
+		Decision:  decision,
+		Summary:   summary,
+		Timestamp: time.Now().UnixMilli(),
+	})
+}
+
+func AppendTraceStatus(filepath, status string, turnCount, inputTokens, outputTokens int) error {
+	return appendTraceLine(filepath, traceStatusLine{
+		Type:         "status",
+		Status:       status,
+		TurnCount:    turnCount,
+		InputTokens:  inputTokens,
+		OutputTokens: outputTokens,
+		Timestamp:    time.Now().UnixMilli(),
+	})
+}
+
+func AppendSessionMessages(filepath string, messages []SessionMessage) error {
+	for _, msg := range messages {
+		msgLine := messageLine{
+			Type:      "message",
+			Role:      msg.Role,
+			Content:   msg.Content,
+			Timestamp: msg.Timestamp.UnixMilli(),
+		}
+		if err := appendTraceLine(filepath, msgLine); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // appendTraceLine appends a JSON line to the session file.
@@ -180,6 +237,7 @@ func SaveSession(s *Session, messages []SessionMessage, dir string) error {
 		TurnCount:    s.TurnCount,
 		InputTokens:  s.InputTokens,
 		OutputTokens: s.OutputTokens,
+		Status:       s.Status,
 	}
 	metaBytes, err := json.Marshal(metaLine)
 	if err != nil {
@@ -275,6 +333,7 @@ func LoadSession(filepath string) (*Session, []SessionMessage, error) {
 				TurnCount:    meta.TurnCount,
 				InputTokens:  meta.InputTokens,
 				OutputTokens: meta.OutputTokens,
+				Status:       meta.Status,
 			}
 
 		case "message":
@@ -289,6 +348,23 @@ func LoadSession(filepath string) (*Session, []SessionMessage, error) {
 				Content:   msg.Content,
 				Timestamp: time.UnixMilli(msg.Timestamp),
 			})
+
+		case "status":
+			var status traceStatusLine
+			if err := json.Unmarshal([]byte(line), &status); err != nil {
+				fmt.Printf("Warning: skipping invalid status line %d: %v\n", lineNum, err)
+				continue
+			}
+			if session != nil {
+				session.Status = status.Status
+				session.TurnCount = status.TurnCount
+				session.InputTokens = status.InputTokens
+				session.OutputTokens = status.OutputTokens
+				session.EndTime = time.UnixMilli(status.Timestamp)
+			}
+
+		case "request", "response", "tool", "permission", "error":
+			continue
 
 		default:
 			fmt.Printf("Warning: skipping unknown line type at line %d: %s\n", lineNum, base.Type)

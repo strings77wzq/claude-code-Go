@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -16,6 +17,7 @@ type SessionInfo struct {
 	EndTime   time.Time
 	TurnCount int
 	Model     string
+	Status    string
 }
 
 type listMetaLine struct {
@@ -27,6 +29,14 @@ type listMetaLine struct {
 	TurnCount    int    `json:"turn_count"`
 	InputTokens  int    `json:"input_tokens"`
 	OutputTokens int    `json:"output_tokens"`
+	Status       string `json:"status,omitempty"`
+}
+
+type listStatusLine struct {
+	Type      string `json:"type"`
+	Status    string `json:"status"`
+	TurnCount int    `json:"turn_count"`
+	Timestamp int64  `json:"timestamp_ms"`
 }
 
 func ListSessions(dir string) ([]SessionInfo, error) {
@@ -74,42 +84,61 @@ func readSessionMeta(filePath string) (SessionInfo, error) {
 	}
 	defer f.Close()
 
-	var firstLine string
-	buf := make([]byte, 1)
-	for {
-		n, err := f.Read(buf)
-		if err != nil {
-			return SessionInfo{}, fmt.Errorf("failed to read file: %w", err)
+	var meta *listMetaLine
+	var status *listStatusLine
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		var base struct {
+			Type string `json:"type"`
 		}
-		if n == 0 {
-			break
+		if err := json.Unmarshal(line, &base); err != nil {
+			continue
 		}
-		if buf[0] == '\n' {
-			break
+		switch base.Type {
+		case "meta":
+			var parsed listMetaLine
+			if err := json.Unmarshal(line, &parsed); err != nil {
+				return SessionInfo{}, fmt.Errorf("failed to parse metadata: %w", err)
+			}
+			meta = &parsed
+		case "status":
+			var parsed listStatusLine
+			if err := json.Unmarshal(line, &parsed); err == nil {
+				status = &parsed
+			}
 		}
-		firstLine += string(buf[0])
 	}
-
-	if firstLine == "" {
-		return SessionInfo{}, fmt.Errorf("empty file")
+	if err := scanner.Err(); err != nil {
+		return SessionInfo{}, fmt.Errorf("failed to read file: %w", err)
 	}
-
-	var meta listMetaLine
-	if err := json.Unmarshal([]byte(firstLine), &meta); err != nil {
-		return SessionInfo{}, fmt.Errorf("failed to parse metadata: %w", err)
-	}
-
-	if meta.Type != "meta" {
+	if meta == nil {
 		return SessionInfo{}, fmt.Errorf("first line is not metadata")
+	}
+
+	turnCount := meta.TurnCount
+	statusText := meta.Status
+	endTime := time.UnixMilli(meta.EndTime)
+	if status != nil {
+		if status.TurnCount != 0 {
+			turnCount = status.TurnCount
+		}
+		if status.Status != "" {
+			statusText = status.Status
+		}
+		if status.Timestamp != 0 {
+			endTime = time.UnixMilli(status.Timestamp)
+		}
 	}
 
 	return SessionInfo{
 		ID:        meta.SessionID,
 		FilePath:  filePath,
 		StartTime: time.UnixMilli(meta.StartTime),
-		EndTime:   time.UnixMilli(meta.EndTime),
-		TurnCount: meta.TurnCount,
+		EndTime:   endTime,
+		TurnCount: turnCount,
 		Model:     meta.Model,
+		Status:    statusText,
 	}, nil
 }
 

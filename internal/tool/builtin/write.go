@@ -59,7 +59,8 @@ func (w *WriteTool) Execute(ctx context.Context, input map[string]any) tool.Resu
 		return tool.Error("file_path is required")
 	}
 
-	if err := ValidatePath(filePath, w.workingDir); err != nil {
+	resolvedPath, err := ResolvePath(filePath, w.workingDir)
+	if err != nil {
 		return tool.Error(err.Error())
 	}
 
@@ -67,15 +68,29 @@ func (w *WriteTool) Execute(ctx context.Context, input map[string]any) tool.Resu
 	if !ok || content == "" {
 		return tool.Error("content is required and cannot be empty")
 	}
+	if int64(len(content)) > permission.MaxFileSize {
+		return tool.Error(fmt.Sprintf("content exceeds maximum allowed size (%d bytes)", permission.MaxFileSize))
+	}
 
-	dir := filepath.Dir(filePath)
+	if _, err := os.Stat(resolvedPath); err == nil {
+		if _, err := permission.CheckFileSize(resolvedPath); err != nil {
+			return tool.Error(fmt.Sprintf("file too large: %s", filePath))
+		}
+		if permission.IsBinaryFile(resolvedPath) {
+			return tool.Error(fmt.Sprintf("refusing to overwrite binary file: %s", filePath))
+		}
+	} else if !os.IsNotExist(err) {
+		return tool.Error(fmt.Sprintf("failed to stat file: %v", err))
+	}
+
+	dir := filepath.Dir(resolvedPath)
 	if dir != "." {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return tool.Error(fmt.Sprintf("failed to create directory: %v", err))
 		}
 	}
 
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(resolvedPath, []byte(content), 0644); err != nil {
 		return tool.Error(fmt.Sprintf("failed to write file: %v", err))
 	}
 

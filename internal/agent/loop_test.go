@@ -89,6 +89,10 @@ func (m *mockPermissionPolicy) Evaluate(toolName string, input map[string]any, r
 	return permission.Allow
 }
 
+func (m *mockPermissionPolicy) RememberDecision(toolName string, input map[string]any, decision permission.Decision) {
+	m.decisions[toolName] = decision
+}
+
 func (m *mockPermissionPolicy) setDecision(toolName string, decision permission.Decision) {
 	m.decisions[toolName] = decision
 }
@@ -98,17 +102,30 @@ type mockTool struct {
 	description string
 	inputSchema map[string]any
 	result      tool.Result
+	requires    bool
+	calls       int
 }
 
 func (m *mockTool) Name() string                { return m.name }
 func (m *mockTool) Description() string         { return m.description }
 func (m *mockTool) InputSchema() map[string]any { return m.inputSchema }
-func (m *mockTool) RequiresPermission() bool    { return false }
+func (m *mockTool) RequiresPermission() bool    { return m.requires }
 func (m *mockTool) RequiredPermissionLevel() permission.PermissionLevel {
 	return permission.LevelReadOnly
 }
 func (m *mockTool) Execute(ctx context.Context, input map[string]any) tool.Result {
+	m.calls++
 	return m.result
+}
+
+type mockPrompter struct {
+	decision permission.Decision
+	calls    int
+}
+
+func (m *mockPrompter) Decide(toolName string, input map[string]any, reason string) permission.Decision {
+	m.calls++
+	return m.decision
 }
 
 func TestAgent_Run_EndTurn(t *testing.T) {
@@ -215,6 +232,85 @@ func TestAgent_Run_ToolUse(t *testing.T) {
 	}
 
 	_ = callCount
+}
+
+func TestAgent_DeniedToolReturnsStructuredResultWithoutExecuting(t *testing.T) {
+	mockTool := &mockTool{
+		name:        "Write",
+		description: "A test write tool",
+		inputSchema: map[string]any{"type": "object"},
+		result:      tool.Success("should not execute"),
+		requires:    true,
+	}
+	toolRegistry := newMockToolRegistry()
+	toolRegistry.registerTool(mockTool)
+
+	permissionPolicy := newMockPermissionPolicy()
+	permissionPolicy.setDecision("Write", permission.Deny)
+
+	agent := NewAgent(&mockApiClient{}, toolRegistry, permissionPolicy, "You are helpful.", "test-model")
+	results := agent.executeTools(context.Background(), []api.ContentBlock{
+		{Type: "tool_use", ID: "toolu_denied", Name: "Write", Input: map[string]any{"file_path": "x.txt"}},
+	})
+
+	if mockTool.calls != 0 {
+		t.Fatalf("denied tool executed %d times", mockTool.calls)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected one tool result, got %d", len(results))
+	}
+	if results[0].Type != "tool_result" || results[0].ToolUseID != "toolu_denied" || !results[0].IsError {
+		t.Fatalf("unexpected structured tool result: %#v", results[0])
+	}
+	if !strings.Contains(results[0].Text, "Permission denied") {
+		t.Fatalf("expected permission denial text, got %q", results[0].Text)
+	}
+}
+
+func TestAgent_RemembersAllowForSessionApproval(t *testing.T) {
+	mockTool := &mockTool{
+		name:        "Write",
+		description: "A test write tool",
+		inputSchema: map[string]any{"type": "object"},
+		result:      tool.Success("ok"),
+		requires:    true,
+	}
+	toolRegistry := newMockToolRegistry()
+	toolRegistry.registerTool(mockTool)
+
+	permissionPolicy := newMockPermissionPolicy()
+	permissionPolicy.setDecision("Write", permission.Ask)
+
+	prompter := &mockPrompter{decision: permission.AllowForSession}
+	agent := NewAgent(&mockApiClient{}, toolRegistry, permissionPolicy, "You are helpful.", "test-model")
+	agent.SetPermissionPrompter(prompter)
+
+	input := map[string]any{"file_path": "x.txt"}
+	allowed, decision := agent.checkPermission("Write", input)
+	if !allowed || decision != permission.AllowForSession {
+		t.Fatalf("first decision = (%v, %v), want allowed AllowForSession", allowed, decision)
+	}
+
+	allowed, decision = agent.checkPermission("Write", input)
+	if !allowed || decision != permission.AllowForSession {
+		t.Fatalf("remembered decision = (%v, %v), want allowed AllowForSession", allowed, decision)
+	}
+	if prompter.calls != 1 {
+		t.Fatalf("prompter calls = %d, want 1", prompter.calls)
+	}
+}
+
+func TestSummarizePermissionInputRedactsSecrets(t *testing.T) {
+	summary := summarizePermissionInput("Bash", map[string]any{
+		"command": "curl -H 'Authorization: Bearer abc123' https://example.test?token=sk-ant-secret",
+	})
+
+	if strings.Contains(summary, "abc123") || strings.Contains(summary, "sk-ant-secret") {
+		t.Fatalf("summary leaked secret: %s", summary)
+	}
+	if !strings.Contains(summary, "[REDACTED]") {
+		t.Fatalf("summary should contain redaction marker: %s", summary)
+	}
 }
 
 func TestAgent_Run_MaxTurns(t *testing.T) {

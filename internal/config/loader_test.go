@@ -56,6 +56,7 @@ func TestCLIOverridesEnvVars(t *testing.T) {
 }
 
 func TestConfigFileLoading(t *testing.T) {
+	clearConfigEnv(t)
 	tmpDir := t.TempDir()
 
 	userDir := filepath.Join(tmpDir, "user")
@@ -173,7 +174,7 @@ func TestPriorityChain(t *testing.T) {
 }
 
 func TestAPIKeyValidation(t *testing.T) {
-	os.Unsetenv("ANTHROPIC_API_KEY")
+	clearConfigEnv(t)
 
 	cfg, err := Load(nil)
 	if err == nil {
@@ -185,8 +186,7 @@ func TestAPIKeyValidation(t *testing.T) {
 }
 
 func TestDefaults(t *testing.T) {
-	os.Unsetenv("ANTHROPIC_API_KEY")
-	os.Unsetenv("ANTHROPIC_BASE_URL")
+	clearConfigEnv(t)
 
 	tmpDir := t.TempDir()
 	projectDir := filepath.Join(tmpDir, "project")
@@ -232,4 +232,12 @@ func TestDefaults(t *testing.T) {
 func mustGetwd() string {
 	wd, _ := os.Getwd()
 	return wd
+}
+
+func clearConfigEnv(t *testing.T) {
+	t.Helper()
+	t.Setenv("ANTHROPIC_API_KEY", "")
+	t.Setenv("ANTHROPIC_BASE_URL", "")
+	t.Setenv("ANTHROPIC_MODEL", "")
+	t.Setenv("LLM_PROVIDER", "")
 }

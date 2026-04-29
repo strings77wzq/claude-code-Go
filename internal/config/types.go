@@ -17,7 +17,6 @@ func DefaultConfig() *Config {
 		BaseURL:   "https://api.anthropic.com",
 		Model:     "claude-sonnet-4-6-20251001",
 		MaxTokens: 8192,
-		Provider:  "anthropic",
 	}
 }
 

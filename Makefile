@@ -1,6 +1,6 @@
 # Makefile for go-code
 
-.PHONY: build test vet install docs docs-build build-all clean help
+.PHONY: build test harness vet install docs docs-build build-all clean help
 
 # Default target
 build: go-build
@@ -12,9 +12,10 @@ go-build:
 # Run tests (Go tests + Python tests if harness exists)
 test:
 	go test -v ./...
-	@if [ -d harness ] && [ -f harness/pytest.ini -o -d harness/tests ]; then \
-		cd harness && python -m pytest -v; \
-	fi
+	./scripts/run-harness.sh
+
+harness:
+	./scripts/run-harness.sh
 
 # Run Go vet
 vet:
@@ -50,6 +51,7 @@ help:
 	@echo "  build       - Build the Go application (default)"
 	@echo "  install     - Install to \$GOPATH/bin (run as 'go-code')"
 	@echo "  test        - Run Go and Python tests"
+	@echo "  harness     - Build binary and run parity harness"
 	@echo "  vet         - Run go vet for static analysis"
 	@echo "  docs        - Serve VitePress documentation locally"
 	@echo "  docs-build  - Build VitePress documentation for production"

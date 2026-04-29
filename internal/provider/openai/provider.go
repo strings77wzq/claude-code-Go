@@ -45,6 +45,10 @@ func (p *OpenAIProvider) Name() string {
 	return "openai"
 }
 
+func (p *OpenAIProvider) SetModel(model string) {
+	p.model = model
+}
+
 func (p *OpenAIProvider) SendMessage(ctx context.Context, req *api.ApiRequest) (*api.ApiResponse, error) {
 	model := req.Model
 	if model == "" {
@@ -77,25 +81,25 @@ func (p *OpenAIProvider) SendMessage(ctx context.Context, req *api.ApiRequest) (
 
 		resp, err := p.httpClient.Do(httpReq)
 		if err != nil {
-			lastErr = err
+			lastErr = provider.ClassifyError(err)
 			continue
 		}
 
 		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusInternalServerError {
 			resp.Body.Close()
-			lastErr = fmt.Errorf("rate limited or server error (%d)", resp.StatusCode)
+			lastErr = provider.ClassifyHTTPStatus(resp.StatusCode, "")
 			continue
 		}
 
 		if resp.StatusCode == http.StatusUnauthorized {
 			resp.Body.Close()
-			return nil, fmt.Errorf("unauthorized (401): invalid API key")
+			return nil, provider.ClassifyHTTPStatus(resp.StatusCode, "")
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
 			body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
-			return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+			resp.Body.Close()
+			return nil, provider.ClassifyHTTPStatus(resp.StatusCode, string(body))
 		}
 
 		defer resp.Body.Close()
@@ -143,25 +147,25 @@ func (p *OpenAIProvider) SendMessageStream(ctx context.Context, req *api.ApiRequ
 
 		resp, err := p.httpClient.Do(httpReq)
 		if err != nil {
-			lastErr = err
+			lastErr = provider.ClassifyError(err)
 			continue
 		}
 
 		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusInternalServerError {
 			resp.Body.Close()
-			lastErr = fmt.Errorf("rate limited or server error (%d)", resp.StatusCode)
+			lastErr = provider.ClassifyHTTPStatus(resp.StatusCode, "")
 			continue
 		}
 
 		if resp.StatusCode == http.StatusUnauthorized {
 			resp.Body.Close()
-			return nil, fmt.Errorf("unauthorized (401): invalid API key")
+			return nil, provider.ClassifyHTTPStatus(resp.StatusCode, "")
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
 			body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
-			return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+			resp.Body.Close()
+			return nil, provider.ClassifyHTTPStatus(resp.StatusCode, string(body))
 		}
 
 		defer resp.Body.Close()

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/strings77wzq/claude-code-Go/internal/api"
@@ -39,21 +41,26 @@ type PermissionPolicyInterface interface {
 	Evaluate(toolName string, input map[string]any, requiresPermission bool) permission.Decision
 }
 
+type permissionMemoryInterface interface {
+	RememberDecision(toolName string, input map[string]any, decision permission.Decision)
+}
+
 // Agent is the core agent that drives the think → act → observe → think again loop.
 type Agent struct {
-	apiClient        ApiClientInterface
-	toolRegistry     ToolRegistryInterface
-	permissionPolicy PermissionPolicyInterface
-	hooksRegistry    *hooks.Registry
-	systemPrompt     string
-	model            string
-	maxTokens        int
-	history          *History
-	contextConfig    *ContextConfig
-	sessionID        string
-	startTime        time.Time
-	traceFilePath    string
-	recoveryManager  *RecoveryManager
+	apiClient          ApiClientInterface
+	toolRegistry       ToolRegistryInterface
+	permissionPolicy   PermissionPolicyInterface
+	permissionPrompter permission.Prompter
+	hooksRegistry      *hooks.Registry
+	systemPrompt       string
+	model              string
+	maxTokens          int
+	history            *History
+	contextConfig      *ContextConfig
+	sessionID          string
+	startTime          time.Time
+	traceFilePath      string
+	recoveryManager    *RecoveryManager
 }
 
 // NewAgent creates a new Agent with the given dependencies.
@@ -65,22 +72,28 @@ func NewAgent(
 	model string,
 ) *Agent {
 	return &Agent{
-		apiClient:        apiClient,
-		toolRegistry:     toolRegistry,
-		permissionPolicy: permissionPolicy,
-		systemPrompt:     systemPrompt,
-		model:            model,
-		maxTokens:        DefaultMaxTokens,
-		history:          NewHistory(),
-		contextConfig:    DefaultContextConfig(),
-		hooksRegistry:    hooks.NewRegistry(),
-		recoveryManager:  NewRecoveryManager(),
+		apiClient:          apiClient,
+		toolRegistry:       toolRegistry,
+		permissionPolicy:   permissionPolicy,
+		permissionPrompter: permission.NewDefaultPrompter(),
+		systemPrompt:       systemPrompt,
+		model:              model,
+		maxTokens:          DefaultMaxTokens,
+		history:            NewHistory(),
+		contextConfig:      DefaultContextConfig(),
+		hooksRegistry:      hooks.NewRegistry(),
+		recoveryManager:    NewRecoveryManager(),
 	}
 }
 
 // SetHooksRegistry sets the hooks registry for the agent.
 func (a *Agent) SetHooksRegistry(reg *hooks.Registry) {
 	a.hooksRegistry = reg
+}
+
+// SetPermissionPrompter sets the prompter used when a tool requires approval.
+func (a *Agent) SetPermissionPrompter(prompter permission.Prompter) {
+	a.permissionPrompter = prompter
 }
 
 // Run is the main entry point for the agent. It takes user input and returns the final text response.
@@ -120,7 +133,7 @@ func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(s
 
 		if err != nil {
 			a.traceError(fmt.Sprintf("API call failed after recovery: %v", err))
-			a.saveSession(turns, totalInputTokens, totalOutputTokens)
+			a.saveSession(turns, totalInputTokens, totalOutputTokens, "failed")
 			return "", fmt.Errorf("API call failed: %w", err)
 		}
 
@@ -131,26 +144,26 @@ func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(s
 
 		if err := a.history.AddAssistantMessage(resp.Content); err != nil {
 			a.traceError(fmt.Sprintf("failed to add assistant message: %v", err))
-			a.saveSession(turns, totalInputTokens, totalOutputTokens)
+			a.saveSession(turns, totalInputTokens, totalOutputTokens, "failed")
 			return "", fmt.Errorf("failed to add assistant message: %w", err)
 		}
 
 		switch resp.StopReason {
 		case "end_turn", "stop_sequence":
 			result := extractTextContent(resp.Content)
-			a.saveSession(turns, totalInputTokens, totalOutputTokens)
+			a.saveSession(turns, totalInputTokens, totalOutputTokens, "completed")
 			return result, nil
 
 		case "max_tokens":
 			result := extractTextContent(resp.Content) + "\n[Warning] Response was truncated (max_tokens reached)."
-			a.saveSession(turns, totalInputTokens, totalOutputTokens)
+			a.saveSession(turns, totalInputTokens, totalOutputTokens, "completed")
 			return result, nil
 
 		case "tool_use":
 			toolResults := a.executeTools(ctx, resp.Content)
 			if err := a.history.AddToolResults(toolResults); err != nil {
 				a.traceError(fmt.Sprintf("failed to add tool results: %v", err))
-				a.saveSession(turns, totalInputTokens, totalOutputTokens)
+				a.saveSession(turns, totalInputTokens, totalOutputTokens, "failed")
 				return "", fmt.Errorf("failed to add tool results: %w", err)
 			}
 			turns++
@@ -158,13 +171,13 @@ func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(s
 
 		default:
 			result := extractTextContent(resp.Content)
-			a.saveSession(turns, totalInputTokens, totalOutputTokens)
+			a.saveSession(turns, totalInputTokens, totalOutputTokens, "completed")
 			return result, nil
 		}
 	}
 
 	result := "[Agent loop stopped] Reached maximum turns (" + fmt.Sprintf("%d", MaxTurns) + ")."
-	a.saveSession(turns, totalInputTokens, totalOutputTokens)
+	a.saveSession(turns, totalInputTokens, totalOutputTokens, "max_turns")
 	return result, nil
 }
 
@@ -204,14 +217,18 @@ func (a *Agent) executeTools(ctx context.Context, content []api.ContentBlock) []
 
 		startTime := time.Now()
 
-		if !a.checkPermission(toolName, toolInput) {
+		if allowed, decision := a.checkPermission(toolName, toolInput); !allowed {
+			a.tracePermission(toolName, decision, summarizePermissionInput(toolName, toolInput))
 			a.traceTool(toolName, toolInput, "permission denied", time.Since(startTime).Milliseconds())
 			toolResults = append(toolResults, api.ContentBlock{
 				Type:      "tool_result",
 				ToolUseID: toolUseID,
+				Text:      "Permission denied for tool: " + toolName,
 				IsError:   true,
 			})
 			continue
+		} else {
+			a.tracePermission(toolName, decision, summarizePermissionInput(toolName, toolInput))
 		}
 
 		if a.hooksRegistry != nil {
@@ -246,13 +263,36 @@ func (a *Agent) executeTools(ctx context.Context, content []api.ContentBlock) []
 	return toolResults
 }
 
-// checkPermission delegates to the permission policy to determine if a tool can be executed.
-func (a *Agent) checkPermission(toolName string, input map[string]any) bool {
+// checkPermission delegates to the permission policy and prompter to determine if a tool can be executed.
+func (a *Agent) checkPermission(toolName string, input map[string]any) (bool, permission.Decision) {
 	t := a.toolRegistry.GetTool(toolName)
 	requiresPermission := t != nil && t.RequiresPermission()
 
 	decision := a.permissionPolicy.Evaluate(toolName, input, requiresPermission)
-	return decision == permission.Allow || decision == permission.Ask
+	switch decision {
+	case permission.Allow, permission.AllowOnce, permission.AllowForSession:
+		return true, decision
+	case permission.Deny:
+		return false, decision
+	case permission.Ask:
+		if a.permissionPrompter == nil {
+			return false, permission.Deny
+		}
+		promptDecision := a.permissionPrompter.Decide(toolName, input, "tool requires approval")
+		switch promptDecision {
+		case permission.Allow, permission.AllowOnce:
+			return true, promptDecision
+		case permission.AllowForSession:
+			if memory, ok := a.permissionPolicy.(permissionMemoryInterface); ok {
+				memory.RememberDecision(toolName, input, permission.AllowForSession)
+			}
+			return true, promptDecision
+		default:
+			return false, permission.Deny
+		}
+	default:
+		return false, permission.Deny
+	}
 }
 
 // GetHistory returns a copy of the current conversation history.
@@ -325,10 +365,15 @@ func (a *Agent) initTraceFile() string {
 	a.traceFilePath = filepath
 
 	metaLine := map[string]interface{}{
-		"type":       "meta",
-		"session_id": a.sessionID,
-		"model":      a.model,
-		"start_ms":   a.startTime.UnixMilli(),
+		"type":          "meta",
+		"session_id":    a.sessionID,
+		"model":         a.model,
+		"start_time_ms": a.startTime.UnixMilli(),
+		"end_time_ms":   0,
+		"turn_count":    0,
+		"input_tokens":  0,
+		"output_tokens": 0,
+		"status":        "running",
 	}
 
 	data, err := json.Marshal(metaLine)
@@ -384,8 +429,67 @@ func (a *Agent) traceError(message string) {
 	session.AppendTraceError(a.traceFilePath, message)
 }
 
+// tracePermission logs permission decisions to the trace file.
+func (a *Agent) tracePermission(toolName string, decision permission.Decision, summary string) {
+	if a.traceFilePath == "" {
+		return
+	}
+	session.AppendTracePermission(a.traceFilePath, toolName, string(decision), summary)
+}
+
+func summarizePermissionInput(toolName string, input map[string]any) string {
+	var summary string
+	switch toolName {
+	case "Bash":
+		if command, ok := input["command"].(string); ok {
+			summary = command
+		}
+	case "Read", "Write", "Edit":
+		if path, ok := input["file_path"].(string); ok {
+			summary = path
+		}
+	case "Glob", "Grep":
+		if pattern, ok := input["pattern"].(string); ok {
+			summary = pattern
+		}
+	}
+	if summary == "" {
+		summary = "tool input"
+	}
+	return sanitizePermissionSummary(summary)
+}
+
+var permissionSecretPatterns = []*regexp.Regexp{
+	regexp.MustCompile(`(?i)bearer\s+[A-Za-z0-9._~+/=-]+`),
+	regexp.MustCompile(`(?i)(api[_-]?key|token|secret|password|authorization)(\s*[:=]\s*|\s+)[^\s;&|]+`),
+	regexp.MustCompile(`sk-[A-Za-z0-9_-]{8,}`),
+}
+
+func sanitizePermissionSummary(summary string) string {
+	summary = strings.TrimSpace(summary)
+	for _, pattern := range permissionSecretPatterns {
+		summary = pattern.ReplaceAllStringFunc(summary, func(match string) string {
+			if strings.HasPrefix(strings.ToLower(match), "bearer ") {
+				return "Bearer [REDACTED]"
+			}
+			if strings.HasPrefix(match, "sk-") {
+				return "sk-[REDACTED]"
+			}
+			parts := regexp.MustCompile(`\s*[:=]\s*|\s+`).Split(match, 2)
+			if len(parts) > 0 {
+				return parts[0] + "=[REDACTED]"
+			}
+			return "[REDACTED]"
+		})
+	}
+	if len(summary) > 200 {
+		return summary[:200] + "...(truncated)"
+	}
+	return summary
+}
+
 // saveSession saves the current session to disk.
-func (a *Agent) saveSession(turnCount, inputTokens, outputTokens int) {
+func (a *Agent) saveSession(turnCount, inputTokens, outputTokens int, status string) {
 	if a.sessionID == "" {
 		return
 	}
@@ -398,10 +502,21 @@ func (a *Agent) saveSession(turnCount, inputTokens, outputTokens int) {
 		TurnCount:    turnCount,
 		InputTokens:  inputTokens,
 		OutputTokens: outputTokens,
+		Status:       status,
 	}
 
 	messages := a.convertHistoryToSessionMessages()
 	dir := getSessionsDir()
+
+	if a.traceFilePath != "" {
+		if err := session.AppendSessionMessages(a.traceFilePath, messages); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to append session messages: %v\n", err)
+		}
+		if err := session.AppendTraceStatus(a.traceFilePath, status, turnCount, inputTokens, outputTokens); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to append session status: %v\n", err)
+		}
+		return
+	}
 
 	if err := session.SaveSession(s, messages, dir); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to save session: %v\n", err)
@@ -422,6 +537,8 @@ func (a *Agent) convertHistoryToSessionMessages() []session.SessionMessage {
 			for _, block := range c {
 				if block.Type == "text" {
 					content += block.Text
+				} else if block.Type == "tool_use" {
+					content += fmt.Sprintf("[tool use: %s %s]", block.Name, formatToolInput(block.Input))
 				} else if block.Type == "tool_result" {
 					content += fmt.Sprintf("[tool result: %s]", block.Text)
 				}
@@ -436,4 +553,15 @@ func (a *Agent) convertHistoryToSessionMessages() []session.SessionMessage {
 	}
 
 	return messages
+}
+
+func formatToolInput(input map[string]any) string {
+	if len(input) == 0 {
+		return "{}"
+	}
+	data, err := json.Marshal(input)
+	if err != nil {
+		return "{}"
+	}
+	return string(data)
 }

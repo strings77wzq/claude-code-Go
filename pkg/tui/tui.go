@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/strings77wzq/claude-code-Go/internal/command"
 )
 
 type streamMsg struct {
@@ -224,42 +225,31 @@ func (m model) runAgent(input string) tea.Cmd {
 }
 
 func (m model) handleCommand(input string) (tea.Model, tea.Cmd) {
-	switch input {
-	case "/exit", "/quit":
-		m.quitting = true
-		return m, tea.Quit
-	case "/clear":
-		m.messages = nil
-		m.agent.ClearHistory()
-		return m, nil
-	case "/help":
-		help := "Commands:\n" +
-			"  /help      - Show this help\n" +
-			"  /clear     - Clear history\n" +
-			"  /model     - Show current model\n" +
-			"  /model <n> - Switch model\n" +
-			"  /models    - List available models\n" +
-			"  /sessions  - List sessions\n" +
-			"  /resume <id> - Resume session\n" +
-			"  /compact   - Compact context\n" +
-			"  /update    - Check for updates\n" +
-			"  /exit      - Exit"
-		m.messages = append(m.messages, message{role: "system", content: help})
-		return m, nil
-	case "/model":
-		m.messages = append(m.messages, message{role: "system", content: "Current model: " + m.agent.Model()})
-		return m, nil
-	default:
-		if strings.HasPrefix(input, "/model ") {
-			newModel := strings.TrimSpace(input[7:])
-			m.agent.SetModel(newModel)
-			m.modelName = newModel
-			m.messages = append(m.messages, message{role: "system", content: "Model switched to: " + newModel})
-			return m, nil
-		}
+	result := command.Handler{
+		Agent:       m.agent,
+		Version:     m.version,
+		Model:       m.modelName,
+		SessionsDir: "~/.claude-code-go/sessions/",
+	}.Handle(input)
+
+	if !result.Handled {
 		m.messages = append(m.messages, message{role: "system", content: "Unknown command: " + input})
 		return m, nil
 	}
+	if result.Model != "" {
+		m.modelName = result.Model
+	}
+	if result.Quit {
+		m.quitting = true
+		return m, tea.Quit
+	}
+	if input == "/clear" {
+		m.messages = nil
+	}
+	if result.Message != "" {
+		m.messages = append(m.messages, message{role: "system", content: result.Message})
+	}
+	return m, nil
 }
 
 func (m model) View() string {

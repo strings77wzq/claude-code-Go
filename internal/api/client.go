@@ -21,12 +21,13 @@ const (
 type ErrorType string
 
 const (
-	ErrorAuth       ErrorType = "auth"
-	ErrorRateLimit  ErrorType = "rate_limit"
-	ErrorServer     ErrorType = "server"
-	ErrorTimeout    ErrorType = "timeout"
-	ErrorNetwork    ErrorType = "network"
-	ErrorUnexpected ErrorType = "unexpected"
+	ErrorAuth           ErrorType = "auth"
+	ErrorRateLimit      ErrorType = "rate_limit"
+	ErrorServer         ErrorType = "server"
+	ErrorTimeout        ErrorType = "timeout"
+	ErrorNetwork        ErrorType = "network"
+	ErrorInvalidRequest ErrorType = "invalid_request"
+	ErrorUnexpected     ErrorType = "unexpected"
 )
 
 type APIError struct {
@@ -71,6 +72,12 @@ func classifyError(statusCode int, body string, originalErr error) *APIError {
 			Type:    ErrorRateLimit,
 			Code:    429,
 			Message: "Rate limited. Retrying automatically...",
+		}
+	case http.StatusBadRequest, http.StatusUnprocessableEntity:
+		return &APIError{
+			Type:    ErrorInvalidRequest,
+			Code:    statusCode,
+			Message: fmt.Sprintf("Invalid provider request (%d): %s", statusCode, body),
 		}
 	}
 

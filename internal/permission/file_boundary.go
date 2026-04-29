@@ -87,30 +87,64 @@ func CheckFileSize(filePath string) (int64, error) {
 
 // ResolveAndValidatePath resolves symlinks and validates the path is within workingDir
 func ResolveAndValidatePath(filePath, workingDir string) (string, error) {
-	// Resolve symlinks to get the canonical path
-	resolvedPath, err := filepath.EvalSymlinks(filePath)
-	if err != nil {
-		// If symlink resolution fails, try to use the original path
-		// This handles the case where the file doesn't exist yet
-		resolvedPath = filePath
-	}
-
-	// Normalize both paths for comparison
 	absWorkingDir, err := filepath.Abs(workingDir)
 	if err != nil {
 		return "", err
 	}
+	if resolvedWorkingDir, err := filepath.EvalSymlinks(absWorkingDir); err == nil {
+		absWorkingDir = resolvedWorkingDir
+	}
 
-	absResolvedPath, err := filepath.Abs(resolvedPath)
+	if !filepath.IsAbs(filePath) {
+		filePath = filepath.Join(absWorkingDir, filePath)
+	}
+
+	absPath, err := filepath.Abs(filePath)
 	if err != nil {
 		return "", err
 	}
 
-	// Check if resolved path is within working directory
-	// Use string comparison with separator to ensure proper path boundary
-	if !strings.HasPrefix(absResolvedPath+string(filepath.Separator), absWorkingDir+string(filepath.Separator)) {
+	resolvedPath, err := resolvePathForExistingParent(absPath)
+	if err != nil {
+		return "", err
+	}
+
+	if !isPathWithin(resolvedPath, absWorkingDir) {
 		return "", ErrPathEscape
 	}
 
-	return absResolvedPath, nil
+	return resolvedPath, nil
+}
+
+func resolvePathForExistingParent(absPath string) (string, error) {
+	if resolvedPath, err := filepath.EvalSymlinks(absPath); err == nil {
+		return filepath.Clean(resolvedPath), nil
+	}
+
+	var missing []string
+	current := absPath
+	for {
+		if resolvedParent, err := filepath.EvalSymlinks(current); err == nil {
+			for i := len(missing) - 1; i >= 0; i-- {
+				resolvedParent = filepath.Join(resolvedParent, missing[i])
+			}
+			return filepath.Clean(resolvedParent), nil
+		}
+
+		parent := filepath.Dir(current)
+		if parent == current {
+			return filepath.Clean(absPath), nil
+		}
+		missing = append(missing, filepath.Base(current))
+		current = parent
+	}
+}
+
+func isPathWithin(path, root string) bool {
+	path = filepath.Clean(path)
+	root = filepath.Clean(root)
+	if path == root {
+		return true
+	}
+	return strings.HasPrefix(path+string(filepath.Separator), root+string(filepath.Separator))
 }

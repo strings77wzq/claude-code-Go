@@ -71,7 +71,8 @@ func (r *ReadTool) Execute(ctx context.Context, input map[string]any) tool.Resul
 		return tool.Error("file_path is required")
 	}
 
-	if err := ValidatePath(filePath, r.workingDir); err != nil {
+	resolvedPath, err := ResolvePath(filePath, r.workingDir)
+	if err != nil {
 		return tool.Error(err.Error())
 	}
 
@@ -99,7 +100,7 @@ func (r *ReadTool) Execute(ctx context.Context, input map[string]any) tool.Resul
 		}
 	}
 
-	info, err := os.Stat(filePath)
+	info, err := os.Stat(resolvedPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return tool.Error(fmt.Sprintf("file not found: %s", filePath))
@@ -115,7 +116,11 @@ func (r *ReadTool) Execute(ctx context.Context, input map[string]any) tool.Resul
 		return tool.Error(fmt.Sprintf("file too large (max 200KB): %s", filePath))
 	}
 
-	file, err := os.Open(filePath)
+	if permission.IsBinaryFile(resolvedPath) {
+		return tool.Error(fmt.Sprintf("cannot read binary file: %s", filePath))
+	}
+
+	file, err := os.Open(resolvedPath)
 	if err != nil {
 		return tool.Error(fmt.Sprintf("failed to open file: %v", err))
 	}

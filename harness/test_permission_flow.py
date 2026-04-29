@@ -22,23 +22,24 @@ def run_go_cli_interactive(binary, base_url, input_lines, env_overrides=None, ti
     env = {
         "ANTHROPIC_API_KEY": "test",
         "ANTHROPIC_BASE_URL": base_url,
+        "ANTHROPIC_MODEL": "claude-sonnet-4-6-20251001",
+        "LLM_PROVIDER": "anthropic",
     }
     if env_overrides:
         env.update(env_overrides)
 
-    # Join all input lines with newlines
-    input_text = "\n".join(input_lines) + "\n"
+    prompt = input_lines[0] if input_lines else ""
 
     process = subprocess.Popen(
-        [str(binary)],
-        stdin=subprocess.PIPE,
+        [str(binary), "-p", prompt, "-q", "-f", "json"],
+        stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         env={**os.environ, **env},
         text=True,
     )
 
-    stdout, stderr = process.communicate(input=input_text, timeout=timeout)
+    stdout, stderr = process.communicate(timeout=timeout)
     return stdout, stderr, process.returncode
 
 

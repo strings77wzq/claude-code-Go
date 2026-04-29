@@ -30,7 +30,7 @@ SCENARIOS: dict[str, Scenario] = {
                 "type": "tool_use",
                 "id": "toolu_001",
                 "name": "Read",
-                "input": {"file_path": "/test.txt"}
+                "input": {"file_path": "README.md"}
             },
             # Second turn: return text after tool_result
             {
@@ -55,6 +55,67 @@ SCENARIOS: dict[str, Scenario] = {
                 "text": "total 4\ndrwxr-xr-x 1 user user 4096 Apr  3 10:00 .\nddrwxr-xr-x   1 user user 4096 Apr  3 10:00 .."
             }
         ]
+    ),
+    "tool_use_edit": Scenario(
+        name="tool_use_edit",
+        messages=[
+            {
+                "type": "tool_use",
+                "id": "toolu_003",
+                "name": "Edit",
+                "input": {
+                    "file_path": "harness/tmp/edit-target.txt",
+                    "old_string": "before",
+                    "new_string": "after",
+                },
+            },
+            {
+                "type": "text",
+                "text": "Edited the file successfully",
+            },
+        ],
+    ),
+    "permission_denial": Scenario(
+        name="permission_denial",
+        messages=[
+            {
+                "type": "tool_use",
+                "id": "toolu_004",
+                "name": "Bash",
+                "input": {"command": "rm -rf /"},
+            },
+            {
+                "type": "text",
+                "text": "The command was denied by the permission system",
+            },
+        ],
+    ),
+    "retryable_provider_error": Scenario(
+        name="retryable_provider_error",
+        messages=[
+            {
+                "type": "text",
+                "text": "Recovered after a retryable provider error",
+            }
+        ],
+    ),
+    "context_pressure": Scenario(
+        name="context_pressure",
+        messages=[
+            {
+                "type": "text",
+                "text": "Context pressure handled with a concise answer.",
+            }
+        ],
+    ),
+    "malformed_stream_event": Scenario(
+        name="malformed_stream_event",
+        messages=[
+            {
+                "type": "malformed",
+                "text": "this scenario emits a malformed SSE event",
+            }
+        ],
     ),
     "multi_turn": Scenario(
         name="multi_turn",
