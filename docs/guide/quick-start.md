@@ -45,6 +45,22 @@ The config loader searches in this order (later sources override earlier ones):
 
 ## Running go-code
 
+### Verify Your Setup
+
+Before starting a real session, run doctor:
+
+```bash
+go-code doctor
+```
+
+If you are offline or only want local checks:
+
+```bash
+go-code doctor --offline
+```
+
+Doctor validates the binary version, configuration source, provider/model configuration, session directory, built-in tool registration, and key documentation files. Failed checks include a concrete remediation line.
+
 ### Interactive REPL Mode
 
 Start an interactive session:
@@ -128,10 +144,10 @@ go-code supports the following startup options:
 ### Positional Arguments
 
 ```bash
-go-code [prompt]
+go-code -p "prompt"
 ```
 
-- `prompt` (optional): If provided, go-code executes this single prompt and exits
+- `-p "prompt"`: execute this single prompt and exit
 
 ### Environment Variables
 
@@ -145,6 +161,8 @@ go-code [prompt]
 
 | Flag | Description |
 |------|-------------|
+| `doctor` | Validate local readiness |
+| `doctor --offline` | Run local readiness checks without network probing |
 | `-p "prompt"` | Run a single prompt and exit |
 | `-f json` | Output in JSON format (use with `-p`) |
 | `-q` | Quiet mode, no spinner (use with `-p`) |

@@ -43,6 +43,22 @@ export ANTHROPIC_API_KEY=sk-ant-your-api-key-here
 
 ## 运行 go-code
 
+### 验证本地环境
+
+首次运行真实会话前，先执行健康检查：
+
+```bash
+go-code doctor
+```
+
+如果当前离线，或只想检查本地配置、会话目录、工具注册和文档文件：
+
+```bash
+go-code doctor --offline
+```
+
+Doctor 会检查二进制版本、配置来源、Provider/模型配置、会话目录、内置工具注册和关键文档文件。失败项会给出 `fix:` 修复提示。
+
 ### 交互式 REPL 模式
 
 启动交互式会话：
@@ -79,7 +95,7 @@ go-code> 当前目录有哪些文件？
 用于执行一次性任务：
 
 ```bash
-./bin/go-code "创建一个 Go 的 hello world 程序"
+./bin/go-code -p "创建一个 Go 的 hello world 程序"
 ```
 
 此命令将执行完成后退出。
@@ -103,10 +119,10 @@ go-code 支持以下启动选项：
 ### 位置参数
 
 ```bash
-go-code [prompt]
+go-code -p "prompt"
 ```
 
-- `prompt`（可选）：如果提供，go-code 将执行此单次命令然后退出
+- `-p "prompt"`：执行一次性任务并退出
 
 ### 环境变量
 
@@ -114,7 +130,7 @@ go-code [prompt]
 |------|------|------|
 | `ANTHROPIC_API_KEY` | 您的 Anthropic API 密钥 | 是 |
 | `ANTHROPIC_BASE_URL` | 覆盖默认 API 端点（可选）| 否 |
-| `ANTHROPIC_MODEL` | 指定模型（默认：claude-3-5-sonnet-20241022）| 否 |
+| `ANTHROPIC_MODEL` | 指定模型（默认：claude-sonnet-4-6-20251001）| 否 |
 
 ### 配置文件
 

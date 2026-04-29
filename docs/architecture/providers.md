@@ -42,41 +42,14 @@ All providers implement the `Provider` interface defined in `internal/provider/i
 ```go
 type Provider interface {
     Name() string
-    DefaultModel() string
-    SendMessage(ctx context.Context, req *Request) (*Response, error)
-    SendMessageStream(ctx context.Context, req *Request, onTextDelta func(text string)) (*Response, error)
+    SendMessage(ctx context.Context, req *api.ApiRequest) (*api.ApiResponse, error)
+    SendMessageStream(ctx context.Context, req *api.ApiRequest, onTextDelta func(text string)) (*api.ApiResponse, error)
 }
 ```
 
-### Core Types
-
-```go
-type Request struct {
-    Model     string
-    MaxTokens int
-    System    string
-    Stream    bool
-    Messages  []Message
-    Tools     []ToolDefinition
-}
-
-type Message struct {
-    Role    string
-    Content string
-}
-
-type Response struct {
-    ID         string
-    Content    string
-    StopReason string
-    Usage       Usage
-}
-
-type Usage struct {
-    InputTokens  int
-    OutputTokens int
-}
-```
+Provider selection is validated before the first request by `internal/provider/registry`.
+The registry checks provider name, base URL, model, and API key presence. Unknown
+providers fail before any network request.
 
 ## Available Providers
 
@@ -87,7 +60,7 @@ The default provider using Anthropic's Messages API.
 | Field | Value |
 |-------|-------|
 | Name | `anthropic` |
-| Default Model | `claude-sonnet-4-20250514` |
+| Default Model | `claude-sonnet-4-6-20251001` |
 | API Base URL | `https://api.anthropic.com` |
 
 ```go
@@ -114,9 +87,10 @@ provider := openai.NewProvider(apiKey, baseURL, model)
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `LLM_PROVIDER` | Provider name | `anthropic` |
-| `ANTHROPIC_API_KEY` | Anthropic API key | - |
-| `OPENAI_API_KEY` | OpenAI API key | - |
+| `LLM_PROVIDER` | Provider name (`anthropic` or `openai`) | auto-detected from model |
+| `ANTHROPIC_API_KEY` | API key used by the active provider | - |
+| `ANTHROPIC_BASE_URL` | Provider base URL override | provider default |
+| `ANTHROPIC_MODEL` | Model override | `claude-sonnet-4-6-20251001` |
 
 ### Configuration File
 
@@ -141,6 +115,21 @@ For OpenAI:
   "baseUrl": "https://api.openai.com"
 }
 ```
+
+For OpenAI-compatible providers, set `provider` to `openai` and use the vendor
+base URL:
+
+| Vendor | Provider | Base URL | Notes |
+| --- | --- | --- | --- |
+| Anthropic | `anthropic` | `https://api.anthropic.com` | Native Messages API path. |
+| OpenAI | `openai` | `https://api.openai.com` | Chat Completions compatibility. |
+| DeepSeek | `openai` | `https://api.deepseek.com` | Use `deepseek-chat` or `deepseek-reasoner`. |
+| Qwen | `openai` | `https://dashscope.aliyuncs.com/compatible-mode` | OpenAI-compatible mode; vendor-specific model availability applies. |
+| GLM | `openai` | `https://open.bigmodel.cn/api/paas` | OpenAI-compatible mode; verify model names with GLM docs. |
+| Tencent Cloud Coding Plan | `anthropic` | `https://api.lkeap.cloud.tencent.com/coding/anthropic` | Anthropic-compatible path, commonly with `tc-code-latest`. |
+
+Runtime `/model <name>` only accepts models known to the registry. Unsupported
+models are rejected and the active model remains unchanged.
 
 ### CLI Overrides
 
@@ -207,7 +196,9 @@ func (p *MyProvider) SendMessageStream(ctx context.Context, req *provider.Reques
 
 | File | Purpose |
 |------|---------|
-| `internal/provider/interface.go` | Provider interface and core types |
+| `internal/provider/interface.go` | Provider interface |
+| `internal/provider/registry/registry.go` | Provider/model validation and routing |
+| `internal/provider/errors.go` | Normalized provider error categories |
 | `internal/provider/anthropic/provider.go` | Anthropic API adapter |
 | `internal/provider/openai/provider.go` | OpenAI API adapter |
 

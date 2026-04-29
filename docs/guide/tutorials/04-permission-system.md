@@ -2,6 +2,18 @@
 
 Learn how claude-code-Go keeps you safe.
 
+## Current Runtime Behavior
+
+New sessions now start in `WorkspaceWrite`, not `DangerFullAccess`. Read-only tools such as `Read`, `Glob`, and `Grep` run without prompting when the target stays inside the workspace. Write-like tools, edits, bash commands, network fetches, and other side-effecting tools require an explicit decision.
+
+The terminal approval prompt supports three choices:
+
+- `y` / `yes`: allow this operation once.
+- `n` / `no`: deny this operation and return an error tool result to the agent.
+- `a` / `always`: allow this matching operation for the rest of the session.
+
+Denied operations are not executed. The agent receives a structured `tool_result` marked as an error, so it can explain the denial or choose a safer path.
+
 ## The Three Tiers
 
 claude-code-Go uses a 3-tier permission model:

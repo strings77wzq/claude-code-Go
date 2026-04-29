@@ -5,7 +5,7 @@ description: Complete reference for all REPL commands in go-code
 
 # REPL Commands Reference
 
-go-code provides a set of slash commands for controlling the REPL session. These commands allow you to get help, manage sessions, switch models, and control the application behavior.
+go-code provides a shared set of slash commands for controlling interactive sessions. The default TUI and legacy REPL use the same command layer for the commands listed here.
 
 ## Command List
 
@@ -18,9 +18,10 @@ go-code provides a set of slash commands for controlling the REPL session. These
 | [`/sessions`](#sessions) | List saved sessions | `/sessions` |
 | [`/resume`](#resume) | Resume a session | `/resume session-id` |
 | [`/compact`](#compact) | Compress conversation context | `/compact` |
-| [`/update`](#update) | Check and apply updates | `/update` |
+| [`/permissions`](#permissions) | Show permission status | `/permissions` |
+| [`/update`](#update) | Check for updates | `/update` |
 | [`/exit`](#exit) | Exit the application | `/exit` |
-| [`/skills`](#skills) | List available skills | `/skills` |
+| [`/skills`](#skills) | List available skills in legacy REPL | `/skills` |
 
 ---
 
@@ -42,16 +43,17 @@ Shows a summary of all available REPL commands with brief descriptions. This is 
 
 ```
 Available commands:
-  /help       - Show this help message
-  /clear      - Clear conversation history
-  /model      - Show/switch current model
-  /models     - List available models
-  /sessions   - List saved sessions
-  /resume     - Resume a session
-  /compact    - Compress conversation context
-  /update     - Check for updates
-  /exit       - Exit the application
-  /skills     - List available skills
+  /help        - Show this help
+  /clear       - Clear conversation history
+  /model       - Show current model
+  /model <n>   - Switch model
+  /models      - List available models
+  /sessions    - List sessions
+  /resume <id> - Resume session
+  /compact     - Compact context
+  /permissions - Show permission status
+  /update      - Check for updates
+  /exit        - Exit
 
 Type /<command> to use a command.
 ```
@@ -110,20 +112,7 @@ Without arguments, displays the currently active model. With a model name, switc
 
 ### Available Models
 
-**Anthropic:**
-- `claude-sonnet-4-20250514` (default)
-- `claude-opus-4-20250514`
-- `claude-haiku-4-20250514`
-
-**Tencent Coding Plan:**
-- `tc-code-latest` (Auto)
-- `hunyuan-2.0-instruct`
-- `hunyuan-2.0-thinking`
-- `minimax-m2.5`
-- `kimi-k2.5`
-- `glm-5`
-- `hunyuan-t1`
-- `hunyuan-turbos`
+The supported model list is defined by the provider registry. Use `/models` for the current list.
 
 ### Examples
 
@@ -161,19 +150,13 @@ Displays a comprehensive list of all models that can be used with go-code, organ
 Available models:
 
   Anthropic:
-    claude-sonnet-4-20250514 (default)
-    claude-opus-4-20250514
-    claude-haiku-4-20250514
+    claude-opus-4-6-20251001 - Most powerful model for complex reasoning
+    claude-sonnet-4-6-20251001 - Balanced model for everyday tasks
+    claude-haiku-4-20250514 - Fast and efficient model
 
-  Tencent Coding Plan:
-    tc-code-latest (Auto)
-    hunyuan-2.0-instruct
-    hunyuan-2.0-thinking
-    minimax-m2.5
-    kimi-k2.5
-    glm-5
-    hunyuan-t1
-    hunyuan-turbos
+  Openai:
+    gpt-4o - OpenAI's most capable model
+    gpt-4o-mini - Fast and affordable model
 
 Switch model: /model <model-name>
 ```
@@ -275,9 +258,32 @@ Conversation compacted
 
 ---
 
+## /permissions
+
+Shows permission status.
+
+### Usage
+
+```
+/permissions
+```
+
+### Description
+
+Displays the current permission status when available. The current implementation exposes a placeholder status while the safe-default approval flow is being completed.
+
+### Example
+
+```
+go-code> /permissions
+Permission mode details are not exposed yet. Safe-default approval flow is tracked in PARITY.md.
+```
+
+---
+
 ## /update
 
-Checks for and applies updates.
+Checks for updates.
 
 ### Usage
 
@@ -287,15 +293,13 @@ Checks for and applies updates.
 
 ### Description
 
-Connects to the release server to check if a newer version is available. If an update is available, prompts to download and replace the current binary.
+Connects to the release server to check if a newer version is available. The shared command layer reports the available version and download URL; automatic replacement is not performed from the shared TUI/REPL command.
 
 ### Behavior
 
 1. Checks latest version from GitHub releases
 2. Compares with current version
-3. If update available, prompts for confirmation
-4. Downloads and replaces the binary
-5. Requires restart to apply
+3. If update available, prints the download URL
 
 ### Examples
 
@@ -309,8 +313,7 @@ Already up to date (v0.1.0)
 ```
 go-code> /update
 Update available: v0.1.0 -> v0.1.1
-Download and replace binary? [y/N]: y
-Update successful. Please restart go-code.
+Download: https://github.com/strings77wzq/claude-code-Go/releases/...
 ```
 
 ---
@@ -343,7 +346,7 @@ Goodbye!
 
 ## /skills
 
-Lists all available skills.
+Lists all available skills in the legacy REPL.
 
 ### Usage
 
@@ -353,7 +356,7 @@ Lists all available skills.
 
 ### Description
 
-Displays all custom skills that have been configured. Skills are custom commands that can be invoked with `/skillname`. Each skill shows its name and description.
+Displays all custom skills that have been configured in the legacy REPL. Skills are custom commands that can be invoked with `/skillname`. Each skill shows its name and description.
 
 ### Example Output
 

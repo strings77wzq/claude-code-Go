@@ -5,7 +5,7 @@ description: go-code 所有 REPL 命令的完整参考
 
 # REPL 命令参考
 
-go-code 提供了一组斜杠命令来控制 REPL 会话。这些命令允许您获取帮助、管理会话、切换模型以及控制应用程序行为。
+go-code 提供一组共享的斜杠命令来控制交互式会话。默认 TUI 和 legacy REPL 对下列命令使用同一套命令层。
 
 ## 命令列表
 
@@ -18,9 +18,10 @@ go-code 提供了一组斜杠命令来控制 REPL 会话。这些命令允许您
 | [`/sessions`](#sessions) | 列出已保存的会话 | `/sessions` |
 | [`/resume`](#resume) | 恢复会话 | `/resume session-id` |
 | [`/compact`](#compact) | 压缩会话上下文 | `/compact` |
-| [`/update`](#update) | 检查并应用更新 | `/update` |
+| [`/permissions`](#permissions) | 显示权限状态 | `/permissions` |
+| [`/update`](#update) | 检查更新 | `/update` |
 | [`/exit`](#exit) | 退出应用程序 | `/exit` |
-| [`/skills`](#skills) | 列出可用的技能 | `/skills` |
+| [`/skills`](#skills) | 在 legacy REPL 中列出技能 | `/skills` |
 
 ---
 
@@ -42,18 +43,17 @@ go-code 提供了一组斜杠命令来控制 REPL 会话。这些命令允许您
 
 ```
 可用命令：
-  /help       - 显示此帮助信息
-  /clear      - 清除会话历史
-  /model      - 显示/切换当前模型
-  /models     - 列出可用模型
-  /sessions   - 列出已保存的会话
-  /resume     - 恢复会话
-  /compact    - 压缩会话上下文
-  /update     - 检查更新
-  /exit       - 退出应用程序
-  /skills     - 列出可用技能
-
-输入 /<command> 来使用命令。
+  /help        - 显示帮助
+  /clear       - 清除会话历史
+  /model       - 显示当前模型
+  /model <n>   - 切换模型
+  /models      - 列出可用模型
+  /sessions    - 列出会话
+  /resume <id> - 恢复会话
+  /compact     - 压缩上下文
+  /permissions - 显示权限状态
+  /update      - 检查更新
+  /exit        - 退出
 ```
 
 ---
@@ -110,20 +110,7 @@ Conversation history cleared
 
 ### 可用模型
 
-**Anthropic：**
-- `claude-sonnet-4-20250514`（默认）
-- `claude-opus-4-20250514`
-- `claude-haiku-4-20250514`
-
-**腾讯云 Coding 计划：**
-- `tc-code-latest`（自动）
-- `hunyuan-2.0-instruct`
-- `hunyuan-2.0-thinking`
-- `minimax-m2.5`
-- `kimi-k2.5`
-- `glm-5`
-- `hunyuan-t1`
-- `hunyuan-turbos`
+可用模型列表由 provider registry 定义。请使用 `/models` 查看当前版本支持的模型。
 
 ### 示例
 
@@ -161,19 +148,13 @@ Model switched to: claude-opus-4-20250514
 可用模型：
 
   Anthropic:
-    claude-sonnet-4-20250514 (默认)
-    claude-opus-4-20250514
-    claude-haiku-4-20250514
+    claude-opus-4-6-20251001 - Most powerful model for complex reasoning
+    claude-sonnet-4-6-20251001 - Balanced model for everyday tasks
+    claude-haiku-4-20250514 - Fast and efficient model
 
-  腾讯云 Coding 计划:
-    tc-code-latest (自动)
-    hunyuan-2.0-instruct
-    hunyuan-2.0-thinking
-    minimax-m2.5
-    kimi-k2.5
-    glm-5
-    hunyuan-t1
-    hunyuan-turbos
+  Openai:
+    gpt-4o - OpenAI's most capable model
+    gpt-4o-mini - Fast and affordable model
 
 切换模型: /model <model-name>
 ```
@@ -275,9 +256,32 @@ Conversation compacted
 
 ---
 
+## /permissions
+
+显示权限状态。
+
+### 使用方法
+
+```
+/permissions
+```
+
+### 描述
+
+在可用时显示当前权限状态。当前实现会先显示占位状态；安全默认权限审批流仍在 `PARITY.md` 中跟踪。
+
+### 示例
+
+```
+go-code> /permissions
+Permission mode details are not exposed yet. Safe-default approval flow is tracked in PARITY.md.
+```
+
+---
+
 ## /update
 
-检查并应用更新。
+检查更新。
 
 ### 使用方法
 
@@ -287,15 +291,13 @@ Conversation compacted
 
 ### 描述
 
-连接到发布服务器检查是否有新版本可用。如果有更新可用，提示下载并替换当前二进制文件。
+连接到发布服务器检查是否有新版本可用。共享命令层会报告可用版本和下载地址；不会在 TUI/REPL 共享命令中自动替换当前二进制文件。
 
 ### 行为
 
 1. 从 GitHub releases 检查最新版本
 2. 与当前版本比较
-3. 如果有可用更新，提示确认
-4. 下载并替换二进制文件
-5. 需要重启以应用
+3. 如果有可用更新，打印下载地址
 
 ### 示例
 
@@ -309,8 +311,7 @@ Already up to date (v0.1.0)
 ```
 go-code> /update
 Update available: v0.1.0 -> v0.1.1
-Download and replace binary? [y/N]: y
-Update successful. Please restart go-code.
+Download: https://github.com/strings77wzq/claude-code-Go/releases/...
 ```
 
 ---
@@ -343,7 +344,7 @@ Goodbye!
 
 ## /skills
 
-列出所有可用的技能。
+在 legacy REPL 中列出所有可用的技能。
 
 ### 使用方法
 
@@ -353,7 +354,7 @@ Goodbye!
 
 ### 描述
 
-显示已配置的所有自定义技能。技能是可以用 `/skillname` 调用的自定义命令。每个技能显示其名称和描述。
+显示 legacy REPL 中已配置的所有自定义技能。技能是可以用 `/skillname` 调用的自定义命令。每个技能显示其名称和描述。
 
 ### 示例输出
 

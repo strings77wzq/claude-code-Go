@@ -2,6 +2,18 @@
 
 Understanding and fixing permission errors.
 
+## Default Safety Model
+
+`go-code` starts in `WorkspaceWrite` by default. This mode allows workspace reads without prompting and asks before writes, edits, bash execution, network access, or other side effects.
+
+When prompted:
+
+- Choose `y` for a one-time approval.
+- Choose `a` to remember the same operation for the current session.
+- Choose `n` to deny it. The tool is not executed, and the agent receives an error result.
+
+Permission decisions are written to the session trace as tool name, decision, summary, and timestamp. Secrets and full tool payloads are not stored in the permission audit entry.
+
 ## Common Scenarios
 
 ### Reading Sensitive Files

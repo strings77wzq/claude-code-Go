@@ -27,7 +27,8 @@ go-code 从多个位置加载配置，优先级如下（从高到低）：
 {
   "apiKey": "sk-ant-your-api-key-here",
   "baseUrl": "https://api.anthropic.com",
-  "model": "claude-sonnet-4-20250514"
+  "model": "claude-sonnet-4-6-20251001",
+  "provider": "anthropic"
 }
 ```
 
@@ -37,7 +38,8 @@ go-code 从多个位置加载配置，优先级如下（从高到低）：
 |-------|------|---------|-------------|
 | `apiKey` | string | (必需) | API 密钥 |
 | `baseUrl` | string | `https://api.anthropic.com` | API 端点 URL |
-| `model` | string | `claude-sonnet-4-20250514` | 使用的模型 |
+| `model` | string | `claude-sonnet-4-6-20251001` | 使用的模型 |
+| `provider` | string | 按模型自动判断 | `anthropic` 或 `openai` |
 
 ## 环境变量
 
@@ -45,6 +47,8 @@ go-code 从多个位置加载配置，优先级如下（从高到低）：
 |----------|-------------|
 | `ANTHROPIC_API_KEY` | 您的 API 密钥 |
 | `ANTHROPIC_BASE_URL` | 覆盖默认 API 端点 |
+| `ANTHROPIC_MODEL` | 覆盖默认模型 |
+| `LLM_PROVIDER` | 显式指定 Provider：`anthropic` 或 `openai` |
 
 ### 示例：设置环境变量
 
@@ -188,19 +192,23 @@ go-code> /models
 Available models:
 
   Anthropic:
-    claude-sonnet-4-20250514 (default)
-    claude-opus-4-20250514
+    claude-opus-4-6-20251001
+    claude-sonnet-4-6-20251001
     claude-haiku-4-20250514
 
-  Tencent Coding Plan:
-    tc-code-latest (Auto)
-    hunyuan-2.0-instruct
-    hunyuan-2.0-thinking
-    minimax-m2.5
-    kimi-k2.5
-    glm-5
-    hunyuan-t1
-    hunyuan-turbos
+  Openai:
+    gpt-4o
+    gpt-4o-mini
+    o1
+    o3
+    deepseek-chat
+    deepseek-reasoner
+    qwen-max
+    qwen-plus
+    qwen-turbo
+    glm-4-plus
+    glm-4
+    glm-4-flash
 
 Switch model: /model <model-name>
 ```
@@ -221,9 +229,25 @@ export ANTHROPIC_MODEL="tc-code-latest"
 {
   "apiKey": "sk-sp-你的密钥",
   "baseUrl": "https://api.lkeap.cloud.tencent.com/coding/anthropic",
-  "model": "tc-code-latest"
+  "model": "tc-code-latest",
+  "provider": "anthropic"
 }
 ```
+
+### OpenAI-compatible 配置
+
+DeepSeek、Qwen、GLM 等 OpenAI-compatible API 需要显式设置 `provider`：
+
+```json
+{
+  "apiKey": "sk-your-provider-key",
+  "provider": "openai",
+  "baseUrl": "https://api.deepseek.com",
+  "model": "deepseek-chat"
+}
+```
+
+`/model <name>` 只允许切换到 registry 中已知的模型。未知模型会被拒绝，并保持当前模型不变。
 
 ## 故障排除
 

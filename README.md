@@ -75,7 +75,22 @@ Or create `~/.go-code/settings.json`:
 }
 ```
 
-### 2. Run
+### 2. Verify your setup
+
+Run the health check before starting a real session:
+
+```bash
+go-code doctor
+```
+
+For offline environments, skip network probing while still checking local config,
+session paths, built-in tools, and docs:
+
+```bash
+go-code doctor --offline
+```
+
+### 3. Run
 
 ```bash
 # Interactive REPL
@@ -86,6 +101,9 @@ go-code -p "Explain the agent loop architecture"
 
 # JSON output (for scripting)
 go-code -p "List files in current directory" -f json
+
+# Replay the latest saved session without a provider call
+go-code replay latest
 
 # Quiet mode (no spinner)
 go-code -p "What is 2+2?" -q
@@ -217,12 +235,12 @@ make docs-build     # Build for production
 
 | Provider | Setup |
 |----------|-------|
-| **Anthropic** | Set `ANTHROPIC_API_KEY` |
-| **OpenAI** | Set `ANTHROPIC_API_KEY` + `ANTHROPIC_BASE_URL=https://api.openai.com/v1` |
-| **DeepSeek** | Set `ANTHROPIC_BASE_URL=https://api.deepseek.com` |
-| **Qwen** | Set `ANTHROPIC_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1` |
-| **GLM** | Set `ANTHROPIC_BASE_URL=https://open.bigmodel.cn/api/paas/v4` |
-| **Tencent Cloud** | Set `ANTHROPIC_BASE_URL=https://api.lkeap.cloud.tencent.com/coding/anthropic` |
+| **Anthropic** | `ANTHROPIC_API_KEY=...`, optional `LLM_PROVIDER=anthropic` |
+| **OpenAI** | `LLM_PROVIDER=openai`, `ANTHROPIC_API_KEY=...`, `ANTHROPIC_BASE_URL=https://api.openai.com` |
+| **DeepSeek** | `LLM_PROVIDER=openai`, `ANTHROPIC_BASE_URL=https://api.deepseek.com`, model `deepseek-chat` or `deepseek-reasoner` |
+| **Qwen** | `LLM_PROVIDER=openai`, `ANTHROPIC_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode` |
+| **GLM** | `LLM_PROVIDER=openai`, `ANTHROPIC_BASE_URL=https://open.bigmodel.cn/api/paas` |
+| **Tencent Cloud** | `LLM_PROVIDER=anthropic`, `ANTHROPIC_BASE_URL=https://api.lkeap.cloud.tencent.com/coding/anthropic`, model `tc-code-latest` |
 
 ## Documentation
 

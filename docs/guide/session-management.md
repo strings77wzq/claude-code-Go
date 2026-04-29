@@ -9,18 +9,24 @@ claude-code-Go automatically saves your conversation sessions to disk, allowing 
 
 ## How Sessions Are Saved
 
-Sessions are saved in **JSONL** (JSON Lines) format in the session directory (default: `~/.go-code/sessions/`).
+Sessions are saved in **JSONL** (JSON Lines) format in the session directory (default: `~/.claude-code-go/sessions/`).
 
-Each session file contains:
-- **Line 1**: Session metadata (session ID, model, timestamps, turn count, token usage)
-- **Lines 2+**: Individual messages (role, content, timestamp)
+Each session file contains normalized trace lines:
+- `meta`: session ID, model, start timestamp, and initial status.
+- `request` / `response`: provider request and response summaries.
+- `tool`: tool execution name, input, output, and duration.
+- `permission`: permission decision, sanitized summary, and timestamp.
+- `message`: recoverable user and assistant messages.
+- `status`: final status, turn count, and token usage.
 
 Example file structure:
 
 ```jsonl
-{"type":"meta","session_id":"sess_123","model":"claude-sonnet-4-20250514","start_time_ms":1234567890000,"end_time_ms":1234567990000,"turn_count":5,"input_tokens":1000,"output_tokens":500}
+{"type":"meta","session_id":"sess_123","model":"claude-sonnet-4-6-20251001","start_time_ms":1234567890000,"end_time_ms":0,"turn_count":0,"input_tokens":0,"output_tokens":0,"status":"running"}
+{"type":"request","model":"claude-sonnet-4-6-20251001","messages_count":1,"timestamp_ms":1234567891000}
 {"type":"message","role":"user","content":"hello","timestamp_ms":1234567890000}
 {"type":"message","role":"assistant","content":"Hello! How can I help you?","timestamp_ms":1234567895000}
+{"type":"status","status":"completed","turn_count":1,"input_tokens":1000,"output_tokens":500,"timestamp_ms":1234567990000}
 ```
 
 ## Session File Location
@@ -28,7 +34,7 @@ Example file structure:
 By default, sessions are stored in:
 
 ```
-~/.go-code/sessions/
+~/.claude-code-go/sessions/
 ```
 
 Each session file is named: `session-{timestamp}.jsonl`
@@ -64,6 +70,18 @@ For example:
 
 This will load all messages from the session file and restore your conversation state, allowing you to continue where you left off.
 
+## Replaying a Session
+
+Use `go-code replay` to inspect a saved session without calling a provider:
+
+```bash
+go-code replay latest
+go-code replay sess_123
+go-code replay ~/.claude-code-go/sessions/session-1234567890.jsonl
+```
+
+Replay prints the sequence of requests, tool calls, permission decisions, messages, errors, and final status. It is intended for debugging and issue reports.
+
 ## Session Metadata
 
 Each session stores the following metadata:
@@ -77,6 +95,7 @@ Each session stores the following metadata:
 | `turn_count` | Number of conversation turns |
 | `input_tokens` | Total input tokens used |
 | `output_tokens` | Total output tokens generated |
+| `status` | `running`, `completed`, `failed`, or `max_turns` |
 
 ## Programmatic Access
 
@@ -86,10 +105,13 @@ You can also access sessions programmatically using the `session` package:
 import "github.com/strings77wzq/claude-code-Go/internal/session"
 
 // List all sessions
-sessions, err := session.ListSessions("~/.go-code/sessions")
+sessions, err := session.ListSessions("~/.claude-code-go/sessions")
 
 // Load a specific session
-sess, messages, err := session.LoadSession("~/.go-code/sessions/session-1234567890.jsonl")
+sess, messages, err := session.LoadSession("~/.claude-code-go/sessions/session-1234567890.jsonl")
+
+// Replay a session trace
+events, err := session.ReplaySessionFile("~/.claude-code-go/sessions/session-1234567890.jsonl")
 ```
 
 The `SessionInfo` struct contains:
