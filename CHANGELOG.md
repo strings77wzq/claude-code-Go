@@ -5,18 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.2.0] - 2026-04-30
 
 ### Added
-- API reference documentation for built-in tools (Read, Write, Edit, Glob, Grep, Bash, Diff, Tree, WebFetch, TodoWrite)
-- REPL commands reference (/help, /clear, /model, /models, /sessions, /resume, /compact, /update, /exit, /skills)
-- Configuration reference with environment variables and settings.json schema
-- Troubleshooting guide with common issues and error codes
-- Contributor guide with development setup and PR process
-- VitePress navigation updates for API Reference, Troubleshooting, and Contributing sections
+- Baseline test coverage for 9 previously untested packages (61 new tests): LSP, Tool, Tool Init, MCP, Telemetry, Update, Anthropic/OpenAI Providers, TUI
+- Provider model registry updated: DeepSeek v4 series (deepseek-v4-pro, deepseek-v4-flash), MiMo-V2.5 (mimo-v2.5-pro)
+- Unknown-model passthrough with provider inference from model name prefixes
+- Legacy model name deprecation warnings (deepseek-chat → deepseek-v4-pro, deepseek-reasoner → deepseek-v4-flash)
+- Provider profile architecture reference docs in openspec/specs/
+
+### Changed
+- README: feature claims now labeled with PARITY.md verification status (verified/experimental/planned)
+- MCP and LSP correctly labeled as "Planned (v0.3)" across all documentation
+- Placeholder demo GIF, testimonials, and stale benchmark metrics removed
+- Chinese docs (docs/zh/) synced with English docs — model names, provider config, feature status
+- PARITY.md: verified rows now include evidence links to test files; unsupported claims downgraded to partial
+- 3 overlapping roadmap changes archived; strategic insights extracted to openspec/specs/
+- Doctor command now passes all checks offline (binary, tools, session dir, docs)
 
 ### Fixed
-- Documentation structure improvements
+- All 24 Go packages pass `go test ./...` with zero failures
+- Documentation build passes with zero errors
+- Honest feature labeling prevents users from trying unsupported MCP/LSP features
+
+## [v0.1.0] - 2026-04-05
 
 ## [v0.1.0] - 2026-04-05
 

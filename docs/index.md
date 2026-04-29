@@ -70,7 +70,7 @@ hero:
   <div class="feature-block">
     <div class="feature-icon">🔌</div>
     <div class="feature-title">Extensible Ecosystem</div>
-    <div class="feature-desc">MCP protocol, Hooks, and Skills — extend with custom tools and integrate with your workflow.</div>
+    <div class="feature-desc">MCP protocol (Planned v0.3), Hooks, and Skills — extend with custom tools and integrate with your workflow.</div>
     <div class="feature-tags">
       <span class="tag">MCP</span>
       <span class="tag">Hooks</span>
@@ -116,7 +116,7 @@ hero:
 | 🔄 Agent Loop | Autonomous "think → act → observe" cycle driven by stop_reason dispatch |
 | 🛠️ 10 Built-in Tools | Read, Write, Edit, Glob, Grep, Bash, Diff, Tree, WebFetch, TodoWrite |
 | 🔒 Permission System | Three-tier model with rule-based matching and session memory |
-| 🔌 MCP Integration | Model Context Protocol with stdio transport and JSON-RPC |
+| 🔌 MCP Integration (Planned v0.3) | Model Context Protocol with stdio transport and JSON-RPC |
 | 🌊 SSE Streaming | Real-time token-by-token with custom parser, zero dependencies |
 | 🧠 Context Management | Intelligent token estimation and automatic conversation compaction |
 
@@ -171,14 +171,6 @@ hero:
     <div class="role-desc">Learn the core principles: how AI agents reason, plan, and execute tools safely.</div>
     <div class="role-link">Learn the principles →</div>
   </a>
-</div>
-
-<div class="testimonials-section-wrapper fade-in-section">
-  <div class="testimonials-header">
-    <h2 class="testimonials-title">💬 What Users Say</h2>
-    <p class="testimonials-subtitle">Trusted by developers worldwide</p>
-  </div>
-  <Testimonials />
 </div>
 
 <style>

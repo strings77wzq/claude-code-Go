@@ -11,8 +11,8 @@ Everything you need for personal and small team usage:
 - Permission system with 3-tier model
 - Session persistence and resume
 - SSE streaming
-- MCP integration
-- LSP support
+- MCP integration (Planned v0.3)
+- LSP support (Planned v0.3)
 - Auto-recovery
 - Auto-update
 

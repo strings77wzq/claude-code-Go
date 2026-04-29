@@ -91,14 +91,21 @@ func (h Handler) switchModel(model string) Result {
 		return h.message("Usage: /model <model-name>")
 	}
 
-	if !isKnownModel(model) {
-		return h.message(fmt.Sprintf("Unsupported model: %s\nType /models to list available models.", model))
-	}
-
 	setter, ok := h.Agent.(interface{ SetModel(string) })
 	if !ok {
 		return h.message("Model switching is not supported for the current agent")
 	}
+
+	if !isKnownModel(model) {
+		// Unknown model: allow via passthrough with a warning
+		setter.SetModel(model)
+		return Result{
+			Handled: true,
+			Message: fmt.Sprintf("Warning: model %q is not in the verified registry. Proceeding with inferred provider.", model),
+			Model:   model,
+		}
+	}
+
 	setter.SetModel(model)
 	return Result{
 		Handled: true,
@@ -118,6 +125,9 @@ func formatModels() string {
 
 	currentProvider := ""
 	for _, model := range models {
+		if model.Deprecated {
+			continue
+		}
 		if model.Provider != currentProvider {
 			currentProvider = model.Provider
 			b.WriteString("\n")

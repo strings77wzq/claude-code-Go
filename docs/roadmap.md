@@ -12,7 +12,7 @@ Here's the development roadmap for claude-code-Go, organized into three phases.
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| Phase 1 | ✅ Complete | Core foundation - Agent loop, tools, permission, MCP, SSE, sessions |
+| Phase 1 | ✅ Complete | Core foundation - Agent loop, tools, permission, MCP (Planned v0.3), SSE, sessions |
 | Phase 2 | ✅ Complete | Enhanced capabilities - Skills, multi-provider, session resume |
 | Phase 3 | 🔮 Planned | Advanced features - IDE integration, collaboration, cloud |
 
@@ -27,7 +27,7 @@ The first phase established the core infrastructure for the AI coding assistant.
 - **Agent Loop** — Autonomous "think → act → observe" cycle with stop_reason dispatch
 - **9 Built-in Tools** — 6 core (Read, Write, Edit, Glob, Grep, Bash) + 3 enhanced (Diff view, Tree, WebFetch)
 - **Permission System** — Three-tier model with rule-based matching and session memory
-- **MCP Integration** — Model Context Protocol with stdio transport and JSON-RPC
+- **MCP Integration (Planned v0.3)** — Model Context Protocol with stdio transport and JSON-RPC (code complete, pending productization)
 - **SSE Streaming** — Real-time token-by-token response with custom parser
 - **Session Persistence** — Save and restore conversation state
 - **Hooks System** — Pre/post execution callbacks for extensibility
@@ -80,7 +80,7 @@ Want to influence the roadmap? See our [Feedback](/feedback) page for how to rep
 | Agent Loop | ✅ | ✅ | ✅ |
 | Built-in Tools | 6 core | 9 total | 20+ |
 | Permission System | ✅ | ✅ | ✅ |
-| MCP Integration | ✅ | ✅ | ✅ |
+| MCP Integration (Planned v0.3) | 🟡 | ✅ | ✅ |
 | SSE Streaming | ✅ | ✅ | ✅ |
 | Session Persistence | ✅ | ✅ | ✅ |
 | Session Resume | ❌ | ✅ | ✅ |

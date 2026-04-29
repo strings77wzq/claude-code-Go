@@ -12,7 +12,7 @@ description: claude-code-Go 项目 Roadmap
 
 | 阶段 | 状态 | 描述 |
 |-------|--------|-------------|
-| 第一阶段 | ✅ 已完成 | 核心基础 — Agent loop、工具、权限、MCP、SSE、会话 |
+| 第一阶段 | ✅ 已完成 | 核心基础 — Agent loop、工具、权限、MCP (Planned v0.3)、SSE、会话 |
 | 第二阶段 | ✅ 已完成 | 增强功能 — Skills、多 Provider、会话恢复 |
 | 第三阶段 | 🔮 规划中 | 高级功能 — IDE 集成、协作、云端 |
 
@@ -27,7 +27,7 @@ description: claude-code-Go 项目 Roadmap
 - **Agent Loop** — 由 stop_reason 驱动的「思考→行动→观察」自主循环
 - **9 大内置工具** — 6 个核心（Read、Write、Edit、Glob、Grep、Bash）+ 3 个增强（Diff view、Tree、WebFetch）
 - **权限系统** — 三级权限模型，支持 glob 规则匹配与会话记忆
-- **MCP 集成** — Model Context Protocol，stdio 传输、JSON-RPC
+- **MCP 集成 (Planned v0.3)** — Model Context Protocol，stdio 传输、JSON-RPC（代码已完成，产品化待完成）
 - **SSE 流式** — 逐 token 实时流式输出
 - **会话持久化** — 保存和恢复对话状态
 - **Hooks 系统** — 执行前后回调，扩展能力
@@ -80,7 +80,7 @@ description: claude-code-Go 项目 Roadmap
 | Agent Loop | ✅ | ✅ | ✅ |
 | 内置工具 | 6 个核心 | 9 个 | 20+ |
 | 权限系统 | ✅ | ✅ | ✅ |
-| MCP 集成 | ✅ | ✅ | ✅ |
+| MCP 集成 (Planned v0.3) | 🟡 | ✅ | ✅ |
 | SSE 流式 | ✅ | ✅ | ✅ |
 | 会话持久化 | ✅ | ✅ | ✅ |
 | 会话恢复 | ❌ | ✅ | ✅ |

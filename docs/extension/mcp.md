@@ -5,6 +5,8 @@ description: Deep dive into Model Context Protocol — transport layer, JSON-RPC
 
 # MCP Integration
 
+> **Status: Planned for v0.3** — The MCP client infrastructure (transport, JSON-RPC, adapter) exists in the codebase but is not yet productized in the default configuration, documentation, or permission flow. This document describes the architecture for reference.
+
 go-code supports the Model Context Protocol (MCP) for integrating external tools and services. This document provides a comprehensive overview of MCP implementation in go-code.
 
 ## What is MCP?

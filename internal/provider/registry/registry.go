@@ -2,6 +2,7 @@ package registry
 
 import (
 	"fmt"
+	"log/slog"
 	"net/url"
 	"strings"
 
@@ -11,9 +12,11 @@ import (
 )
 
 type ModelInfo struct {
-	Name        string
-	Provider    string
-	Description string
+	Name               string
+	Provider           string
+	Description        string
+	Deprecated         bool
+	DeprecationMessage string
 }
 
 type ResolvedConfig struct {
@@ -24,25 +27,37 @@ type ResolvedConfig struct {
 }
 
 var modelRegistry = []ModelInfo{
+	// Anthropic
 	{Name: "claude-opus-4-6-20251001", Provider: "anthropic", Description: "Most powerful model for complex reasoning"},
 	{Name: "claude-sonnet-4-6-20251001", Provider: "anthropic", Description: "Balanced model for everyday tasks"},
 	{Name: "claude-haiku-4-20250514", Provider: "anthropic", Description: "Fast and efficient model"},
 
+	// OpenAI
 	{Name: "gpt-4o", Provider: "openai", Description: "OpenAI's most capable model"},
 	{Name: "gpt-4o-mini", Provider: "openai", Description: "Fast and affordable model"},
 	{Name: "o1", Provider: "openai", Description: "Reasoning model for complex problems"},
 	{Name: "o3", Provider: "openai", Description: "Advanced reasoning model"},
 
-	{Name: "deepseek-chat", Provider: "openai", Description: "DeepSeek's chat model"},
-	{Name: "deepseek-reasoner", Provider: "openai", Description: "DeepSeek's reasoning model"},
+	// DeepSeek (primary models)
+	{Name: "deepseek-v4-pro", Provider: "openai", Description: "DeepSeek's latest flagship model"},
+	{Name: "deepseek-v4-flash", Provider: "openai", Description: "DeepSeek's fast reasoning model"},
 
+	// DeepSeek (deprecated aliases)
+	{Name: "deepseek-chat", Provider: "openai", Description: "[Deprecated] Use deepseek-v4-pro instead", Deprecated: true, DeprecationMessage: "deepseek-chat is deprecated, use deepseek-v4-pro instead"},
+	{Name: "deepseek-reasoner", Provider: "openai", Description: "[Deprecated] Use deepseek-v4-flash instead", Deprecated: true, DeprecationMessage: "deepseek-reasoner is deprecated, use deepseek-v4-flash instead"},
+
+	// Qwen
 	{Name: "qwen-max", Provider: "openai", Description: "Alibaba Qwen's most capable model"},
 	{Name: "qwen-plus", Provider: "openai", Description: "Alibaba Qwen's balanced model"},
 	{Name: "qwen-turbo", Provider: "openai", Description: "Alibaba Qwen's fast model"},
 
+	// GLM
 	{Name: "glm-4-plus", Provider: "openai", Description: "Zhipu GLM's most capable model"},
 	{Name: "glm-4", Provider: "openai", Description: "Zhipu GLM's balanced model"},
 	{Name: "glm-4-flash", Provider: "openai", Description: "Zhipu GLM's fast model"},
+
+	// MiMo (OpenAI-compatible)
+	{Name: "mimo-v2.5-pro", Provider: "openai", Description: "MiMo's flagship model (OpenAI-compatible)"},
 }
 
 func SelectProvider(apiKey, baseURL, modelName string) provider.Provider {
@@ -68,7 +83,7 @@ func DetectProvider(modelName string) string {
 		return "anthropic"
 	}
 
-	openAIPrefixes := []string{"gpt-", "o1", "o3", "deepseek-", "qwen-", "glm-"}
+	openAIPrefixes := []string{"gpt-", "o1", "o3", "deepseek-", "qwen-", "glm-", "mimo-"}
 	for _, prefix := range openAIPrefixes {
 		if strings.HasPrefix(modelName, prefix) {
 			return "openai"
@@ -103,8 +118,18 @@ func ResolveConfig(providerName, baseURL, modelName, apiKey string) (*ResolvedCo
 		return nil, fmt.Errorf("invalid base URL %q", baseURL)
 	}
 
-	if info, ok := LookupModel(modelName); ok && info.Provider != providerName {
-		return nil, fmt.Errorf("model %q belongs to provider %q, not %q", modelName, info.Provider, providerName)
+	if info, ok := LookupModel(modelName); ok {
+		if info.Deprecated && info.DeprecationMessage != "" {
+			slog.Warn(info.DeprecationMessage, "model", modelName)
+		}
+		if info.Provider != providerName {
+			return nil, fmt.Errorf("model %q belongs to provider %q, not %q", modelName, info.Provider, providerName)
+		}
+	} else {
+		slog.Warn("model not in verified registry, proceeding with inferred provider",
+			"model", modelName,
+			"provider", providerName,
+		)
 	}
 
 	return &ResolvedConfig{

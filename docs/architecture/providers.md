@@ -123,13 +123,15 @@ base URL:
 | --- | --- | --- | --- |
 | Anthropic | `anthropic` | `https://api.anthropic.com` | Native Messages API path. |
 | OpenAI | `openai` | `https://api.openai.com` | Chat Completions compatibility. |
-| DeepSeek | `openai` | `https://api.deepseek.com` | Use `deepseek-chat` or `deepseek-reasoner`. |
+| DeepSeek | `openai` | `https://api.deepseek.com` | Primary models: `deepseek-v4-pro`, `deepseek-v4-flash`. Legacy aliases (`deepseek-chat`, `deepseek-reasoner`) still work with deprecation warning. |
 | Qwen | `openai` | `https://dashscope.aliyuncs.com/compatible-mode` | OpenAI-compatible mode; vendor-specific model availability applies. |
 | GLM | `openai` | `https://open.bigmodel.cn/api/paas` | OpenAI-compatible mode; verify model names with GLM docs. |
+| MiMo | `openai` | `https://api.mimo.com` | OpenAI-compatible mode; use `mimo-v2.5-pro` model. |
 | Tencent Cloud Coding Plan | `anthropic` | `https://api.lkeap.cloud.tencent.com/coding/anthropic` | Anthropic-compatible path, commonly with `tc-code-latest`. |
 
-Runtime `/model <name>` only accepts models known to the registry. Unsupported
-models are rejected and the active model remains unchanged.
+Runtime `/model <name>` accepts known registry models and unknown models via
+passthrough (provider inferred from model name prefix). Unknown models produce
+a warning and proceed with the inferred provider.
 
 ### CLI Overrides
 

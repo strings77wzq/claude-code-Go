@@ -22,7 +22,7 @@ hero:
 <div class="metrics-section fade-in-section">
   <div class="metrics-grid">
     <div class="metric-item">
-      <div class="metric-value">50+</div>
+      <div class="metric-value">82</div>
       <div class="metric-label">源代码文件</div>
     </div>
     <div class="metric-item">
@@ -30,11 +30,11 @@ hero:
       <div class="metric-label">模块数量</div>
     </div>
     <div class="metric-item">
-      <div class="metric-value">9</div>
+      <div class="metric-value">10</div>
       <div class="metric-label">内置工具</div>
     </div>
     <div class="metric-item">
-      <div class="metric-value">7,000+</div>
+      <div class="metric-value">14,000+</div>
       <div class="metric-label">代码行数</div>
     </div>
   </div>
@@ -66,7 +66,7 @@ hero:
   <div class="feature-block">
     <div class="feature-icon">🔌</div>
     <div class="feature-title">可扩展生态</div>
-    <div class="feature-desc">MCP 协议、Hooks、Skills——通过自定义工具扩展能力，无缝集成你的工作流。</div>
+    <div class="feature-desc">MCP 协议（Planned v0.3）、Hooks、Skills——通过自定义工具扩展能力，无缝集成你的工作流。</div>
     <div class="feature-tags">
       <span class="tag">MCP</span>
       <span class="tag">Hooks</span>
@@ -133,9 +133,9 @@ hero:
 | 功能 | 说明 |
 |------|------|
 | 🔄 Agent Loop | 由 stop_reason 驱动的「思考→行动→观察」自主循环 |
-| 🛠️ 9 大内置工具 | Read、Write、Edit、Glob、Grep、Bash、Diff、Tree、WebFetch |
+| 🛠️ 10 大内置工具 | Read、Write、Edit、Glob、Grep、Bash、Diff、Tree、WebFetch、TodoWrite |
 | 🔒 权限系统 | 三级权限模型，支持 glob 规则匹配与会话记忆 |
-| 🔌 MCP 集成 | Model Context Protocol，stdio 传输、JSON-RPC 客户端 |
+| 🔌 MCP 集成 (Planned v0.3) | Model Context Protocol，stdio 传输、JSON-RPC 客户端 |
 | 🌊 SSE 流式 | 逐 token 实时流式输出，自研解析器，零外部依赖 |
 | 🧠 上下文管理 | 智能 token 用量估算与自动压缩对话 |
 
@@ -175,3 +175,7 @@ chmod +x go-code
 export ANTHROPIC_API_KEY=sk-ant-...
 ./go-code
 ```
+
+---
+
+> **翻译说明**：本站部分页面（如 Showcase、Benchmarks、Troubleshooting）目前仅有英文版本。中文翻译将在后续更新中逐步完成。

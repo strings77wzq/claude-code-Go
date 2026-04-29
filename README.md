@@ -9,15 +9,11 @@
 
 > **Model provides intelligence, Harness provides reliability.**
 
-A production-grade AI coding assistant with full agent loop, tool execution, permission management, SSE streaming, LSP integration, and auto-recovery — in a single Go binary.
+A production-grade AI coding assistant with full agent loop, tool execution, permission management, SSE streaming, and auto-recovery — in a single Go binary.
 
 ## Demo
 
-![Demo](docs/public/demo.gif)
-
-See the tool in action — autonomous file reading, intelligent tool selection, and real-time streaming output.
-
-> Note: Demo GIF is a placeholder. Record actual usage with [asciinema](https://asciinema.org/) or [terminalizer](https://github.com/faressoft/terminalizer).
+A terminal recording of the agent in action will be added in a future release.
 
 ## Installation
 
@@ -114,12 +110,12 @@ go-code -p "What is 2+2?" -q
 - **Agent Loop**: Full "think → act → observe" cycle with stop_reason-driven state machine
 - **10 Built-in Tools**: `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, `Diff`, `Tree`, `WebFetch`, `TodoWrite`
 - **Permission System**: 3-tier model (ReadOnly / WorkspaceWrite / DangerFullAccess) with glob rules and session memory
-- **MCP Support**: Model Context Protocol with stdio transport
+- **MCP Support** (Planned v0.3): Model Context Protocol with stdio transport
 - **SSE Streaming**: Real-time token-by-token output with custom parser
-- **Session Persistence**: Auto-save and resume conversations (JSONL format)
+- **Session Persistence** (Experimental): Auto-save and resume conversations (JSONL format)
 - **Skills System**: Custom commands and reusable workflows
-- **Multi-Provider**: Anthropic, OpenAI, and any OpenAI-compatible API (DeepSeek, Qwen, GLM)
-- **LSP Integration**: Language Server Protocol for code symbols, references, diagnostics
+- **Multi-Provider** (Experimental): Anthropic, OpenAI, and any OpenAI-compatible API (DeepSeek, Qwen, GLM)
+- **LSP Integration** (Planned v0.3): Language Server Protocol for code symbols, references, diagnostics
 - **Auto-Recovery**: Automatic retry on API timeout, rate limit, and context full
 - **Runtime Model Switching**: Change models mid-session with `/model <name>`
 - **Auto-Update**: Check and download latest version with `/update`
