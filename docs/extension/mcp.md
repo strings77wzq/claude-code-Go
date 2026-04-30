@@ -5,7 +5,7 @@ description: Deep dive into Model Context Protocol — transport layer, JSON-RPC
 
 # MCP Integration
 
-> **Status: Planned for v0.3** — The MCP client infrastructure (transport, JSON-RPC, adapter) exists in the codebase but is not yet productized in the default configuration, documentation, or permission flow. This document describes the architecture for reference.
+> **Status: Experimental (v0.2)** — MCP client infrastructure (transport, JSON-RPC, adapter, manager) is wired into the application entrypoint. MCP servers are auto-loaded from `~/.config/go-code/mcp.json` at startup. Each MCP tool requires `DangerFullAccess` permission and is namespaced as `mcp__{server}__{tool}`. See [internal/tool/mcp/](https://github.com/strings77wzq/claude-code-Go/tree/main/internal/tool/mcp) for the implementation.
 
 go-code supports the Model Context Protocol (MCP) for integrating external tools and services. This document provides a comprehensive overview of MCP implementation in go-code.
 
@@ -334,9 +334,9 @@ MCP servers are configured in a JSON configuration file.
 
 ### Configuration File Location
 
-Default: `~/.go-code/mcp.json`
+Default: `~/.config/go-code/mcp.json`
 
-Or custom path via configuration.
+The MCP manager loads this file at startup (non-fatally if missing).
 
 ### Configuration Format
 
@@ -421,7 +421,7 @@ func LoadMcpConfigs(settingsPath string) (map[string]McpServerConfig, error) {
 - [Skills System](./skills.md) — Named prompts for customizing agent behavior
 - [Hooks System](./hooks.md) — Pre/post execution callbacks
 - [Tool System Overview](../tools/overview.md) — Tool interface and registry
-- [Configuration Guide](../guide/configuration.md) — MCP configuration options
+- [Configuration Guide](../api/config.md) — MCP configuration options
 
 ---
 

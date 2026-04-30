@@ -3,17 +3,14 @@
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev/doc/install)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/strings77wzq/claude-code-Go/releases)
-[![Stars](https://img.shields.io/github/stars/strings77wzq/claude-code-Go?style=social)](https://github.com/strings77wzq/claude-code-Go/stargazers)
 [![CI](https://github.com/strings77wzq/claude-code-Go/actions/workflows/ci.yml/badge.svg)](https://github.com/strings77wzq/claude-code-Go/actions/workflows/ci.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/strings77wzq/claude-code-Go)](https://goreportcard.com/report/github.com/strings77wzq/claude-code-Go)
 
-> **Model provides intelligence, Harness provides reliability.**
+A Go-native AI coding agent with full agent loop, tool execution, permission management, SSE streaming, and auto-recovery — in a single binary.
 
-A production-grade AI coding assistant with full agent loop, tool execution, permission management, SSE streaming, and auto-recovery — in a single Go binary.
+> **Status: v0.2** — Core agent runtime, permission system, session persistence, multi-provider support, doctor checks, and parity harness are implemented and tested. See [PARITY.md](PARITY.md) for detailed feature status. MCP, LSP are planned for v0.3.
 
-## Demo
-
-A terminal recording of the agent in action will be added in a future release.
+> **Disclaimer:** This is an independent open-source project. It is not affiliated with, endorsed by, or connected to Anthropic PBC. "Claude" and "Claude Code" are trademarks of Anthropic PBC.
 
 ## Installation
 
@@ -49,6 +46,8 @@ chmod +x go-code
 sudo mv go-code /usr/local/bin/
 ```
 
+For script-based install, see [scripts/](scripts/) for `install.sh` and `install.ps1`.
+
 ## Quick Start
 
 ### 1. Set your API key
@@ -79,8 +78,7 @@ Run the health check before starting a real session:
 go-code doctor
 ```
 
-For offline environments, skip network probing while still checking local config,
-session paths, built-in tools, and docs:
+For offline environments:
 
 ```bash
 go-code doctor --offline
@@ -89,8 +87,11 @@ go-code doctor --offline
 ### 3. Run
 
 ```bash
-# Interactive REPL
+# Interactive TUI
 go-code
+
+# Legacy REPL
+go-code --legacy-repl
 
 # Single prompt (non-interactive)
 go-code -p "Explain the agent loop architecture"
@@ -98,27 +99,43 @@ go-code -p "Explain the agent loop architecture"
 # JSON output (for scripting)
 go-code -p "List files in current directory" -f json
 
-# Replay the latest saved session without a provider call
+# Replay a saved session
 go-code replay latest
-
-# Quiet mode (no spinner)
-go-code -p "What is 2+2?" -q
 ```
 
-## Features
+## Verified Features (v0.2)
 
-- **Agent Loop**: Full "think → act → observe" cycle with stop_reason-driven state machine
-- **10 Built-in Tools**: `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, `Diff`, `Tree`, `WebFetch`, `TodoWrite`
-- **Permission System**: 3-tier model (ReadOnly / WorkspaceWrite / DangerFullAccess) with glob rules and session memory
-- **MCP Support** (Planned v0.3): Model Context Protocol with stdio transport
-- **SSE Streaming**: Real-time token-by-token output with custom parser
-- **Session Persistence** (Experimental): Auto-save and resume conversations (JSONL format)
-- **Skills System**: Custom commands and reusable workflows
-- **Multi-Provider** (Experimental): Anthropic, OpenAI, and any OpenAI-compatible API (DeepSeek, Qwen, GLM)
-- **LSP Integration** (Planned v0.3): Language Server Protocol for code symbols, references, diagnostics
-- **Auto-Recovery**: Automatic retry on API timeout, rate limit, and context full
-- **Runtime Model Switching**: Change models mid-session with `/model <name>`
-- **Auto-Update**: Check and download latest version with `/update`
+These features are tested and covered by the parity harness. See [PARITY.md](PARITY.md) for evidence links.
+
+| Feature | Status | Tests |
+|---------|--------|-------|
+| Agent Loop (think → act → observe) | Verified | Go unit + harness |
+| 11 Built-in Tools | Verified | Go tests |
+| Permission System (3-tier) | Verified | Go + harness |
+| Doctor Health Check | Verified | Go tests |
+| Multi-Provider (Anthropic, OpenAI-compatible) | Verified | Go tests |
+| Session Persistence + Resume | Verified | Go tests |
+| Session Replay | Verified | Go tests |
+| Slash Commands (/help, /model, /sessions, etc.) | Verified | Go tests |
+| Skills System | Verified | Go tests |
+| Hooks System | Verified | Go tests |
+| MCP Integration | Planned v0.3 | Go tests (code complete) |
+| LSP Integration | Planned v0.3 | Go tests (code complete) |
+
+### Built-in Tools
+
+`Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, `Diff`, `Tree`, `WebFetch`, `TodoWrite`, `NotebookEdit`
+
+## Supported Providers
+
+| Provider | Setup |
+|----------|-------|
+| **Anthropic** | `ANTHROPIC_API_KEY=...`, optional `LLM_PROVIDER=anthropic` |
+| **OpenAI** | `LLM_PROVIDER=openai`, `ANTHROPIC_API_KEY=...`, `ANTHROPIC_BASE_URL=https://api.openai.com` |
+| **DeepSeek** | `LLM_PROVIDER=openai`, `ANTHROPIC_BASE_URL=https://api.deepseek.com`, model `deepseek-chat` or `deepseek-reasoner` |
+| **Qwen** | `LLM_PROVIDER=openai`, `ANTHROPIC_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode` |
+| **GLM** | `LLM_PROVIDER=openai`, `ANTHROPIC_BASE_URL=https://open.bigmodel.cn/api/paas` |
+| **Tencent Cloud** | `LLM_PROVIDER=anthropic`, `ANTHROPIC_BASE_URL=https://api.lkeap.cloud.tencent.com/coding/anthropic`, model `tc-code-latest` |
 
 ## Architecture
 
@@ -136,35 +153,10 @@ go-code -p "What is 2+2?" -q
 │                     │   API Client │    │   Built-in    │  │
 │                     │ (SSE Stream) │    │    Tools      │  │
 │                     └──────────────┘    └───────────────┘  │
-│                            │                               │
-│                            ▼                               │
-│                     ┌──────────────┐                       │
-│                     │  Anthropic   │                       │
-│                     │     API      │                       │
-│                     └──────────────┘                       │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Design Philosophy
-
-**Model provides intelligence, Harness provides reliability.**
-
-| Layer | Responsibility |
-|-------|---------------|
-| **Model (LLM)** | Intent understanding, tool selection, result interpretation, next-step planning |
-| **Harness (Runtime)** | Permission control, timeout protection, output truncation, session persistence, error recovery |
-
-### Go Runtime vs Python Harness
-
-The main `go-code` binary is a pure Go implementation:
-- Direct API communication with SSE streaming
-- Local tool execution with safety guards
-- Agent state and context management
-
-The Python harness (`harness/`) is optional:
-- Mock API server for testing without API costs
-- Session replay for debugging
-- Quality evaluators for integration testing
+For a detailed architecture overview, see [docs/architecture/](docs/architecture/).
 
 ## Project Structure
 
@@ -185,7 +177,7 @@ claude-code-Go/
 │   ├── session/          # Session persistence + resume
 │   ├── skills/           # Custom skills system
 │   ├── tool/             # Tool interface + builtins
-│   │   ├── builtin/      # 10 built-in tools
+│   │   ├── builtin/      # 11 built-in tools
 │   │   ├── mcp/          # MCP integration
 │   │   └── init/         # Tool registration
 │   └── update/           # Auto-update checker
@@ -200,51 +192,26 @@ claude-code-Go/
 
 ## Development
 
-### Build
 ```bash
-make build
-```
-
-### Install
-```bash
-make install
-```
-
-### Test
-```bash
-make test          # Go + Python tests
-go test -v ./...   # Go tests only
-```
-
-### Cross-Platform Build
-```bash
-make build-all     # Linux amd64, macOS amd64/arm64, Windows amd64
-```
-
-### Documentation
-```bash
+make build          # Build binary
+make test           # Go + Python harness tests
+make vet            # Static analysis
+make build-all      # Cross-compile all platforms
 make docs           # Serve docs locally
-make docs-build     # Build for production
+make docs-build     # Build docs for production
 ```
-
-## Supported Providers
-
-| Provider | Setup |
-|----------|-------|
-| **Anthropic** | `ANTHROPIC_API_KEY=...`, optional `LLM_PROVIDER=anthropic` |
-| **OpenAI** | `LLM_PROVIDER=openai`, `ANTHROPIC_API_KEY=...`, `ANTHROPIC_BASE_URL=https://api.openai.com` |
-| **DeepSeek** | `LLM_PROVIDER=openai`, `ANTHROPIC_BASE_URL=https://api.deepseek.com`, model `deepseek-chat` or `deepseek-reasoner` |
-| **Qwen** | `LLM_PROVIDER=openai`, `ANTHROPIC_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode` |
-| **GLM** | `LLM_PROVIDER=openai`, `ANTHROPIC_BASE_URL=https://open.bigmodel.cn/api/paas` |
-| **Tencent Cloud** | `LLM_PROVIDER=anthropic`, `ANTHROPIC_BASE_URL=https://api.lkeap.cloud.tencent.com/coding/anthropic`, model `tc-code-latest` |
 
 ## Documentation
 
-📖 Full documentation: [https://strings77wzq.github.io/claude-code-Go/](https://strings77wzq.github.io/claude-code-Go/)
+Full documentation: [https://strings77wzq.github.io/claude-code-Go/](https://strings77wzq.github.io/claude-code-Go/)
 
----
-
-⭐ If you find this project helpful, please give it a ⭐ Star!
+Key pages:
+- [Quick Start](docs/guide/quick-start.md)
+- [Architecture Overview](docs/architecture/overview.md)
+- [Roadmap](docs/roadmap.md)
+- [Troubleshooting](docs/troubleshooting/)
+- [Contributing](CONTRIBUTING.md)
+- [Parity Status](PARITY.md)
 
 ## License
 

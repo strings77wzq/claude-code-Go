@@ -53,7 +53,15 @@ export default defineConfig({
           { text: '指南', link: '/zh/guide/introduction' },
           { text: '架构', link: '/zh/architecture/overview' },
           { text: 'API', link: '/zh/api/tools' },
-          { text: '资源', link: '/zh/roadmap' },
+          {
+            text: '资源',
+            items: [
+              { text: 'Roadmap', link: '/zh/roadmap' },
+              { text: '故障排除', link: '/zh/troubleshooting' },
+              { text: '性能基准测试', link: '/zh/benchmark' },
+              { text: '案例展示', link: '/zh/showcase' }
+            ]
+          },
           { text: 'GitHub', link: 'https://github.com/strings77wzq/claude-code-Go' }
         ],
         footer: {
@@ -147,9 +155,23 @@ export default defineConfig({
           collapsed: false,
           items: [
             { text: 'Roadmap', link: '/zh/roadmap' },
-            { text: '故障排除', link: '/zh/troubleshooting' },
+            {
+              text: '故障排除',
+              collapsed: false,
+              items: [
+                { text: '总览', link: '/zh/troubleshooting' },
+                { text: '常见问题', link: '/zh/troubleshooting/common-issues' },
+                { text: 'API 错误', link: '/zh/troubleshooting/api-errors' },
+                { text: '权限被拒绝', link: '/zh/troubleshooting/permission-denied' },
+                { text: '性能问题', link: '/zh/troubleshooting/performance-issues' }
+              ]
+            },
+            { text: '案例展示', link: '/zh/showcase' },
+            { text: '性能基准测试', link: '/zh/benchmark' },
             { text: '贡献指南', link: '/zh/contributing' },
-            { text: '反馈', link: '/zh/feedback' }
+            { text: '反馈', link: '/zh/feedback' },
+            { text: '定价', link: '/zh/pricing' },
+            { text: '隐私政策', link: '/zh/privacy' }
           ]
         }
       ]
@@ -174,5 +196,5 @@ export default defineConfig({
 
   lastUpdated: true,
 
-  ignoreDeadLinks: true
+  ignoreDeadLinks: false
 })

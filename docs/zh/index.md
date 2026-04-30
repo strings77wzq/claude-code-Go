@@ -178,4 +178,4 @@ export ANTHROPIC_API_KEY=sk-ant-...
 
 ---
 
-> **翻译说明**：本站部分页面（如 Showcase、Benchmarks、Troubleshooting）目前仅有英文版本。中文翻译将在后续更新中逐步完成。
+> **翻译说明**：本站大部分页面已有中文版本。部分深度内容（如 Architecture Deep Dive、Interactive Diagram）目前仅有英文版本，中文翻译将在后续更新中逐步完成。

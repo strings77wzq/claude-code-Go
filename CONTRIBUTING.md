@@ -167,6 +167,43 @@ Include in your PR description:
 
 Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
 
+## Changelog Discipline
+
+User-visible changes must include a CHANGELOG entry. Add your change under `[Unreleased]` in [CHANGELOG.md](CHANGELOG.md) using [Keep a Changelog](https://keepachangelog.com/) format:
+
+```markdown
+### Added
+- New feature description.
+
+### Changed
+- Changed behavior description.
+
+### Fixed
+- Bug fix description.
+```
+
+## First Good Issues
+
+If you're new to the project, look for issues tagged `good first issue` in the [issue tracker](https://github.com/strings77wzq/claude-code-Go/issues). These are scoped for new contributors and come with context in the issue description.
+
+Good starter contributions:
+- Adding tests to packages with low coverage
+- Updating documentation to match current behavior
+- Fixing small bugs tagged `help wanted`
+- Adding examples to existing docs
+
+When working on a `good first issue`:
+1. Comment on the issue to let others know you're working on it
+2. Ask questions in the issue if the scope is unclear
+3. Start with `make test` from a clean checkout to verify your environment
+
+## Test Evidence
+
+Pull requests that change runtime code must include test evidence:
+- Go unit tests for new functions or changed behavior
+- Run `go test ./...` before submitting and include the pass/fail result
+- For agent loop or tool changes, consider adding a harness scenario
+
 ## Getting Help
 
 - **Issues**: [GitHub Issues](https://github.com/strings77wzq/claude-code-Go/issues)

@@ -61,6 +61,20 @@ The `PostExecute` method is called after a tool completes. Use cases include:
 
 Errors from `PostExecute` are **logged but ignored** — they do not affect the tool's result or the agent's execution flow.
 
+### Lifecycle Guarantees
+
+The hook system provides the following guarantees:
+
+| Guarantee | Details |
+|-----------|---------|
+| **Pre-hook blocks execution** | If any pre-hook returns an error, the target tool is NOT executed and the agent receives a `PreHookError` wrapping the underlying cause. Remaining pre-hooks are skipped. |
+| **Post-hook errors are non-fatal** | Post-hook errors are logged but do NOT affect the tool result returned to the agent. All post-hooks run even if one fails. |
+| **Ordered execution** | Hooks execute in registration order. Pre-hooks run sequentially (first error stops). Post-hooks always all run. |
+| **Thread-safe** | Registration and hook lists are protected by `sync.RWMutex`. |
+| **Duplicate detection** | Registering two hooks with the same name returns `DuplicateHookError`. |
+
+These guarantees are verified by tests in `internal/hooks/hooks_test.go`.
+
 ## Hook Registry
 
 The `Registry` manages hook registration and execution:
@@ -401,13 +415,12 @@ registry.Register(notifHook)
 - [Skills System](./skills.md) — Named prompts for customizing agent behavior
 - [MCP Integration](./mcp.md) — External tool integration
 - [Tool System Overview](../tools/overview.md) — Tool interface and registry
-- [Agent Loop Implementation](../core-code/agent-loop-impl.md) — Tool execution flow
+- [Agent Loop Implementation](../architecture/core-code-agent-loop.md) — Tool execution flow
 
 ---
 
 <div class="nav-prev-next">
 
 - [MCP Integration](./mcp.md) ←
-- → [Extension Overview](./overview.md)
 
 </div>

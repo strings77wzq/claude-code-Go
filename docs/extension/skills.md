@@ -49,7 +49,10 @@ The loading process:
 2. Filters for `.json` files only
 3. Parses each JSON file into a Skill struct
 4. Validates that required fields are present
-5. Registers valid skills in the registry
+5. Reports invalid files as non-fatal warnings (unsupported extension, invalid JSON, missing name)
+6. Registers valid skills in the registry
+
+Invalid skill files (wrong format, missing required fields) are skipped with a warning — they never stop go-code from starting.
 
 ### JSON Format
 
@@ -223,15 +226,14 @@ Create `~/.go-code/skills/refactor.json`:
 
 ## Related Documentation
 
-- [Configuration Guide](../guide/configuration.md) — Configuration file locations
+- [Configuration Guide](../api/config.md) — Configuration file locations
 - [Tool System Overview](../tools/overview.md) — Tool interface and registry
-- [Agent Loop Implementation](../core-code/agent-loop-impl.md) — Tool execution flow
+- [Agent Loop Implementation](../architecture/core-code-agent-loop.md) — Tool execution flow
 
 ---
 
 <div class="nav-prev-next">
 
-- [Extension Overview](./overview.md) ←
 - → [Hooks System](./hooks.md)
 
 </div>

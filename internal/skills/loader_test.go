@@ -153,6 +153,45 @@ func TestLoadSkillsSkipsEmptyName(t *testing.T) {
 	}
 }
 
+func TestLoadSkillsWithWarnings(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	validSkill := `{"name": "good", "description": "Valid", "prompt": "OK"}`
+	invalidJSON := `{broken`
+	noName := `{"description": "No name", "prompt": "Test"}`
+	nonJSON := `name: yaml-skill`
+
+	os.WriteFile(filepath.Join(tmpDir, "good.json"), []byte(validSkill), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "broken.json"), []byte(invalidJSON), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "noname.json"), []byte(noName), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "readme.yaml"), []byte(nonJSON), 0644)
+
+	result, err := LoadSkillsWithWarnings(tmpDir)
+	if err != nil {
+		t.Fatalf("LoadSkillsWithWarnings failed: %v", err)
+	}
+
+	if len(result.Skills) != 1 {
+		t.Errorf("expected 1 valid skill, got %d", len(result.Skills))
+	}
+
+	if result.Skills[0].Name != "good" {
+		t.Errorf("expected skill name 'good', got %q", result.Skills[0].Name)
+	}
+
+	if len(result.Warnings) != 3 {
+		t.Errorf("expected 3 warnings (invalid JSON, empty name, unsupported ext), got %d", len(result.Warnings))
+	}
+
+	foundReasons := make(map[string]bool)
+	for _, w := range result.Warnings {
+		foundReasons[w.Reason] = true
+	}
+	if !foundReasons["missing required field \"name\""] {
+		t.Error("expected warning for missing name field")
+	}
+}
+
 func TestLoadSkillsEmptyDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 

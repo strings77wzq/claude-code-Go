@@ -22,6 +22,7 @@ import (
 	"github.com/strings77wzq/claude-code-Go/internal/skills"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 	toolinit "github.com/strings77wzq/claude-code-Go/internal/tool/init"
+	"github.com/strings77wzq/claude-code-Go/internal/tool/mcp"
 	"github.com/strings77wzq/claude-code-Go/pkg/tty"
 	"github.com/strings77wzq/claude-code-Go/pkg/tui"
 )
@@ -128,6 +129,20 @@ func main() {
 	}
 	logger.Info("Builtin tools registered", "count", len(toolRegistry.GetAllDefinitions()))
 
+	// Initialize MCP servers and register their tools
+	logger.Info("Initializing MCP servers")
+	mcpManager := mcp.NewMcpManager()
+	mcpConfigPath := mcp.GetDefaultMcpConfigPath()
+	if mcpConfigPath != "" {
+		if mcpConfigs, err := mcp.LoadMcpConfigs(mcpConfigPath); err == nil {
+			mcpManager.InitializeAndRegister(mcpConfigs, toolRegistry)
+		} else {
+			logger.Debug("No MCP config found, skipping", "path", mcpConfigPath)
+		}
+	}
+	defer mcpManager.Close()
+	logger.Info("MCP initialization complete", "tools", len(toolRegistry.GetAllDefinitions()))
+
 	// Create permission policy
 	logger.Info("Creating permission policy")
 	policy := permission.NewPolicy(permission.WorkspaceWrite)
@@ -164,12 +179,15 @@ func main() {
 		return
 	}
 
-	// Load skills
+	// Load skills with validation warnings
 	skillsRegistry := skills.NewRegistry()
 	if homeDir, err := os.UserHomeDir(); err == nil {
 		skillsDir := filepath.Join(homeDir, ".go-code", "skills")
-		if loadedSkills, err := skills.LoadSkills(skillsDir); err == nil {
-			for _, s := range loadedSkills {
+		if result, err := skills.LoadSkillsWithWarnings(skillsDir); err == nil {
+			for _, w := range result.Warnings {
+				logger.Warn("Invalid skill file", "file", w.File, "reason", w.Reason)
+			}
+			for _, s := range result.Skills {
 				if err := skillsRegistry.Register(s); err != nil {
 					logger.Warn("Failed to register skill", "name", s.Name, "error", err)
 				}

@@ -7,6 +7,15 @@ description: go-code 常见问题及解决方案
 
 本指南涵盖您在使用 go-code 时可能遇到的常见问题，并提供解决方案。
 
+## 分类指南
+
+针对特定问题的详细排查文档:
+
+- [常见问题](common-issues.md) — 安装、配置、连接和运行时问题的解决方案
+- [API 错误](api-errors.md) — 速率限制、认证错误、内容错误和服务端错误
+- [权限被拒绝](permission-denied.md) — 权限模型、自定义规则和调试
+- [性能问题](performance-issues.md) — 启动缓慢、内存过高、响应延迟和 Token 优化
+
 ---
 
 ## 权限与沙箱

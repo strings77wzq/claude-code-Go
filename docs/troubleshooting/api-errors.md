@@ -1,86 +1,82 @@
+---
+title: API Errors
+description: How to read and resolve errors from LLM providers (Anthropic, OpenAI, and compatible).
+---
+
 # API Errors
 
-Handling errors from AI providers.
+This page covers error types returned by LLM providers and what to do when something goes wrong.
 
-## Rate Limiting
+## Error Classification
 
-### "rate_limit_exceeded"
+Errors are normalized into categories in `internal/provider/errors.go`:
 
-**Cause**: Too many requests.
+| Kind | HTTP Status | Meaning |
+| --- | --- | --- |
+| `auth` | 401, 403 | Authentication or permission failure. |
+| `rate_limit` | 429 | Too many requests. |
+| `invalid_request` | 400, 422 | Malformed request payload. |
+| `server` | 500+ | Temporary provider-side failure. |
+| `timeout` | (none) | Request exceeded deadline. |
+| `network` | (none) | DNS, dial, or connection failure. |
 
-**Solution**:
-- Wait 60 seconds
-- Upgrade your plan
-- Reduce request frequency
+## Authentication Errors
 
-### "rate_limit_request_enqueued"
+**Message**: `Invalid API key. Please check your ANTHROPIC_API_KEY.`
 
-**Cause**: Request queued due to high load.
+Causes: missing key (`ErrAPIKeyRequired` from `internal/config`), wrong format (Anthropic keys start with `sk-ant-`), expired or revoked key.
 
-**Solution**:
-- Wait for automatic retry
-- Reduce concurrent requests
-
-## Authentication
-
-### "invalid_api_key"
-
-**Cause**: Wrong API key.
-
-**Solution**:
-- Check key format (sk-ant-...)
-- Generate new key
-- Verify key in settings
-
-### "permission_denied"
-
-**Cause**: Key lacks required permissions.
-
-**Solution**:
-- Check key scope
-- Generate key with correct permissions
-- Contact Anthropic support
-
-## Content Errors
-
-### "context_length_exceeded"
-
-**Cause**: Too much context.
-
-**Solution**:
-```
-> /compact
-> Let's continue with the compacted context
+```bash
+echo $ANTHROPIC_API_KEY                      # verify set
+echo ${ANTHROPIC_API_KEY:0:7}                # check prefix
+curl -H "x-api-key: $ANTHROPIC_API_KEY" \
+  https://api.anthropic.com/v1/models        # test directly
 ```
 
-### "invalid_request_error"
+**Message**: `API access denied. Check your API key permissions.`
 
-**Cause**: Malformed request.
+The key exists but lacks scope for the requested resource. Regenerate with correct permissions at the provider console.
 
-**Solution**:
-- Update to latest version
-- Check settings.json format
-- Report bug if persistent
+## Rate Limiting (429)
 
-## Server Errors
+**Message**: `Rate limited. Retrying automatically...`
 
-### "api_error" or "server_error"
+The application retries automatically with exponential backoff (from `internal/api/client.go`):
+- 3 retries with delays of 1s, 2s, 4s.
+- After all retries fail: `request failed after 3 retries: rate_limit_exceeded`.
 
-**Cause**: Provider issue.
+Reduce concurrent usage or upgrade your provider plan.
 
-**Solution**:
-- Wait and retry
-- Check provider status page
-- Try different model
+## Server Errors (5xx)
 
-## Retry Logic
+**Message**: `Server error. Please try again later.`
 
-claude-code-Go automatically retries:
-- Rate limits (with exponential backoff)
-- Timeouts (up to 3 attempts)
-- Server errors (5xx)
+Retried automatically (same 3-attempt backoff). If persistent, check the provider status page or switch models with `/model`.
 
-Manual retry:
+## Timeout Errors
+
+**Message**: `provider request timed out`
+
+The HTTP client timeout is 5 minutes (from `internal/api/client.go`). Try a faster model or check your network connection.
+
+## Invalid Request (400, 422)
+
+**Message format**: `Invalid provider request (status): body`
+
+Causes: context length exceeded, invalid model name, malformed schema. If `context_length_exceeded`, use `/compact`.
+
+## Reading Provider Errors
+
+Errors from the Anthropic HTTP client are classified by `classifyError()` in `internal/api/client.go`. Provider adapters in `internal/provider/anthropic` and `internal/provider/openai` add a second classification layer:
+
+```go
+func ClassifyHTTPStatus(statusCode int, body string) *ClassifiedError
+func ClassifyError(err error) *ClassifiedError
 ```
-> That failed, please try again
-```
+
+OpenAI-compatible providers transform their error payloads into the same categories before reaching the agent loop.
+
+## Related
+
+- [Common Issues](common-issues.md) — API key setup, connection issues
+- [Provider Configuration](../architecture/providers.md) — Provider setup

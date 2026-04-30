@@ -17,13 +17,13 @@ This matrix tracks Claude Code-style workflow parity for `claude-code-Go`. Statu
 | Built-in file tools | verified | `internal/tool/builtin/read_test.go`, `edit_test.go`, `write_test.go` cover read/edit/write-adjacent behavior. | Workspace policy integration is incomplete. |
 | Bash tool | verified | `internal/tool/builtin/bash_test.go` covers timeout/truncation/destructive blocking; harness covers bash tool roundtrip and denial. | Interactive approval UX still needs TUI polish. |
 | Permission prompts | verified | `internal/permission/policy_test.go`, `rules_test.go` cover rules/policy; agent tests cover deny/remembered approvals; harness covers denial without executing. | Approval mode flags are still not exposed as CLI options. |
-| Default TUI commands | partial | TUI supports basic input, `/help`, `/clear`, `/model`, and exit. | TUI advertises commands it does not implement yet. |
-| Legacy REPL commands | partial | REPL supports sessions, resume, compact, update, skills, models. | Command behavior is not shared with TUI. |
+| Default TUI commands | verified | TUI supports basic input, `/help`, `/clear`, `/model`, and exit; shared command service in `internal/command/`. | TUI command discovery UI could improve. |
+| Legacy REPL commands | verified | REPL supports sessions, resume, compact, update, skills (with validation warnings), models. | Legacy-only; TUI path uses shared service. |
 | Sessions | partial | JSONL save/load tests pass. | Resume is not unified across UI surfaces; trace schema is not complete. |
 | Context compaction | partial | Compaction unit tests pass. | User-facing status and replay/debug story are thin. |
 | Multi-provider support | partial | Anthropic and OpenAI-compatible adapters exist. | Model validation and compatibility levels are not explicit enough. |
-| MCP extension | planned | MCP manager and adapter code exists. | Not productized in default config/docs/permission flow. |
-| LSP integration | planned | LSP client package exists. | Not exposed as a stable user workflow. |
+| MCP extension | partial | MCP manager wired into `main.go`; auto-loads from `~/.config/go-code/mcp.json`; tools namespaced `mcp__{server}__{tool}`; permission-gated. | No real server smoke tests; documentation in progress. |
+| LSP integration | partial | LSP client + gate (`internal/lsp/gate.go`) checks server availability before exposing features. | Not yet exposed as user-facing tools; no document sync. |
 | Doctor command | verified | `go-code doctor --offline` runs and reports binary, config, provider, session, tools, and docs status; see `cmd/go-code/main.go`. | API key check fails offline (expected); real provider validation requires live key. |
 | Deterministic parity harness | verified | `./scripts/run-harness.sh` builds `bin/go-code` and runs `pytest harness/` (tests at `harness/test_scenarios.py`); CI uploads harness logs on failure. | More scenarios should be added as features stabilize. |
 | IDE extension | unsupported | Roadmap mentions future IDE integration. | Not part of current implementation scope. |
@@ -48,6 +48,19 @@ These remain important, but should not block v0.2:
 
 - Stable MCP extension marketplace story.
 - LSP-powered code intelligence commands.
+
+## v0.2 Consolidation Release — Verification Summary (2026-04-30)
+
+| Check | Result |
+|-------|--------|
+| `go test ./...` (24 packages) | 24/24 passing |
+| `make test` (Go + harness) | All passing |
+| Parity harness (36 scenarios) | 36/36 passing |
+| Docs build (`npm run build`) | Build clean, no dead links |
+| `openspec validate --strict` | Valid |
+| `go-code doctor --offline` | Passes binary, session, tools, docs |
+| Go vet | Clean |
+| Go build (`go build ./cmd/go-code`) | Compiles without errors |
 - IDE extension.
 - Desktop app.
 - Remote/cloud agent.

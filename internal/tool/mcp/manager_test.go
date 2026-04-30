@@ -47,6 +47,37 @@ func TestMcpManagerInitializeInvalidConfig(t *testing.T) {
 	}
 }
 
+func TestMcpToolAdapterPermissionRequired(t *testing.T) {
+	adapter := &McpToolAdapter{
+		serverName:  "test-server",
+		toolName:    "test-tool",
+		description: "A test MCP tool",
+	}
+
+	if !adapter.RequiresPermission() {
+		t.Error("MCP tool adapter should require permission")
+	}
+	if adapter.RequiredPermissionLevel() != 2 {
+		t.Errorf("expected LevelDangerFullAccess (2), got %d", adapter.RequiredPermissionLevel())
+	}
+	if adapter.Name() != "mcp__test-server__test-tool" {
+		t.Errorf("expected namespaced name 'mcp__test-server__test-tool', got %q", adapter.Name())
+	}
+}
+
+func TestMcpToolAdapterNoSchema(t *testing.T) {
+	adapter, err := newMcpToolAdapter("srv", McpToolInfo{
+		Name:        "no-schema-tool",
+		Description: "Tool without input schema",
+	}, nil)
+	if err != nil {
+		t.Fatalf("newMcpToolAdapter failed: %v", err)
+	}
+	if adapter.InputSchema() != nil {
+		t.Error("expected nil input schema when none provided")
+	}
+}
+
 func TestMcpManagerCloseEmpty(t *testing.T) {
 	mgr := NewMcpManager()
 	err := mgr.Close()

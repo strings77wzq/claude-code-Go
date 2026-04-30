@@ -1,0 +1,27 @@
+## ADDED Requirements
+
+### Requirement: Deterministic mock provider scenarios
+The system SHALL include deterministic mock-provider scenarios for streaming text, tool use, edit flows, bash flows, permission denial, retries, context pressure, and malformed provider responses.
+
+#### Scenario: Tool-use loop
+- **WHEN** the parity harness runs a scenario where the mock provider requests a file read and then returns a final answer
+- **THEN** the agent executes the read, sends the tool result, and completes with the expected final answer
+
+#### Scenario: Malformed stream event
+- **WHEN** the mock provider emits a malformed streaming event
+- **THEN** the agent returns a classified error or recovery result without panicking
+
+### Requirement: CI runs parity gates
+The system MUST run the deterministic parity harness in CI for pull requests that affect runtime, provider, tool, permission, session, or TUI code.
+
+#### Scenario: Harness failure
+- **WHEN** a parity scenario fails in CI
+- **THEN** the workflow fails and publishes enough logs to identify the failing scenario
+
+### Requirement: Parity status is documented
+The system SHALL maintain a parity matrix that maps important Claude Code-style workflows to status, tests, docs, and known gaps.
+
+#### Scenario: Unsupported workflow
+- **WHEN** a workflow is not implemented
+- **THEN** the parity matrix marks it as unsupported or planned instead of implying support
+
