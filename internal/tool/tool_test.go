@@ -10,12 +10,16 @@ import (
 // stubTool is a minimal Tool implementation for testing.
 type stubTool struct{}
 
-func (s *stubTool) Name() string                                    { return "stub" }
-func (s *stubTool) Description() string                             { return "a stub tool for testing" }
-func (s *stubTool) InputSchema() map[string]any                     { return map[string]any{"type": "object"} }
-func (s *stubTool) RequiresPermission() bool                        { return false }
-func (s *stubTool) RequiredPermissionLevel() permission.PermissionLevel { return permission.LevelReadOnly }
-func (s *stubTool) Execute(_ context.Context, _ map[string]any) Result { return Success("stub executed") }
+func (s *stubTool) Name() string                { return "stub" }
+func (s *stubTool) Description() string         { return "a stub tool for testing" }
+func (s *stubTool) InputSchema() map[string]any { return map[string]any{"type": "object"} }
+func (s *stubTool) RequiresPermission() bool    { return false }
+func (s *stubTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelReadOnly
+}
+func (s *stubTool) Execute(_ context.Context, _ map[string]any) Result {
+	return Success("stub executed")
+}
 
 func TestSuccessAndErrorConstructors(t *testing.T) {
 	// Happy path: Success creates a non-error Result.

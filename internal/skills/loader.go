@@ -12,8 +12,8 @@ var ErrInvalidSkill = errors.New("invalid skill: missing required field")
 
 // SkillWarning describes a non-fatal issue encountered while loading a skill file.
 type SkillWarning struct {
-	File    string
-	Reason  string
+	File   string
+	Reason string
 }
 
 // LoadResult holds the result of loading skills, including warnings for invalid files.

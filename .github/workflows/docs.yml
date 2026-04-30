@@ -22,10 +22,10 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: cd docs && npm install
+        run: cd docs && npm ci
 
       - name: Build documentation
-        run: npx vitepress build docs
+        run: cd docs && npm run build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

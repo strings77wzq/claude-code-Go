@@ -47,7 +47,7 @@ func TestNewProvider_MissingAPIKey(t *testing.T) {
 
 func TestConvertToOpenAIRequest(t *testing.T) {
 	req := &api.ApiRequest{
-		Model: "gpt-4o",
+		Model:  "gpt-4o",
 		System: "You are a helpful assistant.",
 		Messages: []api.Message{
 			{Role: "user", Content: "Hello"},

@@ -18,9 +18,9 @@ func (m *mockAgent) Run(ctx context.Context, userInput string, onTextDelta func(
 	return "", nil
 }
 
-func (m *mockAgent) ClearHistory()           {}
-func (m *mockAgent) SetModel(model string)   {}
-func (m *mockAgent) Model() string           { return "test-model" }
+func (m *mockAgent) ClearHistory()         {}
+func (m *mockAgent) SetModel(model string) {}
+func (m *mockAgent) Model() string         { return "test-model" }
 
 func TestNewModel_Valid(t *testing.T) {
 	agent := &mockAgent{}
