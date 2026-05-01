@@ -12,9 +12,9 @@ description: claude-code-Go 项目 Roadmap
 
 | 阶段 | 状态 | 描述 |
 |-------|--------|-------------|
-| 第一阶段 | ✅ 已完成 | 核心基础 — Agent loop、工具、权限、MCP (Planned v0.3)、SSE、会话 |
+| 第一阶段 | ✅ 已完成 | 核心基础 — Agent loop、工具、权限、SSE、会话 |
 | 第二阶段 | ✅ 已完成 | 增强功能 — Skills、多 Provider、会话恢复 |
-| 第三阶段 | 🔮 规划中 | 高级功能 — IDE 集成、协作、云端 |
+| 第三阶段 | 🟡 进行中 | v0.3 扩展产品化 — MCP、LSP、Hooks、Skills、Replay evidence |
 
 ---
 
@@ -27,7 +27,7 @@ description: claude-code-Go 项目 Roadmap
 - **Agent Loop** — 由 stop_reason 驱动的「思考→行动→观察」自主循环
 - **9 大内置工具** — 6 个核心（Read、Write、Edit、Glob、Grep、Bash）+ 3 个增强（Diff view、Tree、WebFetch）
 - **权限系统** — 三级权限模型，支持 glob 规则匹配与会话记忆
-- **MCP 集成 (Planned v0.3)** — Model Context Protocol，stdio 传输、JSON-RPC（代码已完成，产品化待完成）
+- **MCP 集成** — 当前为 v0.3 partial：配置、命名空间、权限门控和 harness 证据正在产品化
 - **SSE 流式** — 逐 token 实时流式输出
 - **会话持久化** — 保存和恢复对话状态
 - **Hooks 系统** — 执行前后回调，扩展能力
@@ -49,21 +49,20 @@ description: claude-code-Go 项目 Roadmap
 
 ---
 
-## 第三阶段：高级功能 🔮 规划中
+## 第三阶段：扩展产品化 🟡 进行中
 
-未来计划带来更高级的功能和更好的集成。
+当前重点是把已有扩展代码变成可诊断、可验证、可文档化的产品能力。
 
-### 规划功能
+### 当前范围
 
-- **VS Code 扩展** — 原生 IDE 集成，丰富的 UI
-- **桌面应用** — 独立 GUI，完整功能集
-- **团队协作** — 共享工作流、团队仪表盘、权限管理
-- **云端 Agent** — 远程执行、API 端点、监控
-- **插件市场** — 社区创建的 Skills 和扩展
+- **MCP 集成 (Partial v0.3)** — 配置、工具命名空间、权限门控、文档和 harness 场景
+- **LSP 集成 (Partial v0.3)** — 健康检查、能力门控、doctor 诊断、文档和 unavailable harness 场景
+- **Replay evidence** — extension events、permission decisions、secret redaction 和 evidence mode
+- **Docs/PARITY 对齐** — 中英文文档只声明已有证据支持的能力
 
 ### 愿景
 
-第三阶段的目标是让 claude-code-Go 成为成熟的开发环境，在保持 Go 简洁和高性能的同时，弥合 CLI 和 IDE 之间的差距。
+第三阶段的目标是先稳定 CLI/TUI runtime 和扩展证据，再考虑 IDE、团队协作或云端能力。
 
 ---
 
@@ -80,7 +79,7 @@ description: claude-code-Go 项目 Roadmap
 | Agent Loop | ✅ | ✅ | ✅ |
 | 内置工具 | 6 个核心 | 9 个 | 20+ |
 | 权限系统 | ✅ | ✅ | ✅ |
-| MCP 集成 (Planned v0.3) | 🟡 | ✅ | ✅ |
+| MCP 集成 (Partial v0.3) | 🟡 | 🟡 | ✅ |
 | SSE 流式 | ✅ | ✅ | ✅ |
 | 会话持久化 | ✅ | ✅ | ✅ |
 | 会话恢复 | ❌ | ✅ | ✅ |
@@ -93,4 +92,4 @@ description: claude-code-Go 项目 Roadmap
 
 ---
 
-*最后更新：2026 年 4 月*
+*最后更新：2026 年 5 月*

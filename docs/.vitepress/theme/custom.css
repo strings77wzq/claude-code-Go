@@ -154,91 +154,7 @@
   left: 100%;
 }
 
-/* Feature card hover animations */
-.feature-block {
-  position: relative;
-  overflow: hidden;
-}
 
-.feature-block::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(0, 173, 216, 0.05) 0%,
-    transparent 50%
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.feature-block:hover::before {
-  opacity: 1;
-}
-
-.feature-block:hover {
-  transform: translateY(-8px);
-  border-color: var(--vp-c-brand-1);
-  box-shadow: 
-    0 12px 40px rgba(0, 173, 216, 0.15),
-    0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.feature-icon {
-  transition: transform 0.3s ease;
-}
-
-.feature-block:hover .feature-icon {
-  transform: scale(1.1);
-}
-
-/* Metrics section */
-.metric-item {
-  position: relative;
-  overflow: hidden;
-}
-
-.metric-item::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(
-    circle,
-    rgba(0, 173, 216, 0.1) 0%,
-    transparent 70%
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.metric-item:hover::after {
-  opacity: 1;
-}
-
-.metric-value {
-  background: linear-gradient(
-    135deg,
-    var(--vp-c-brand-1) 0%,
-    var(--vp-c-brand-2) 100%
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  transition: transform 0.3s ease;
-}
-
-.metric-item:hover .metric-value {
-  transform: scale(1.05);
-}
 
 /* Role cards enhancements */
 .role-card {
@@ -448,24 +364,6 @@
   color: var(--vp-c-text-2);
 }
 
-/* Enhanced CTA section */
-.cta-section {
-  position: relative;
-  overflow: hidden;
-}
-
-.cta-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  pointer-events: none;
-}
 
 /* Code preview enhancements */
 .code-preview-section {
@@ -494,12 +392,35 @@
 }
 
 .metric-item {
+  position: relative;
+  overflow: hidden;
   text-align: center;
   padding: 2rem 1rem;
   background: var(--vp-c-bg-soft);
   border-radius: 12px;
   border: 1px solid var(--vp-c-divider);
   transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.metric-item::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(0, 173, 216, 0.1) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.metric-item:hover::after {
+  opacity: 1;
 }
 
 .metric-item:hover {
@@ -510,9 +431,21 @@
 .metric-value {
   font-size: 2.5rem;
   font-weight: 700;
-  color: var(--vp-c-brand-1);
+  background: linear-gradient(
+    135deg,
+    var(--vp-c-brand-1) 0%,
+    var(--vp-c-brand-2) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   line-height: 1.2;
   margin-bottom: 0.5rem;
+  transition: transform 0.3s ease;
+}
+
+.metric-item:hover .metric-value {
+  transform: scale(1.05);
 }
 
 .metric-label {
@@ -531,23 +464,52 @@
 }
 
 .feature-block {
+  position: relative;
+  overflow: hidden;
   background: var(--vp-c-bg-soft);
   border: 1px solid var(--vp-c-divider);
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 1.5rem;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-block::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 173, 216, 0.05) 0%,
+    transparent 50%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.feature-block:hover::before {
+  opacity: 1;
 }
 
 .feature-block:hover {
-  transform: translateY(-4px);
+  transform: translateY(-8px);
   border-color: var(--vp-c-brand-1);
-  box-shadow: 0 8px 24px rgba(0, 173, 216, 0.1);
+  box-shadow:
+    0 12px 40px rgba(0, 173, 216, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .feature-icon {
   font-size: 2rem;
   margin-bottom: 0.75rem;
+  transition: transform 0.3s ease;
+}
+
+.feature-block:hover .feature-icon {
+  transform: scale(1.1);
 }
 
 .feature-title {

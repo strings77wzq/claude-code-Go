@@ -408,6 +408,5 @@ registry.Register(notifHook)
 <div class="nav-prev-next">
 
 - [MCP 集成](./mcp.md) ←
-- → [扩展概述](./overview.md)
 
 </div>

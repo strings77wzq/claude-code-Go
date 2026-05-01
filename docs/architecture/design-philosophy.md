@@ -144,7 +144,7 @@ This interface is intentionally narrow. The model cannot bypass the harness, can
 | **250-character tool descriptions** | Forces discipline in capability communication; prevents context bloat. The model receives concise, actionable tool definitions. | May omit useful tool details |
 | **MAX_TURNS = 50** | Prevents resource exhaustion from infinite loops. The model has no intrinsic understanding of resource constraints. | Complex tasks may need more iterations |
 | **Three-tier message compaction** | Preserves semantic content while managing token limits. Full messages until threshold, then summaries. | Compression is lossy; some context may be lost |
-| **Pure Go implementation** | No runtime dependencies; single-binary deployment; predictable memory usage and low latency. Aligns with local-first philosophy. | Less flexible than interpreted languages |
+| **Pure Go implementation** | No runtime dependencies; single-binary deployment; predictable runtime behavior. Aligns with local-first philosophy. | Less flexible than interpreted languages |
 | **MCP as external adapter** | Protocol-agnostic tool discovery; ecosystem integration. Enables extending capabilities without modifying core code. | MCP servers add external dependencies |
 
 ## The Philosophy in Practice

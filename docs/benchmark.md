@@ -43,23 +43,6 @@ All benchmark results include:
 
 ## Why Go?
 
-### Go vs Python (for AI agent runtimes)
-
-| Aspect | Go | Python |
-|--------|-----|--------|
-| Deployment | Single static binary | Requires interpreter + dependencies |
-| Startup time | ~10ms | ~100-500ms |
-| Memory baseline | ~5MB | ~30-50MB |
-| Concurrency model | Goroutines (lightweight) | asyncio (cooperative) |
-| Cross-compilation | `GOOS=linux GOARCH=amd64 go build` | Packaging tools required |
-
-### Go vs Rust (for AI agent runtimes)
-
-| Aspect | Go | Rust |
-|--------|-----|------|
-| Development speed | Faster iteration (GC, simpler types) | Slower (borrow checker, longer compiles) |
-| Compilation time | <1s for incremental builds | 5-30s+ |
-| Ecosystem (AI/HTTP) | Mature `net/http`, JSON, SSE | Growing but less turnkey |
-| Binary size | ~10-15MB (stripped) | ~5-10MB (stripped) |
+This project uses Go for single-binary distribution, straightforward cross-compilation, mature HTTP/SSE primitives, and a small runtime dependency surface. Quantitative comparisons with Python or Rust will be published only after reproducible benchmark commands and raw results exist.
 
 *Last updated: April 2026. Measurements pending.*

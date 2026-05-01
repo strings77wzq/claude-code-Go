@@ -5,7 +5,7 @@ description: Deep dive into Model Context Protocol — transport layer, JSON-RPC
 
 # MCP Integration
 
-> **Status: Experimental (v0.2)** — MCP client infrastructure (transport, JSON-RPC, adapter, manager) is wired into the application entrypoint. MCP servers are auto-loaded from `~/.config/go-code/mcp.json` at startup. Each MCP tool requires `DangerFullAccess` permission and is namespaced as `mcp__{server}__{tool}`. See [internal/tool/mcp/](https://github.com/strings77wzq/claude-code-Go/tree/main/internal/tool/mcp) for the implementation.
+> **Status: Experimental (v0.3 productization)** — MCP client infrastructure (transport, JSON-RPC, adapter, manager) is wired into the application entrypoint. MCP servers are auto-loaded from `~/.config/go-code/mcp.json` at startup. Each MCP tool requires explicit approval, is permission-gated like built-in tools, and is namespaced as `mcp__{server}__{tool}`. `go-code doctor --offline` can validate the local MCP config without starting servers.
 
 go-code supports the Model Context Protocol (MCP) for integrating external tools and services. This document provides a comprehensive overview of MCP implementation in go-code.
 
@@ -328,6 +328,8 @@ func (a *McpToolAdapter) RequiresPermission() bool {
 }
 ```
 
+In `WorkspaceWrite` or `ReadOnly` mode, MCP tools are evaluated by the same permission policy used for built-in tools. Without an allow rule or session approval, MCP tool calls require explicit user approval before execution. Session traces record both the permission decision and the MCP tool result.
+
 ## Configuration
 
 MCP servers are configured in a JSON configuration file.
@@ -405,6 +407,29 @@ func LoadMcpConfigs(settingsPath string) (map[string]McpServerConfig, error) {
     return configs, nil
 }
 ```
+
+## Diagnostics and Unavailable States
+
+Run local diagnostics without starting MCP servers:
+
+```bash
+go-code doctor --offline
+```
+
+The doctor command reports:
+
+- `[SKIP] mcp` when no config exists at `~/.config/go-code/mcp.json`.
+- `[FAIL] mcp` when the config file exists but cannot be read or parsed.
+- `[PASS] mcp` when the config file is readable and contains server entries.
+
+Startup behavior remains non-fatal: if a configured MCP server cannot start or list tools, go-code logs the failure and continues with built-in tools.
+
+## Current Limits
+
+- Stdio transport is implemented; other MCP transports are not productized yet.
+- MCP server startup is best-effort and does not currently expose a detailed UI beyond logs and doctor config diagnostics.
+- MCP tools are treated conservatively as external side-effecting tools and always require permission.
+- CI coverage uses local fixtures and does not depend on real external MCP servers or credentials.
 
 ## MCP Components Summary
 

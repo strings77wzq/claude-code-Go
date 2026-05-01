@@ -518,4 +518,4 @@ If `RequiresPermission()` returns `true`, the permission system will prompt the 
 
 - [Architecture Overview](overview.md) — System components
 - [Agent Loop Deep Dive](agent-loop.md) — Tool execution in the loop
-- [Configuration Guide](../guide/configuration.md) — MCP configuration
+- [Configuration Guide](../api/config.md) — MCP configuration

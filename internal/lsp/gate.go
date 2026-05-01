@@ -4,6 +4,8 @@ package lsp
 import (
 	"context"
 	"errors"
+
+	"github.com/strings77wzq/claude-code-Go/internal/session"
 )
 
 // ErrLSPUnavailable is returned when no LSP server is configured or healthy.
@@ -13,6 +15,7 @@ var ErrLSPUnavailable = errors.New("LSP server not configured or unavailable")
 type LSPGate struct {
 	client     *LSPClient
 	configured bool
+	healthy    bool
 }
 
 // NewLSPGate creates an LSP gate. If serverURL is empty, all LSP features are unavailable.
@@ -36,7 +39,68 @@ func (g *LSPGate) HealthCheck(ctx context.Context) error {
 	if !g.configured {
 		return ErrLSPUnavailable
 	}
-	return g.client.Initialize(ctx)
+	if g.client.IsInitialized() {
+		g.healthy = true
+		return nil
+	}
+	if err := g.client.Initialize(ctx); err != nil {
+		g.healthy = false
+		return err
+	}
+	g.healthy = true
+	return nil
+}
+
+// HealthCheckWithTrace records the LSP health outcome as a non-fatal extension event.
+func (g *LSPGate) HealthCheckWithTrace(ctx context.Context, traceFile string) error {
+	err := g.HealthCheck(ctx)
+	fields := map[string]interface{}{}
+	status := "available"
+	if err != nil {
+		if errors.Is(err, ErrLSPUnavailable) {
+			status = "unavailable"
+		} else {
+			status = "error"
+			fields["error"] = err.Error()
+		}
+	} else if info := g.client.GetServerInfo(); info != nil {
+		fields["server"] = info.Name
+		if info.Version != "" {
+			fields["server_version"] = info.Version
+		}
+	}
+	if g.healthy {
+		fields["operations"] = g.AdvertisedOperations()
+	}
+	if traceErr := session.AppendTraceExtension(traceFile, "lsp", "health_check", status, fields); traceErr != nil && err == nil {
+		return traceErr
+	}
+	return err
+}
+
+// AdvertisedOperations returns LSP operations that are safe to expose to callers.
+func (g *LSPGate) AdvertisedOperations() []string {
+	if !g.configured || !g.healthy || !g.client.IsInitialized() {
+		return nil
+	}
+	caps := g.client.GetCapabilities()
+	operations := make([]string, 0, 5)
+	if capabilityEnabled(caps.PublishDiagnosticsProvider) {
+		operations = append(operations, "diagnostics")
+	}
+	if capabilityEnabled(caps.WorkspaceSymbolProvider) || capabilityEnabled(caps.DocumentSymbolProvider) {
+		operations = append(operations, "symbols")
+	}
+	if capabilityEnabled(caps.DefinitionProvider) {
+		operations = append(operations, "definitions")
+	}
+	if capabilityEnabled(caps.ReferencesProvider) {
+		operations = append(operations, "references")
+	}
+	if capabilityEnabled(caps.HoverProvider) {
+		operations = append(operations, "hover")
+	}
+	return operations
 }
 
 // GetClient returns the LSP client if configured, or an error if unavailable.
@@ -45,4 +109,15 @@ func (g *LSPGate) GetClient() (*LSPClient, error) {
 		return nil, ErrLSPUnavailable
 	}
 	return g.client, nil
+}
+
+func capabilityEnabled(value interface{}) bool {
+	switch v := value.(type) {
+	case nil:
+		return false
+	case bool:
+		return v
+	default:
+		return true
+	}
 }

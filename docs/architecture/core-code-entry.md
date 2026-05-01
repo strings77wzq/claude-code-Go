@@ -233,6 +233,6 @@ Understanding this initialization sequence is fundamental to understanding the e
 <div class="nav-prev-next">
 
 - [Architecture Overview](../architecture/overview.md) ←
-- → [Agent Loop Implementation](agent-loop-impl.md)
+- → [Agent Loop Implementation](core-code-agent-loop.md)
 
 </div>

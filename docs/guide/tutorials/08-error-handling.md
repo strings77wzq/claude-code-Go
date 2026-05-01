@@ -75,5 +75,4 @@ When all else fails:
 
 ## Next Steps
 
-- [Troubleshooting Guide](../troubleshooting/common-issues.md)
-- [Examples: Error Handling](../../../examples/error-handling/)
+- [Troubleshooting Guide](../../troubleshooting/common-issues.md)

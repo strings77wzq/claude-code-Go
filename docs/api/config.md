@@ -301,6 +301,5 @@ See [Permission System](../architecture/tools.md#permission-system) for details.
 
 ## Related Documentation
 
-- [Configuration Guide](../guide/configuration.md) — User-friendly configuration guide
 - [Tool System](../tools/overview.md) — Tool execution and permissions
 - [MCP Integration](../extension/mcp.md) — MCP server configuration

@@ -307,7 +307,7 @@ The agent loop is the **operational core** — it takes the initialized componen
 
 <div class="nav-prev-next">
 
-- [Entry Point Architecture](entry-point.md) ←
+- [Entry Point Architecture](core-code-entry.md) ←
 - → [Tool System Overview](../tools/overview.md)
 
 </div>

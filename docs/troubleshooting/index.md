@@ -255,7 +255,7 @@ If you encounter an issue not covered here:
 
 ## Related Documentation
 
-- [Configuration Guide](../guide/configuration.md) — Configuration options
+- [Configuration Guide](../api/config.md) — Configuration options
 - [Tool System](../tools/overview.md) — Built-in tools
 - [MCP Integration](../extension/mcp.md) — MCP servers
 - [Session Management](../guide/session-management.md) — Session persistence

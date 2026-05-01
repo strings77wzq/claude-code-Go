@@ -256,5 +256,5 @@ Edit `~/.go-code/settings.json`:
 ## Next Steps
 
 - [Tutorial 5: Building Custom Tools](05-custom-tools.md)
-- [Architecture: Permission Model](../../architecture/permission-model-deep-dive.md)
+- [ADR-002: Permission Model](../../adr/002-permission-model.md)
 - [ADR-002: Permission Model](../../adr/002-permission-model.md)

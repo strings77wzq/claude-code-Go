@@ -8,7 +8,7 @@
 
 A Go-native AI coding agent with full agent loop, tool execution, permission management, SSE streaming, and auto-recovery — in a single binary.
 
-> **Status: v0.2** — Core agent runtime, permission system, session persistence, multi-provider support, doctor checks, and parity harness are implemented and tested. See [PARITY.md](PARITY.md) for detailed feature status. MCP, LSP are planned for v0.3.
+> **Status: v0.2 stable, v0.3 extension productization in progress** — Core agent runtime, permission system, session persistence, multi-provider support, doctor checks, and parity harness are implemented and tested. MCP, LSP, hooks, skills, and replay evidence are being productized behind conservative v0.3 gates. See [PARITY.md](PARITY.md) for detailed feature status.
 
 > **Disclaimer:** This is an independent open-source project. It is not affiliated with, endorsed by, or connected to Anthropic PBC. "Claude" and "Claude Code" are trademarks of Anthropic PBC.
 
@@ -101,6 +101,9 @@ go-code -p "List files in current directory" -f json
 
 # Replay a saved session
 go-code replay latest
+
+# Collect concise release/issue evidence
+go-code replay --evidence latest
 ```
 
 ## Verified Features (v0.2)
@@ -115,12 +118,12 @@ These features are tested and covered by the parity harness. See [PARITY.md](PAR
 | Doctor Health Check | Verified | Go tests |
 | Multi-Provider (Anthropic, OpenAI-compatible) | Verified | Go tests |
 | Session Persistence + Resume | Verified | Go tests |
-| Session Replay | Verified | Go tests |
+| Session Replay + Evidence Mode | Partial v0.3 | Go tests + harness |
 | Slash Commands (/help, /model, /sessions, etc.) | Verified | Go tests |
 | Skills System | Verified | Go tests |
 | Hooks System | Verified | Go tests |
-| MCP Integration | Planned v0.3 | Go tests (code complete) |
-| LSP Integration | Planned v0.3 | Go tests (code complete) |
+| MCP Integration | Partial v0.3 | Go tests + harness |
+| LSP Integration | Partial v0.3 | Go tests + harness |
 
 ### Built-in Tools
 
@@ -210,6 +213,8 @@ Key pages:
 - [Architecture Overview](docs/architecture/overview.md)
 - [Roadmap](docs/roadmap.md)
 - [Troubleshooting](docs/troubleshooting/)
+- [MCP Integration](docs/extension/mcp.md)
+- [LSP Integration](docs/extension/lsp.md)
 - [Contributing](CONTRIBUTING.md)
 - [Parity Status](PARITY.md)
 

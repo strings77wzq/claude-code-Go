@@ -19,13 +19,13 @@ This matrix tracks Claude Code-style workflow parity for `claude-code-Go`. Statu
 | Permission prompts | verified | `internal/permission/policy_test.go`, `rules_test.go` cover rules/policy; agent tests cover deny/remembered approvals; harness covers denial without executing. | Approval mode flags are still not exposed as CLI options. |
 | Default TUI commands | verified | TUI supports basic input, `/help`, `/clear`, `/model`, and exit; shared command service in `internal/command/`. | TUI command discovery UI could improve. |
 | Legacy REPL commands | verified | REPL supports sessions, resume, compact, update, skills (with validation warnings), models. | Legacy-only; TUI path uses shared service. |
-| Sessions | partial | JSONL save/load tests pass. | Resume is not unified across UI surfaces; trace schema is not complete. |
+| Sessions and replay | partial | JSONL save/load tests pass; replay includes messages, tools, permissions, extension events, redaction, evidence mode (`internal/session/session_test.go`, `cmd/go-code/replay_test.go`, `harness/test_extension_productization.py`). | Resume is not unified across UI surfaces; trace schema can still gain richer provider metadata. |
 | Context compaction | partial | Compaction unit tests pass. | User-facing status and replay/debug story are thin. |
 | Multi-provider support | partial | Anthropic and OpenAI-compatible adapters exist. | Model validation and compatibility levels are not explicit enough. |
-| MCP extension | partial | MCP manager wired into `main.go`; auto-loads from `~/.config/go-code/mcp.json`; tools namespaced `mcp__{server}__{tool}`; permission-gated. | No real server smoke tests; documentation in progress. |
-| LSP integration | partial | LSP client + gate (`internal/lsp/gate.go`) checks server availability before exposing features. | Not yet exposed as user-facing tools; no document sync. |
+| MCP extension | partial | MCP manager wired into `main.go`; auto-loads from `~/.config/go-code/mcp.json`; tools namespaced `mcp__{server}__{tool}`; permission-gated (`internal/tool/mcp/manager_test.go`, `internal/agent/loop_test.go`, `harness/test_extension_productization.py`). | Real server smoke tests remain manual; broader UX is still v0.3 work. |
+| LSP integration | partial | LSP client + gate checks health before advertising diagnostics/symbols/definitions/references/hover (`internal/lsp/gate_test.go`); doctor reports unavailable/health states; harness covers unavailable behavior. | LSP operations are gated internals, not full user-facing IDE commands. |
 | Doctor command | verified | `go-code doctor --offline` runs and reports binary, config, provider, session, tools, and docs status; see `cmd/go-code/main.go`. | API key check fails offline (expected); real provider validation requires live key. |
-| Deterministic parity harness | verified | `./scripts/run-harness.sh` builds `bin/go-code` and runs `pytest harness/` (tests at `harness/test_scenarios.py`); CI uploads harness logs on failure. | More scenarios should be added as features stabilize. |
+| Deterministic parity harness | verified | `./scripts/run-harness.sh` builds `bin/go-code` and runs `pytest harness/`; extension gate scenarios live in `harness/test_extension_productization.py`. | More scenarios should be added as features stabilize. |
 | IDE extension | unsupported | Roadmap mentions future IDE integration. | Not part of current implementation scope. |
 | Cloud/team collaboration | unsupported | Future concept only. | Not part of current implementation scope. |
 

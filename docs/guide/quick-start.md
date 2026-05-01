@@ -226,6 +226,6 @@ The permission system controls:
 
 ## Next Steps
 
-- [Configuration Guide](configuration.md) — Customize behavior with advanced settings
+- [Configuration Guide](../api/config.md) — Customize behavior with advanced settings
 - [Architecture Overview](../architecture/overview.md) — Understand how go-code works
 - [Agent Loop Deep Dive](../architecture/agent-loop.md) — Learn about the core execution cycle

@@ -19,12 +19,11 @@ from harness.mock_server.server import MockServer
 def go_binary() -> Path:
     """Return path to the compiled Go binary."""
     binary = _project_root / "bin" / "go-code"
-    if not binary.exists():
-        subprocess.run(
-            ["go", "build", "-o", str(binary), "./cmd/go-code"],
-            cwd=_project_root,
-            check=True,
-        )
+    subprocess.run(
+        ["go", "build", "-o", str(binary), "./cmd/go-code"],
+        cwd=_project_root,
+        check=True,
+    )
     return binary
 
 

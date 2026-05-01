@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -103,6 +105,15 @@ type traceStatusLine struct {
 	Timestamp    int64  `json:"timestamp_ms"`
 }
 
+type traceExtensionLine map[string]interface{}
+
+const redactedMarker = "[REDACTED]"
+
+var (
+	bearerSecretPattern = regexp.MustCompile(`(?i)bearer\s+[A-Za-z0-9._~+/=-]+`)
+	apiKeyPattern       = regexp.MustCompile(`sk-[A-Za-z0-9][A-Za-z0-9._-]{8,}`)
+)
+
 // AppendTraceRequest appends a request trace line to the session file.
 func AppendTraceRequest(filepath, model string, messagesCount int) error {
 	return appendTraceLine(filepath, traceRequestLine{
@@ -167,6 +178,20 @@ func AppendTraceStatus(filepath, status string, turnCount, inputTokens, outputTo
 	})
 }
 
+func AppendTraceExtension(filepath, name, event, status string, fields map[string]interface{}) error {
+	line := traceExtensionLine{
+		"type":         "extension",
+		"name":         name,
+		"event":        event,
+		"status":       status,
+		"timestamp_ms": time.Now().UnixMilli(),
+	}
+	for key, value := range fields {
+		line[key] = value
+	}
+	return appendTraceLine(filepath, line)
+}
+
 func AppendSessionMessages(filepath string, messages []SessionMessage) error {
 	for _, msg := range messages {
 		msgLine := messageLine{
@@ -184,7 +209,7 @@ func AppendSessionMessages(filepath string, messages []SessionMessage) error {
 
 // appendTraceLine appends a JSON line to the session file.
 func appendTraceLine(filepath string, v interface{}) error {
-	data, err := json.Marshal(v)
+	data, err := json.Marshal(redactTraceValue(v))
 	if err != nil {
 		return fmt.Errorf("failed to marshal trace line: %w", err)
 	}
@@ -203,6 +228,68 @@ func appendTraceLine(filepath string, v interface{}) error {
 	}
 
 	return nil
+}
+
+func redactTraceValue(v interface{}) interface{} {
+	switch value := v.(type) {
+	case map[string]interface{}:
+		redacted := make(map[string]interface{}, len(value))
+		for key, item := range value {
+			if isSensitiveTraceKey(key) {
+				redacted[key] = redactedMarker
+				continue
+			}
+			redacted[key] = redactTraceValue(item)
+		}
+		return redacted
+	case []interface{}:
+		redacted := make([]interface{}, 0, len(value))
+		for _, item := range value {
+			redacted = append(redacted, redactTraceValue(item))
+		}
+		return redacted
+	case string:
+		return redactTraceString(value)
+	default:
+		data, err := json.Marshal(v)
+		if err != nil {
+			return v
+		}
+		var decoded interface{}
+		if err := json.Unmarshal(data, &decoded); err != nil {
+			return v
+		}
+		switch decoded.(type) {
+		case map[string]interface{}, []interface{}:
+			return redactTraceValue(decoded)
+		default:
+			return decoded
+		}
+	}
+}
+
+func isSensitiveTraceKey(key string) bool {
+	normalized := strings.ToLower(strings.NewReplacer("_", "", "-", "", ".", "").Replace(key))
+	for _, token := range []string{"apikey", "authorization", "secret", "password"} {
+		if strings.Contains(normalized, token) {
+			return true
+		}
+	}
+	if strings.Contains(normalized, "token") && !strings.Contains(normalized, "tokens") {
+		return true
+	}
+	return false
+}
+
+func redactTraceString(value string) string {
+	value = bearerSecretPattern.ReplaceAllStringFunc(value, func(match string) string {
+		if strings.HasPrefix(strings.ToLower(match), "bearer ") {
+			return "Bearer " + redactedMarker
+		}
+		return redactedMarker
+	})
+	value = apiKeyPattern.ReplaceAllString(value, redactedMarker)
+	return value
 }
 
 // SaveSession saves a session and its messages to a JSONL file.
@@ -363,7 +450,7 @@ func LoadSession(filepath string) (*Session, []SessionMessage, error) {
 				session.EndTime = time.UnixMilli(status.Timestamp)
 			}
 
-		case "request", "response", "tool", "permission", "error":
+		case "request", "response", "tool", "permission", "extension", "error":
 			continue
 
 		default:

@@ -82,6 +82,18 @@ go test -v ./...
 | `make build-all` | Build for all platforms |
 | `make clean` | Remove build artifacts |
 
+### Documentation Build Outputs
+
+Documentation source lives under `docs/**/*.md`, `docs/.vitepress/config.ts`, and `docs/.vitepress/theme/**`. The VitePress build output under `docs/.vitepress/dist/` is generated and should not be included in ordinary pull requests.
+
+Include `docs/.vitepress/dist/` changes only when a release or publishing task explicitly requires generated site artifacts. For CI fixes, update the source Markdown/config files and verify with:
+
+```bash
+cd docs
+npm ci
+npm run build
+```
+
 ## Code Style Guidelines
 
 ### Go Code

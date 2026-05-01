@@ -231,7 +231,6 @@ Skills 通过斜杠命令与 REPL 集成：
 
 <div class="nav-prev-next">
 
-- [扩展概述](./overview.md) ←
 - → [钩子系统](./hooks.md)
 
 </div>

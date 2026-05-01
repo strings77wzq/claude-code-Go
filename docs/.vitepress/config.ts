@@ -110,6 +110,16 @@ export default defineConfig({
           ]
         },
         {
+          text: 'Extensions',
+          collapsed: false,
+          items: [
+            { text: 'MCP', link: '/extension/mcp' },
+            { text: 'LSP', link: '/extension/lsp' },
+            { text: 'Hooks', link: '/extension/hooks' },
+            { text: 'Skills', link: '/extension/skills' }
+          ]
+        },
+        {
           text: 'Resources',
           collapsed: false,
           items: [
@@ -148,6 +158,16 @@ export default defineConfig({
             { text: '工具', link: '/zh/api/tools' },
             { text: '命令', link: '/zh/api/commands' },
             { text: '配置', link: '/zh/api/config' }
+          ]
+        },
+        {
+          text: '扩展',
+          collapsed: false,
+          items: [
+            { text: 'MCP', link: '/zh/extension/mcp' },
+            { text: 'LSP', link: '/zh/extension/lsp' },
+            { text: 'Hooks', link: '/zh/extension/hooks' },
+            { text: 'Skills', link: '/zh/extension/skills' }
           ]
         },
         {

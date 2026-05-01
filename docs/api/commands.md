@@ -391,6 +391,6 @@ Not supported in the basic REPL. Use the TUI mode for enhanced features.
 
 ## Related Documentation
 
-- [Configuration Guide](../guide/configuration.md) — Model configuration
+- [Configuration Reference](./config.md) — Model configuration
 - [Session Management](../guide/session-management.md) — Session persistence
 - [Skills System](../extension/skills.md) — Custom commands

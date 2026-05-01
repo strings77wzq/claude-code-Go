@@ -43,6 +43,7 @@ test/
 node_modules/
 .vitepress/dist/
 docs/node_modules/
+docs/.vitepress/.temp/
 
 # Scripts directory (tracked - do NOT ignore)
 # scripts/ is intentionally tracked - contains install scripts

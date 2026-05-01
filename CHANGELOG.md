@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - v0.3 Extension Productization Draft
+
+### Added
+- LSP health-check trace events and capability gating for diagnostics, symbols, definitions, references, and hover.
+- Replay extension-event summaries, permission decisions, final status output, secret redaction, and `go-code replay --evidence`.
+- Hook failure policy tests proving warning-mode failures do not block and block-mode failures do.
+- Python harness extension scenarios for MCP registration, MCP permission denial, LSP unavailable behavior, and replay evidence output.
+- English and Chinese LSP integration docs.
+
+### Verification Commands
+- `go test ./...`
+- `python -m pytest harness/test_extension_productization.py -v --tb=short`
+- `./scripts/run-harness.sh`
+- `cd docs && npm run build`
+- `go-code doctor --offline`
+- `openspec validate v03-extension-productization --strict`
+
+### Known Risks
+- MCP and LSP real-server smoke checks remain manual.
+- LSP capabilities are gated internally; full user-facing code-intelligence commands are still future work.
+- Generated docs output under `docs/.vitepress/dist/` should stay out of ordinary reviews unless publishing requires it.
+
 ## [v0.2.0] - 2026-04-30
 
 ### Added

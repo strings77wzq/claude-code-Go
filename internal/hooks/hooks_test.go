@@ -11,6 +11,7 @@ type mockHook struct {
 	name        string
 	preExecErr  error
 	postExecErr error
+	preCalls    int
 }
 
 func (h *mockHook) Name() string {
@@ -18,6 +19,7 @@ func (h *mockHook) Name() string {
 }
 
 func (h *mockHook) PreExecute(toolName string, input map[string]any) error {
+	h.preCalls++
 	return h.preExecErr
 }
 
@@ -179,6 +181,49 @@ func TestRunPreHooksWithFailingHook(t *testing.T) {
 	errStr := err.Error()
 	if !strings.Contains(errStr, "hook2") || !strings.Contains(errStr, "Read") || !strings.Contains(errStr, "failed") {
 		t.Errorf("Expected error message to contain 'hook2', 'Read', and 'failed', got: %s", errStr)
+	}
+}
+
+func TestRunPreHooksWithWarnPolicyDoesNotBlock(t *testing.T) {
+	registry := NewRegistry()
+
+	hook1 := &mockHook{name: "hook1", preExecErr: errors.New("hook1 failed")}
+	hook2 := &mockHook{name: "hook2"}
+
+	if err := registry.RegisterWithPolicy(hook1, HookPolicy{PreFailure: HookFailureWarn}); err != nil {
+		t.Fatalf("RegisterWithPolicy hook1 failed: %v", err)
+	}
+	if err := registry.Register(hook2); err != nil {
+		t.Fatalf("Register hook2 failed: %v", err)
+	}
+
+	if err := registry.RunPreHooks("Read", map[string]any{"file": "test.txt"}); err != nil {
+		t.Fatalf("warn-policy hook should not block execution: %v", err)
+	}
+	if hook2.preCalls != 1 {
+		t.Fatalf("expected following hooks to continue, hook2 calls=%d", hook2.preCalls)
+	}
+}
+
+func TestRunPreHooksWithBlockPolicyBlocks(t *testing.T) {
+	registry := NewRegistry()
+
+	hook1 := &mockHook{name: "hook1", preExecErr: errors.New("hook1 failed")}
+	hook2 := &mockHook{name: "hook2"}
+
+	if err := registry.RegisterWithPolicy(hook1, HookPolicy{PreFailure: HookFailureBlock}); err != nil {
+		t.Fatalf("RegisterWithPolicy hook1 failed: %v", err)
+	}
+	if err := registry.Register(hook2); err != nil {
+		t.Fatalf("Register hook2 failed: %v", err)
+	}
+
+	err := registry.RunPreHooks("Read", map[string]any{"file": "test.txt"})
+	if err == nil {
+		t.Fatal("block-policy hook should block execution")
+	}
+	if hook2.preCalls != 0 {
+		t.Fatalf("expected following hooks to stop, hook2 calls=%d", hook2.preCalls)
 	}
 }
 

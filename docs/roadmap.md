@@ -28,12 +28,13 @@ Shipped and verified. See [PARITY.md](https://github.com/strings77wzq/claude-cod
 
 ## Next (v0.3)
 
-Actively planned. Some code exists but is not productized.
+Active extension productization. Code paths exist; public support depends on diagnostics, tests, docs, and harness evidence.
 
 | Feature | Status |
 |---------|--------|
-| MCP Integration | Code complete, needs productization |
-| LSP Integration | Code complete, needs productization |
+| MCP Integration | Partial — config, namespacing, permission gate, docs, and harness evidence in progress |
+| LSP Integration | Partial — health gate, capability gating, doctor diagnostics, docs, and harness evidence in progress |
+| Replay evidence mode | Partial — extension events, permission decisions, redaction, and concise evidence output covered by tests |
 | Extension docs + configuration | In progress |
 | Enhanced permission memory | Planned |
 | Improved TUI command coverage | Planned |
@@ -72,8 +73,8 @@ Comparison with Claude Code (as of April 2026). Status reflects verified impleme
 | Session Resume | Verified | Yes |
 | Streaming (SSE) | Verified | Yes |
 | Multi-Provider | Verified | No (Anthropic-only) |
-| MCP Integration | Planned v0.3 | Yes |
-| LSP Integration | Planned v0.3 | No |
+| MCP Integration | Partial v0.3 | Yes |
+| LSP Integration | Partial v0.3 | No |
 | Skills System | Verified | Yes |
 | Hooks System | Verified | Yes |
 | IDE Integration | Later | Yes |
@@ -85,4 +86,4 @@ See [CONTRIBUTING.md](https://github.com/strings77wzq/claude-code-Go/blob/main/C
 
 ---
 
-*Last updated: April 2026*
+*Last updated: May 2026*

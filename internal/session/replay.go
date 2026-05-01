@@ -71,6 +71,17 @@ func summarizeReplayLine(lineType string, line map[string]any) string {
 		return fmt.Sprintf("tool %s duration_ms=%s output=%s", asString(line["name"]), asNumber(line["duration_ms"]), truncateReplay(asString(line["output"])))
 	case "permission":
 		return fmt.Sprintf("permission %s decision=%s summary=%s", asString(line["tool"]), asString(line["decision"]), truncateReplay(asString(line["summary"])))
+	case "extension":
+		summary := fmt.Sprintf("extension %s %s status=%s", asString(line["name"]), asString(line["event"]), asString(line["status"]))
+		for _, key := range []string{"reason", "warning", "error"} {
+			if value := asString(line[key]); value != "" {
+				summary += fmt.Sprintf(" %s=%s", key, truncateReplay(value))
+			}
+		}
+		if operations := asString(line["operations"]); operations != "" {
+			summary += " operations=" + truncateReplay(operations)
+		}
+		return summary
 	case "error":
 		return fmt.Sprintf("error: %s", truncateReplay(asString(line["message"])))
 	case "status":
@@ -78,6 +89,21 @@ func summarizeReplayLine(lineType string, line map[string]any) string {
 	default:
 		return fmt.Sprintf("unknown %s", lineType)
 	}
+}
+
+func FormatReplayEvidence(events []ReplayEvent) string {
+	var b strings.Builder
+	for _, event := range events {
+		switch event.Type {
+		case "message", "tool", "permission", "extension", "error", "status":
+			if event.Summary == "" {
+				continue
+			}
+			b.WriteString(event.Summary)
+			b.WriteString("\n")
+		}
+	}
+	return strings.TrimRight(b.String(), "\n")
 }
 
 func asString(v any) string {
@@ -100,6 +126,7 @@ func asNumber(v any) string {
 }
 
 func truncateReplay(s string) string {
+	s = redactTraceString(s)
 	s = strings.ReplaceAll(s, "\n", "\\n")
 	if len(s) > 120 {
 		return s[:120] + "...(truncated)"

@@ -250,6 +250,11 @@ func TestTraceReplayAndResumeSchema(t *testing.T) {
 	if err := AppendTracePermission(sessionFile, "Bash", "Deny", "rm -rf /"); err != nil {
 		t.Fatalf("failed to append permission: %v", err)
 	}
+	if err := AppendTraceExtension(sessionFile, "lsp", "health_check", "unavailable", map[string]any{
+		"reason": "not configured",
+	}); err != nil {
+		t.Fatalf("failed to append extension: %v", err)
+	}
 	if err := AppendSessionMessages(sessionFile, []SessionMessage{
 		{Type: "message", Role: "user", Content: "hello", Timestamp: time.UnixMilli(1234567891)},
 		{Type: "message", Role: "assistant", Content: "[tool result: ok]", Timestamp: time.UnixMilli(1234567892)},
@@ -276,7 +281,7 @@ func TestTraceReplayAndResumeSchema(t *testing.T) {
 		t.Fatalf("ReplaySessionFile() error = %v", err)
 	}
 	replay := FormatReplay(events)
-	for _, want := range []string{"session sess_trace", "request model=test-model", "tool Read", "permission Bash", "status completed"} {
+	for _, want := range []string{"session sess_trace", "request model=test-model", "tool Read", "permission Bash", "extension lsp health_check status=unavailable", "status completed"} {
 		if !strings.Contains(replay, want) {
 			t.Fatalf("replay missing %q:\n%s", want, replay)
 		}
@@ -288,5 +293,41 @@ func TestTraceReplayAndResumeSchema(t *testing.T) {
 	}
 	if len(sessions) != 1 || sessions[0].TurnCount != 1 || sessions[0].Status != "completed" {
 		t.Fatalf("unexpected session info: %#v", sessions)
+	}
+}
+
+func TestTraceRedactsSecretsInStoredOutputAndReplay(t *testing.T) {
+	sessionFile := filepath.Join(t.TempDir(), "session-redact.jsonl")
+
+	if err := AppendTraceTool(sessionFile, "ProviderCall", map[string]any{
+		"api_key":       "sk-ant-test-secret-value",
+		"Authorization": "Bearer provider-token-value",
+	}, "authorization: Bearer output-token-value", 1); err != nil {
+		t.Fatalf("failed to append tool: %v", err)
+	}
+
+	raw, err := os.ReadFile(sessionFile)
+	if err != nil {
+		t.Fatalf("failed to read trace file: %v", err)
+	}
+	rawText := string(raw)
+	for _, leaked := range []string{"sk-ant-test-secret-value", "provider-token-value", "output-token-value"} {
+		if strings.Contains(rawText, leaked) {
+			t.Fatalf("trace leaked secret %q:\n%s", leaked, rawText)
+		}
+	}
+	if !strings.Contains(rawText, "[REDACTED]") {
+		t.Fatalf("expected redaction marker in trace:\n%s", rawText)
+	}
+
+	events, err := ReplaySessionFile(sessionFile)
+	if err != nil {
+		t.Fatalf("ReplaySessionFile() error = %v", err)
+	}
+	replay := FormatReplay(events)
+	for _, leaked := range []string{"sk-ant-test-secret-value", "provider-token-value", "output-token-value"} {
+		if strings.Contains(replay, leaked) {
+			t.Fatalf("replay leaked secret %q:\n%s", leaked, replay)
+		}
 	}
 }

@@ -11,8 +11,16 @@ import (
 
 func runReplayCommand(args []string, stdout, stderr io.Writer) int {
 	target := "latest"
-	if len(args) > 0 && args[0] != "" {
-		target = args[0]
+	evidence := false
+	for _, arg := range args {
+		switch arg {
+		case "":
+			continue
+		case "--evidence":
+			evidence = true
+		default:
+			target = arg
+		}
 	}
 
 	filePath, err := resolveReplayTarget(target)
@@ -25,6 +33,14 @@ func runReplayCommand(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintf(stderr, "Replay failed: %v\n", err)
 		return 1
+	}
+
+	if evidence {
+		fmt.Fprintf(stdout, "Replay evidence: %s\n", filePath)
+		if formatted := session.FormatReplayEvidence(events); formatted != "" {
+			fmt.Fprintln(stdout, formatted)
+		}
+		return 0
 	}
 
 	fmt.Fprintf(stdout, "Replay: %s\n", filePath)

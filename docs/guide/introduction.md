@@ -9,7 +9,7 @@ Welcome to claude-code-Go—a Go implementation of the Claude Code agent system.
 
 ## What is claude-code-Go?
 
-claude-code-Go is a terminal-based AI coding assistant that implements the complete agent loop with built-in tools, a permission system, MCP (Model Context Protocol, Planned v0.3) support, and SSE (Server-Sent Events) streaming.
+claude-code-Go is a terminal-based AI coding assistant that implements the complete agent loop with built-in tools, a permission system, partial v0.3 MCP (Model Context Protocol) support, and SSE (Server-Sent Events) streaming.
 
 Core design philosophy: **Model provides intelligence, harness provides reliability.**
 

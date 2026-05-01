@@ -91,10 +91,6 @@ func (t *StdioTransport) SendRequest(method string, params map[string]any, id in
 		return fmt.Errorf("failed to write request: %w", err)
 	}
 
-	if err := t.stdin.Sync(); err != nil {
-		return fmt.Errorf("failed to sync stdin: %w", err)
-	}
-
 	return nil
 }
 

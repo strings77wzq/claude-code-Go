@@ -86,5 +86,4 @@ go-code --help
 ## Next Steps
 
 - [Quick Start Guide](quick-start.md) — Run your first command
-- [Configuration Guide](configuration.md) — Set up API keys and preferences
-- [Installation Guide for AI Agents](installation-for-agents.md) — Step-by-step instructions for LLM agents
+- [Configuration Guide](../api/config.md) — Set up API keys and preferences

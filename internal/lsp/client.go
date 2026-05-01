@@ -35,6 +35,7 @@ type LSPClient struct {
 	nextID       int64
 	initialized  bool
 	capabilities ServerCapabilities
+	serverInfo   *ServerInfo
 	log          *slog.Logger
 }
 
@@ -161,6 +162,7 @@ func (c *LSPClient) Initialize(ctx context.Context) error {
 	}
 
 	c.capabilities = result.Capabilities
+	c.serverInfo = result.ServerInfo
 	c.initialized = true
 	c.log.Info("LSP client initialized successfully")
 	return nil
@@ -195,6 +197,12 @@ func (c *LSPClient) GetCapabilities() ServerCapabilities {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.capabilities
+}
+
+func (c *LSPClient) GetServerInfo() *ServerInfo {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.serverInfo
 }
 
 func (c *LSPClient) call(ctx context.Context, method string, params interface{}, result interface{}) error {

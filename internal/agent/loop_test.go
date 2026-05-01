@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"errors"
+	"os"
 	"strings"
 	"testing"
 
@@ -232,6 +233,103 @@ func TestAgent_Run_ToolUse(t *testing.T) {
 	}
 
 	_ = callCount
+}
+
+func TestAgent_TraceIncludesMCPPermissionAndToolResult(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	mockTool := &mockTool{
+		name:        "mcp__fixture__echo",
+		description: "A test MCP tool",
+		inputSchema: map[string]any{"type": "object"},
+		result:      tool.Success("fixture: hello"),
+		requires:    true,
+	}
+
+	firstCall := true
+	apiClient := &mockApiClient{
+		sendFunc: func(ctx context.Context, req *api.ApiRequest, onTextDelta func(text string)) (*api.ApiResponse, error) {
+			defer func() { firstCall = false }()
+			if firstCall {
+				return &api.ApiResponse{
+					ID:   "test-id",
+					Type: "message",
+					Role: "assistant",
+					Content: []api.ContentBlock{
+						{Type: "tool_use", ID: "toolu_mcp", Name: "mcp__fixture__echo", Input: map[string]any{"text": "hello"}},
+					},
+					Model:      "test-model",
+					StopReason: "tool_use",
+					Usage:      api.Usage{InputTokens: 10, OutputTokens: 5},
+				}, nil
+			}
+			return &api.ApiResponse{
+				ID:         "test-id-2",
+				Type:       "message",
+				Role:       "assistant",
+				Content:    []api.ContentBlock{{Type: "text", Text: "done"}},
+				Model:      "test-model",
+				StopReason: "end_turn",
+				Usage:      api.Usage{InputTokens: 20, OutputTokens: 10},
+			}, nil
+		},
+	}
+	toolRegistry := newMockToolRegistry()
+	toolRegistry.registerTool(mockTool)
+	permissionPolicy := newMockPermissionPolicy()
+	permissionPolicy.setDecision("mcp__fixture__echo", permission.Allow)
+
+	agent := NewAgent(apiClient, toolRegistry, permissionPolicy, "You are helpful.", "test-model")
+	if _, err := agent.Run(context.Background(), "Use MCP", nil); err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+
+	trace, err := os.ReadFile(agent.TraceFilePath())
+	if err != nil {
+		t.Fatalf("failed to read trace file: %v", err)
+	}
+	traceText := string(trace)
+	for _, want := range []string{
+		`"type":"permission"`,
+		`"tool":"mcp__fixture__echo"`,
+		`"decision":"Allow"`,
+		`"type":"tool"`,
+		`"name":"mcp__fixture__echo"`,
+		`"output":"fixture: hello"`,
+	} {
+		if !strings.Contains(traceText, want) {
+			t.Fatalf("expected %s in trace:\n%s", want, traceText)
+		}
+	}
+}
+
+func TestAgent_DeniedMCPToolReturnsStructuredResultWithoutExecuting(t *testing.T) {
+	mockTool := &mockTool{
+		name:        "mcp__fixture__write",
+		description: "A write-like MCP tool",
+		inputSchema: map[string]any{"type": "object"},
+		result:      tool.Success("should not execute"),
+		requires:    true,
+	}
+	toolRegistry := newMockToolRegistry()
+	toolRegistry.registerTool(mockTool)
+	permissionPolicy := newMockPermissionPolicy()
+	permissionPolicy.setDecision("mcp__fixture__write", permission.Deny)
+
+	agent := NewAgent(&mockApiClient{}, toolRegistry, permissionPolicy, "You are helpful.", "test-model")
+	results := agent.executeTools(context.Background(), []api.ContentBlock{
+		{Type: "tool_use", ID: "toolu_mcp_denied", Name: "mcp__fixture__write", Input: map[string]any{"path": "blocked.txt"}},
+	})
+
+	if mockTool.calls != 0 {
+		t.Fatalf("denied MCP tool executed %d time(s)", mockTool.calls)
+	}
+	if len(results) != 1 || results[0].Type != "tool_result" {
+		t.Fatalf("unexpected tool results: %#v", results)
+	}
+	if !strings.Contains(strings.ToLower(results[0].Text), "permission") {
+		t.Fatalf("expected permission denial text, got %q", results[0].Text)
+	}
 }
 
 func TestAgent_DeniedToolReturnsStructuredResultWithoutExecuting(t *testing.T) {

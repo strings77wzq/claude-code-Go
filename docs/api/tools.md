@@ -725,5 +725,5 @@ Todo List:
 ## Related Documentation
 
 - [Tool System Overview](../tools/overview.md) — Architecture and extension guide
-- [Configuration Guide](../guide/configuration.md) — Tool configuration
+- [Configuration Reference](./config.md) — Tool configuration
 - [MCP Integration](../extension/mcp.md) — External tools via MCP

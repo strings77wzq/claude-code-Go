@@ -1,16 +1,21 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/strings77wzq/claude-code-Go/internal/config"
+	"github.com/strings77wzq/claude-code-Go/internal/lsp"
 	"github.com/strings77wzq/claude-code-Go/internal/provider/registry"
+	"github.com/strings77wzq/claude-code-Go/internal/skills"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 	toolinit "github.com/strings77wzq/claude-code-Go/internal/tool/init"
+	"github.com/strings77wzq/claude-code-Go/internal/tool/mcp"
 )
 
 type doctorStatus string
@@ -76,6 +81,10 @@ func RunDoctor(w io.Writer, opts DoctorOptions) int {
 	checks = append(checks, checkProvider(cfg, cfgSource, opts.Offline))
 	checks = append(checks, checkSessionDir(opts.HomeDir))
 	checks = append(checks, checkTools(opts.WorkingDir))
+	checks = append(checks, checkMCPConfig(opts.HomeDir))
+	checks = append(checks, checkLSP(opts.Offline))
+	checks = append(checks, checkHooks(opts.HomeDir))
+	checks = append(checks, checkSkills(opts.HomeDir))
 	checks = append(checks, checkDocs(opts.WorkingDir))
 
 	fmt.Fprintln(w, "go-code doctor")
@@ -305,6 +314,151 @@ func checkTools(workingDir string) doctorCheck {
 		Name:   "tools",
 		Status: doctorPass,
 		Detail: fmt.Sprintf("%d built-in tools registered", len(registry.GetAllDefinitions())),
+	}
+}
+
+func checkMCPConfig(homeDir string) doctorCheck {
+	if homeDir == "" {
+		return doctorCheck{
+			Name:   "mcp",
+			Status: doctorSkip,
+			Detail: "home directory unavailable; MCP config not checked",
+		}
+	}
+	configPath := filepath.Join(homeDir, ".config", "go-code", "mcp.json")
+	if _, err := os.Stat(configPath); err != nil {
+		if os.IsNotExist(err) {
+			return doctorCheck{
+				Name:   "mcp",
+				Status: doctorSkip,
+				Detail: fmt.Sprintf("no MCP config found at %s", configPath),
+			}
+		}
+		return doctorCheck{
+			Name:        "mcp",
+			Status:      doctorFail,
+			Detail:      fmt.Sprintf("%s is not accessible: %v", configPath, err),
+			Remediation: "check MCP config file permissions",
+		}
+	}
+	configs, err := mcp.LoadMcpConfigs(configPath)
+	if err != nil {
+		return doctorCheck{
+			Name:        "mcp",
+			Status:      doctorFail,
+			Detail:      err.Error(),
+			Remediation: "fix or remove the invalid MCP config",
+		}
+	}
+	return doctorCheck{
+		Name:   "mcp",
+		Status: doctorPass,
+		Detail: fmt.Sprintf("%d server config(s) found at %s", len(configs), configPath),
+	}
+}
+
+func checkLSP(offline bool) doctorCheck {
+	serverURL := os.Getenv("GO_CODE_LSP_URL")
+	if serverURL == "" {
+		return doctorCheck{
+			Name:   "lsp",
+			Status: doctorSkip,
+			Detail: "not configured; set GO_CODE_LSP_URL to enable LSP health checks",
+		}
+	}
+	if offline {
+		return doctorCheck{
+			Name:   "lsp",
+			Status: doctorSkip,
+			Detail: "configured via GO_CODE_LSP_URL; health check skipped by --offline",
+		}
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := lsp.NewLSPGate(serverURL).HealthCheck(ctx); err != nil {
+		return doctorCheck{
+			Name:        "lsp",
+			Status:      doctorFail,
+			Detail:      fmt.Sprintf("configured via GO_CODE_LSP_URL but health check failed: %v", err),
+			Remediation: "start the LSP server or unset GO_CODE_LSP_URL",
+		}
+	}
+	return doctorCheck{
+		Name:   "lsp",
+		Status: doctorPass,
+		Detail: "configured via GO_CODE_LSP_URL and health check passed",
+	}
+}
+
+func checkHooks(homeDir string) doctorCheck {
+	if homeDir == "" {
+		return doctorCheck{
+			Name:   "hooks",
+			Status: doctorSkip,
+			Detail: "home directory unavailable; hooks directory not checked",
+		}
+	}
+	hooksDir := filepath.Join(homeDir, ".go-code", "hooks")
+	entries, err := os.ReadDir(hooksDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return doctorCheck{
+				Name:   "hooks",
+				Status: doctorSkip,
+				Detail: fmt.Sprintf("no hooks directory found at %s; built-in hook registry is available", hooksDir),
+			}
+		}
+		return doctorCheck{
+			Name:        "hooks",
+			Status:      doctorFail,
+			Detail:      fmt.Sprintf("%s is not readable: %v", hooksDir, err),
+			Remediation: "fix hooks directory permissions or remove the blocking path",
+		}
+	}
+	return doctorCheck{
+		Name:   "hooks",
+		Status: doctorPass,
+		Detail: fmt.Sprintf("hooks directory readable at %s (%d entrie(s)); built-in hook registry is available", hooksDir, len(entries)),
+	}
+}
+
+func checkSkills(homeDir string) doctorCheck {
+	if homeDir == "" {
+		return doctorCheck{
+			Name:   "skills",
+			Status: doctorSkip,
+			Detail: "home directory unavailable; skills directory not checked",
+		}
+	}
+	skillsDir := filepath.Join(homeDir, ".go-code", "skills")
+	if _, err := os.Stat(skillsDir); err != nil {
+		if os.IsNotExist(err) {
+			return doctorCheck{
+				Name:   "skills",
+				Status: doctorSkip,
+				Detail: fmt.Sprintf("no skills directory found at %s", skillsDir),
+			}
+		}
+		return doctorCheck{
+			Name:        "skills",
+			Status:      doctorFail,
+			Detail:      fmt.Sprintf("%s is not accessible: %v", skillsDir, err),
+			Remediation: "check skills directory permissions",
+		}
+	}
+	result, err := skills.LoadSkillsWithWarnings(skillsDir)
+	if err != nil {
+		return doctorCheck{
+			Name:        "skills",
+			Status:      doctorFail,
+			Detail:      fmt.Sprintf("%s could not be read: %v", skillsDir, err),
+			Remediation: "fix skills directory permissions",
+		}
+	}
+	return doctorCheck{
+		Name:   "skills",
+		Status: doctorPass,
+		Detail: fmt.Sprintf("%d skill(s) loaded, %d warning(s) from %s", len(result.Skills), len(result.Warnings), skillsDir),
 	}
 }
 

@@ -28,6 +28,18 @@ type Registry struct {
 	mu        sync.RWMutex
 	preHooks  []Hook
 	postHooks []Hook
+	policies  map[string]HookPolicy
+}
+
+type HookFailureMode string
+
+const (
+	HookFailureWarn  HookFailureMode = "warn"
+	HookFailureBlock HookFailureMode = "block"
+)
+
+type HookPolicy struct {
+	PreFailure HookFailureMode
 }
 
 // NewRegistry creates a new empty hook registry.
@@ -35,6 +47,7 @@ func NewRegistry() *Registry {
 	return &Registry{
 		preHooks:  make([]Hook, 0),
 		postHooks: make([]Hook, 0),
+		policies:  make(map[string]HookPolicy),
 	}
 }
 
@@ -42,6 +55,11 @@ func NewRegistry() *Registry {
 // The hook will be called on all tool executions.
 // Returns an error if a hook with the same name is already registered.
 func (r *Registry) Register(hook Hook) error {
+	return r.RegisterWithPolicy(hook, HookPolicy{PreFailure: HookFailureBlock})
+}
+
+// RegisterWithPolicy adds a hook with explicit failure behavior.
+func (r *Registry) RegisterWithPolicy(hook Hook, policy HookPolicy) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -53,6 +71,7 @@ func (r *Registry) Register(hook Hook) error {
 
 	r.preHooks = append(r.preHooks, hook)
 	r.postHooks = append(r.postHooks, hook)
+	r.policies[hook.Name()] = normalizeHookPolicy(policy)
 
 	return nil
 }
@@ -87,7 +106,9 @@ func (r *Registry) RunPreHooks(toolName string, input map[string]any) error {
 
 	for _, hook := range hooks {
 		if err := hook.PreExecute(toolName, input); err != nil {
-			return &PreHookError{HookName: hook.Name(), ToolName: toolName, Err: err}
+			if r.policyFor(hook.Name()).PreFailure == HookFailureBlock {
+				return &PreHookError{HookName: hook.Name(), ToolName: toolName, Err: err}
+			}
 		}
 	}
 
@@ -130,4 +151,17 @@ func (e *PreHookError) Error() string {
 
 func (e *PreHookError) Unwrap() error {
 	return e.Err
+}
+
+func (r *Registry) policyFor(name string) HookPolicy {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return normalizeHookPolicy(r.policies[name])
+}
+
+func normalizeHookPolicy(policy HookPolicy) HookPolicy {
+	if policy.PreFailure == "" {
+		policy.PreFailure = HookFailureBlock
+	}
+	return policy
 }

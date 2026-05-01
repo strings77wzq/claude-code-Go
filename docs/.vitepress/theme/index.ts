@@ -7,7 +7,6 @@ import CodePreview from './components/CodePreview.vue'
 import AnimatedButton from './components/AnimatedButton.vue'
 import Playground from './components/Playground.vue'
 import GitHubStars from './components/GitHubStars.vue'
-import ThemeToggle from './components/ThemeToggle.vue'
 import './custom.css'
 
 export default {
@@ -21,7 +20,6 @@ export default {
     app.component('AnimatedButton', AnimatedButton)
     app.component('Playground', Playground)
     app.component('GitHubStars', GitHubStars)
-    app.component('ThemeToggle', ThemeToggle)
     if (typeof window !== 'undefined') {
       window.addEventListener('DOMContentLoaded', () => {
         const addCopyButtons = () => {

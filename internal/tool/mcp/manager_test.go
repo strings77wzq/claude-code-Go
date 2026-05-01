@@ -1,8 +1,14 @@
 package mcp
 
 import (
+	"bufio"
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
 	"testing"
 
+	"github.com/strings77wzq/claude-code-Go/internal/permission"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
 
@@ -84,4 +90,125 @@ func TestMcpManagerCloseEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Close on empty manager returned error: %v", err)
 	}
+}
+
+func TestMcpManagerRegistersToolsFromFixture(t *testing.T) {
+	mgr := NewMcpManager()
+	registry := tool.NewRegistry()
+
+	err := mgr.InitializeAndRegister(map[string]McpServerConfig{
+		"fixture": {
+			Command: os.Args[0],
+			Args:    []string{"-test.run=TestMcpFixtureServer"},
+			Env: map[string]string{
+				"GO_WANT_MCP_FIXTURE": "1",
+			},
+		},
+	}, registry)
+	if err != nil {
+		t.Fatalf("InitializeAndRegister returned error: %v", err)
+	}
+	defer mgr.Close()
+
+	registered := registry.GetTool("mcp__fixture__echo")
+	if registered == nil {
+		t.Fatalf("expected namespaced MCP tool to be registered")
+	}
+
+	result := registered.Execute(context.Background(), map[string]any{"text": "hello"})
+	if result.IsError {
+		t.Fatalf("expected MCP fixture tool success, got error: %s", result.Content)
+	}
+	if result.Content != "fixture: hello" {
+		t.Fatalf("unexpected fixture result: %q", result.Content)
+	}
+}
+
+func TestMcpToolAdapterUsesPermissionPolicy(t *testing.T) {
+	adapter := &McpToolAdapter{
+		serverName:  "external",
+		toolName:    "write-file",
+		description: "External write-like action",
+		inputSchema: map[string]any{"type": "object"},
+	}
+	policy := permission.NewPolicy(permission.WorkspaceWrite)
+
+	decision := policy.Evaluate(adapter.Name(), map[string]any{"path": "x"}, adapter.RequiresPermission())
+	if decision != permission.Ask {
+		t.Fatalf("expected MCP tool to require explicit approval in workspace mode, got %s", decision)
+	}
+}
+
+func TestMcpFixtureServer(t *testing.T) {
+	if os.Getenv("GO_WANT_MCP_FIXTURE") != "1" {
+		return
+	}
+
+	scanner := bufio.NewScanner(os.Stdin)
+	encoder := json.NewEncoder(os.Stdout)
+	for scanner.Scan() {
+		var req map[string]any
+		if err := json.Unmarshal(scanner.Bytes(), &req); err != nil {
+			writeFixtureResponse(encoder, nil, nil, fmt.Sprintf("invalid request: %v", err))
+			continue
+		}
+		method, _ := req["method"].(string)
+		id := req["id"]
+
+		switch method {
+		case "initialize":
+			writeFixtureResponse(encoder, id, map[string]any{
+				"protocolVersion": "2024-11-05",
+				"serverInfo": map[string]any{
+					"name":    "fixture",
+					"version": "test",
+				},
+				"capabilities": map[string]any{
+					"tools": map[string]any{},
+				},
+			}, "")
+		case "notifications/initialized":
+			continue
+		case "tools/list":
+			writeFixtureResponse(encoder, id, map[string]any{
+				"tools": []map[string]any{
+					{
+						"name":        "echo",
+						"description": "Echo text from fixture",
+						"inputSchema": map[string]any{
+							"type": "object",
+							"properties": map[string]any{
+								"text": map[string]any{"type": "string"},
+							},
+						},
+					},
+				},
+			}, "")
+		case "tools/call":
+			params, _ := req["params"].(map[string]any)
+			args, _ := params["arguments"].(map[string]any)
+			text, _ := args["text"].(string)
+			writeFixtureResponse(encoder, id, map[string]any{
+				"content": []map[string]any{
+					{"type": "text", "text": "fixture: " + text},
+				},
+			}, "")
+		default:
+			writeFixtureResponse(encoder, id, nil, "unknown method: "+method)
+		}
+	}
+	os.Exit(0)
+}
+
+func writeFixtureResponse(encoder *json.Encoder, id any, result map[string]any, errMsg string) {
+	resp := map[string]any{
+		"jsonrpc": "2.0",
+		"id":      id,
+	}
+	if errMsg != "" {
+		resp["error"] = map[string]any{"message": errMsg}
+	} else {
+		resp["result"] = result
+	}
+	_ = encoder.Encode(resp)
 }

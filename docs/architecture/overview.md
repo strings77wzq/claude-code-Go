@@ -112,4 +112,4 @@ The emphasis throughout is on *why* rather than *what* — the code reveals impl
 - [Design Philosophy](design-philosophy.md) — Deep dive into the intelligence/reliability separation
 - [Agent Loop](agent-loop.md) — State machine mechanics and history management
 - [Tool System](tools.md) — Built-in tools and extension mechanisms
-- [Configuration Guide](../guide/configuration.md) — Permission policies and model settings
+- [Configuration Guide](../api/config.md) — Permission policies and model settings
