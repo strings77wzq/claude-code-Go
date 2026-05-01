@@ -1,4 +1,7 @@
-## ADDED Requirements
+## Purpose
+Define the runtime health check requirements that let users verify local readiness and receive actionable remediation before starting agent sessions.
+
+## Requirements
 
 ### Requirement: Doctor validates local readiness
 The system SHALL provide a `doctor` command that validates whether the local installation can run a basic agent session.
@@ -21,4 +24,3 @@ The system MUST report failed checks with concrete next commands or documentatio
 #### Scenario: Provider probe disabled
 - **WHEN** the user runs doctor in offline or no-network mode
 - **THEN** local checks still run and provider checks are marked as skipped rather than failed
-

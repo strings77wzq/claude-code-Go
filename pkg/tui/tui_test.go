@@ -2,13 +2,18 @@ package tui
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // mockAgent implements AgentInterface for testing.
 type mockAgent struct {
 	runFunc func(ctx context.Context, userInput string, onTextDelta func(text string)) (string, error)
+	model   string
+	cleared bool
 }
 
 func (m *mockAgent) Run(ctx context.Context, userInput string, onTextDelta func(text string)) (string, error) {
@@ -18,9 +23,20 @@ func (m *mockAgent) Run(ctx context.Context, userInput string, onTextDelta func(
 	return "", nil
 }
 
-func (m *mockAgent) ClearHistory()         {}
-func (m *mockAgent) SetModel(model string) {}
-func (m *mockAgent) Model() string         { return "test-model" }
+func (m *mockAgent) ClearHistory() {
+	m.cleared = true
+}
+
+func (m *mockAgent) SetModel(model string) {
+	m.model = model
+}
+
+func (m *mockAgent) Model() string {
+	if m.model == "" {
+		return "test-model"
+	}
+	return m.model
+}
 
 func TestNewModel_Valid(t *testing.T) {
 	agent := &mockAgent{}
@@ -156,5 +172,153 @@ func TestModel_ViewWithStreamBuffer(t *testing.T) {
 
 	if !strings.Contains(view, "streaming text") {
 		t.Errorf("expected view to contain stream buffer, got %q", view)
+	}
+}
+
+func TestModel_InitReturnsBlinkCommand(t *testing.T) {
+	m := NewModel(&mockAgent{}, "v0.2.0", "test-provider", "test-model", false)
+	if cmd := m.Init(); cmd == nil {
+		t.Fatal("expected Init to return a blink command")
+	}
+}
+
+func TestModel_UpdateQuitKey(t *testing.T) {
+	m := NewModel(&mockAgent{}, "v0.2.0", "test-provider", "test-model", false)
+	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
+	got := updated.(model)
+	if !got.quitting {
+		t.Fatal("expected ctrl-c to mark model as quitting")
+	}
+	if cmd == nil {
+		t.Fatal("expected ctrl-c to return quit command")
+	}
+}
+
+func TestModel_UpdateEnterStartsAgent(t *testing.T) {
+	agent := &mockAgent{
+		runFunc: func(ctx context.Context, userInput string, onTextDelta func(text string)) (string, error) {
+			if userInput != "hello" {
+				t.Fatalf("Run input = %q, want hello", userInput)
+			}
+			return "done", nil
+		},
+	}
+	m := NewModel(agent, "v0.2.0", "test-provider", "test-model", false)
+	m.input.SetValue("hello")
+
+	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	got := updated.(model)
+	if !got.isLoading {
+		t.Fatal("expected enter to start loading")
+	}
+	if len(got.messages) != 1 || got.messages[0].role != "user" || got.messages[0].content != "hello" {
+		t.Fatalf("unexpected messages after enter: %#v", got.messages)
+	}
+	if cmd == nil {
+		t.Fatal("expected enter to return agent command")
+	}
+}
+
+func TestModel_UpdateEnterIgnoresEmptyInput(t *testing.T) {
+	m := NewModel(&mockAgent{}, "v0.2.0", "test-provider", "test-model", false)
+	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	got := updated.(model)
+	if len(got.messages) != 0 || got.isLoading {
+		t.Fatalf("expected empty input to leave model idle: %#v", got)
+	}
+	if cmd != nil {
+		t.Fatal("expected empty input to return no command")
+	}
+}
+
+func TestModel_UpdateSlashCommand(t *testing.T) {
+	agent := &mockAgent{}
+	m := NewModel(agent, "v0.2.0", "test-provider", "test-model", false)
+	m.input.SetValue("/clear")
+
+	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	got := updated.(model)
+	if cmd != nil {
+		t.Fatal("expected /clear to return no async command")
+	}
+	if !agent.cleared {
+		t.Fatal("expected /clear to clear agent history")
+	}
+	if len(got.messages) != 1 || !strings.Contains(got.messages[0].content, "cleared") {
+		t.Fatalf("expected clear confirmation message, got %#v", got.messages)
+	}
+}
+
+func TestModel_UpdateMessages(t *testing.T) {
+	m := NewModel(&mockAgent{}, "v0.2.0", "test-provider", "test-model", false)
+
+	updated, _ := m.Update(streamMsg{text: "partial"})
+	got := updated.(model)
+	if got.streamBuffer != "partial" {
+		t.Fatalf("streamBuffer = %q, want partial", got.streamBuffer)
+	}
+
+	updated, _ = got.Update(connectionStatusMsg{text: "Connecting", elapsedStr: "3s"})
+	got = updated.(model)
+	if got.connectionMsg != "Connecting" || got.elapsedTime != "3s" {
+		t.Fatalf("unexpected connection state: msg=%q elapsed=%q", got.connectionMsg, got.elapsedTime)
+	}
+
+	got.isLoading = true
+	updated, _ = got.Update(doneMsg{result: "fallback"})
+	got = updated.(model)
+	if got.isLoading || got.streamBuffer != "" || len(got.messages) != 1 || got.messages[0].content != "partial" {
+		t.Fatalf("unexpected done state with stream buffer: %#v", got)
+	}
+
+	m = NewModel(&mockAgent{}, "v0.2.0", "test-provider", "test-model", false)
+	m.isLoading = true
+	updated, _ = m.Update(doneMsg{result: "final"})
+	got = updated.(model)
+	if got.isLoading || len(got.messages) != 1 || got.messages[0].content != "final" {
+		t.Fatalf("unexpected done state with result: %#v", got)
+	}
+}
+
+func TestModel_UpdateErrors(t *testing.T) {
+	m := NewModel(&mockAgent{}, "v0.2.0", "test-provider", "test-model", false)
+	m.isLoading = true
+	m.streamBuffer = "partial"
+
+	updated, _ := m.Update(errorMsg{err: errors.New("bad credentials")})
+	got := updated.(model)
+	if got.isLoading || got.streamBuffer != "" || len(got.messages) != 1 || !strings.Contains(got.messages[0].content, "bad credentials") {
+		t.Fatalf("unexpected error state: %#v", got)
+	}
+
+	m = NewModel(&mockAgent{}, "v0.2.0", "test-provider", "test-model", false)
+	updated, _ = m.Update(errorMsg{err: context.DeadlineExceeded})
+	got = updated.(model)
+	if len(got.messages) != 1 || !strings.Contains(got.messages[0].content, "timed out") {
+		t.Fatalf("expected timeout remediation, got %#v", got.messages)
+	}
+}
+
+func TestModel_RunAgentCommandReturnsAgentMessage(t *testing.T) {
+	agent := &mockAgent{
+		runFunc: func(ctx context.Context, userInput string, onTextDelta func(text string)) (string, error) {
+			onTextDelta("delta")
+			return "done", nil
+		},
+	}
+	m := NewModel(agent, "v0.2.0", "test-provider", "test-model", false)
+	cmd := m.runAgent("hello")
+	if cmd == nil {
+		t.Fatal("expected runAgent to return a command")
+	}
+	batch, ok := cmd().(tea.BatchMsg)
+	if !ok || len(batch) != 2 {
+		t.Fatalf("expected batch with spinner and agent command, got %#v", batch)
+	}
+	msg := batch[1]()
+	switch msg.(type) {
+	case streamMsg, doneMsg:
+	default:
+		t.Fatalf("expected stream or done message, got %#v", msg)
 	}
 }

@@ -1,4 +1,7 @@
-## ADDED Requirements
+## Purpose
+Define the permission and sandbox behavior required to keep local agent execution safe, enforceable, workspace-bounded, and auditable.
+
+## Requirements
 
 ### Requirement: Safe permission defaults
 The system SHALL start new users in a safe permission mode that allows read-only exploration and asks before file writes, edits, shell execution, network fetches, or destructive operations.
@@ -39,4 +42,3 @@ The system SHALL record permission decisions in the session trace without storin
 #### Scenario: Audited approval
 - **WHEN** the user approves a shell command
 - **THEN** the trace records the tool name, normalized decision, command summary, and timestamp
-

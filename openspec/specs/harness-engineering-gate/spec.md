@@ -1,7 +1,7 @@
 # harness-engineering-gate Specification
 
 ## Purpose
-TBD - created by archiving change recenter-claudecodego-agent-roadmap. Update Purpose after archive.
+Define the deterministic harness and release verification gates required before public docs mark runtime, provider, tool, or extension workflows as supported.
 ## Requirements
 ### Requirement: Harness Must Gate Supported Claims
 The project SHALL require deterministic verification before marking an agent workflow, provider, or tool behavior as supported in public docs.
@@ -59,4 +59,3 @@ Every extension workflow marked verified in PARITY.md MUST name the test, harnes
 #### Scenario: MCP status changes to verified
 - **WHEN** PARITY.md marks MCP as verified
 - **THEN** the row names the unit test or harness scenario that proves registration, permission behavior, and diagnostics
-

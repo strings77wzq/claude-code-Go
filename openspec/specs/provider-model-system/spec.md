@@ -1,4 +1,7 @@
-## ADDED Requirements
+## Purpose
+Define provider and model selection behavior, including explicit validation, safe runtime switching, adapter routing, and normalized provider errors.
+
+## Requirements
 
 ### Requirement: Provider configuration is explicit and validated
 The system SHALL validate provider, base URL, API key source, and model before starting an agent request.
@@ -28,4 +31,3 @@ The system SHALL classify provider errors into auth, rate limit, timeout, server
 #### Scenario: Rate limit error
 - **WHEN** the provider returns a rate limit response
 - **THEN** the system classifies it as rate limit and applies the configured retry policy
-

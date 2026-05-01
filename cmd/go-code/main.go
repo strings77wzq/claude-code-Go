@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -27,9 +28,19 @@ import (
 	"github.com/strings77wzq/claude-code-Go/pkg/tui"
 )
 
-const version = "0.1.0"
+const version = "0.2.0"
 
 const systemPrompt = "You are an interactive agent that helps users with software engineering tasks. You have access to tools for reading files, editing files, executing shell commands, searching code, and more. Use your tools to complete tasks efficiently and accurately."
+
+type cliOptions struct {
+	legacyRepl   bool
+	setupMode    bool
+	prompt       string
+	outputFormat string
+	quiet        bool
+	debug        bool
+	version      bool
+}
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "doctor" {
@@ -38,16 +49,25 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "replay" {
 		os.Exit(runReplayCommand(os.Args[2:], os.Stdout, os.Stderr))
 	}
+	if len(os.Args) > 1 && os.Args[1] == "version" {
+		printVersion(os.Stdout)
+		return
+	}
 
-	legacyRepl := flag.Bool("legacy-repl", false, "Use the old bufio-based REPL")
-	setupMode := flag.Bool("setup", false, "Run setup wizard")
-	prompt := flag.String("p", "", "Run a single prompt and exit (non-interactive mode)")
-	outputFormat := flag.String("f", "text", "Output format for non-interactive mode (text, json)")
-	quiet := flag.Bool("q", false, "Hide spinner in non-interactive mode")
-	debug := flag.Bool("debug", false, "Enable debug logging to stderr")
-	flag.Parse()
+	flags, opts := newRootFlagSet("go-code", flag.ContinueOnError, os.Stdout)
+	if err := flags.Parse(os.Args[1:]); err != nil {
+		if err == flag.ErrHelp {
+			return
+		}
+		os.Exit(2)
+	}
 
-	if *setupMode {
+	if opts.version {
+		printVersion(os.Stdout)
+		return
+	}
+
+	if opts.setupMode {
 		if err := SetupWizard(); err != nil {
 			fmt.Fprintf(os.Stderr, "Setup failed: %v\n", err)
 			os.Exit(1)
@@ -57,7 +77,7 @@ func main() {
 
 	// Initialize structured logging
 	logLevel := slog.LevelInfo
-	if *debug {
+	if opts.debug {
 		logLevel = slog.LevelDebug
 	}
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
@@ -155,9 +175,9 @@ func main() {
 	logger.Info("Agent started", "model", cfg.Model)
 
 	// Non-interactive mode: run single prompt and exit
-	if *prompt != "" {
-		result, err := agentInstance.Run(ctx, *prompt, func(text string) {
-			if !*quiet {
+	if opts.prompt != "" {
+		result, err := agentInstance.Run(ctx, opts.prompt, func(text string) {
+			if !opts.quiet {
 				fmt.Print(text)
 			}
 		})
@@ -166,13 +186,13 @@ func main() {
 			os.Exit(1)
 		}
 
-		switch *outputFormat {
+		switch opts.outputFormat {
 		case "json":
 			output := map[string]string{"result": result}
 			data, _ := json.Marshal(output)
 			fmt.Println(string(data))
 		default:
-			if !*quiet {
+			if !opts.quiet {
 				fmt.Println()
 			}
 		}
@@ -196,14 +216,14 @@ func main() {
 	}
 
 	// Use legacy REPL or new bubbletea TUI
-	if *legacyRepl {
+	if opts.legacyRepl {
 		logger.Info("Starting legacy REPL")
 		repl := tty.NewREPL(agentInstance, version, cfg.Provider, cfg.Model, skillsRegistry, "~/.claude-code-go/sessions/")
 		repl.SetExternalContext(ctx)
 		repl.Run()
 	} else {
 		logger.Info("Starting bubbletea TUI")
-		tuiModel := tui.NewModel(agentInstance, version, cfg.Provider, cfg.Model, *debug)
+		tuiModel := tui.NewModel(agentInstance, version, cfg.Provider, cfg.Model, opts.debug)
 		p := tea.NewProgram(tuiModel, tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			logger.Error("TUI error", "error", err)
@@ -212,4 +232,39 @@ func main() {
 	}
 
 	logger.Info("REPL exited")
+}
+
+func newRootFlagSet(name string, errorHandling flag.ErrorHandling, output io.Writer) (*flag.FlagSet, *cliOptions) {
+	opts := &cliOptions{}
+	flags := flag.NewFlagSet(name, errorHandling)
+	flags.SetOutput(output)
+	flags.BoolVar(&opts.legacyRepl, "legacy-repl", false, "Use the old bufio-based REPL instead of the default interactive TUI")
+	flags.BoolVar(&opts.setupMode, "setup", false, "Run setup wizard")
+	flags.StringVar(&opts.prompt, "p", "", "Run a single prompt and exit (non-interactive mode)")
+	flags.StringVar(&opts.outputFormat, "f", "text", "Output format for non-interactive mode (text, json)")
+	flags.BoolVar(&opts.quiet, "q", false, "Hide spinner in non-interactive mode")
+	flags.BoolVar(&opts.debug, "debug", false, "Enable debug logging to stderr")
+	flags.BoolVar(&opts.version, "version", false, "Print version and exit")
+	flags.Usage = func() {
+		fmt.Fprintf(flags.Output(), "Usage: %s [options]\n", name)
+		fmt.Fprintf(flags.Output(), "       %s doctor [--offline]\n", name)
+		fmt.Fprintf(flags.Output(), "       %s replay [--evidence] [latest|session-id|file]\n", name)
+		fmt.Fprintf(flags.Output(), "       %s version\n\n", name)
+		fmt.Fprintln(flags.Output(), "Entrypoints:")
+		fmt.Fprintln(flags.Output(), "  interactive mode    default TUI when no prompt is provided")
+		fmt.Fprintln(flags.Output(), "  setup               configure provider credentials")
+		fmt.Fprintln(flags.Output(), "  doctor              validate local runtime readiness")
+		fmt.Fprintln(flags.Output(), "  prompt mode         run one prompt with -p")
+		fmt.Fprintln(flags.Output(), "  JSON output         use -f json with prompt mode")
+		fmt.Fprintln(flags.Output(), "  quiet mode          suppress streaming text with -q")
+		fmt.Fprintln(flags.Output(), "  debug mode          emit debug logs with -debug")
+		fmt.Fprintln(flags.Output(), "  version             print go-code version")
+		fmt.Fprintln(flags.Output(), "\nOptions:")
+		flags.PrintDefaults()
+	}
+	return flags, opts
+}
+
+func printVersion(w io.Writer) {
+	fmt.Fprintf(w, "go-code %s\n", version)
 }

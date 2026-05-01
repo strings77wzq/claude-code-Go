@@ -1,9 +1,15 @@
 package logger
 
 import (
+	"bytes"
+	"context"
+	"errors"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestInit(t *testing.T) {
@@ -133,4 +139,43 @@ func TestMultipleInit(t *testing.T) {
 	Init(false, false)
 	Init(true, true)
 	defer Cleanup()
+}
+
+func TestMultiHandlerDelegatesRecordsAttrsAndGroups(t *testing.T) {
+	var first, second bytes.Buffer
+	handler := newMultiHandler(
+		slog.NewTextHandler(&first, &slog.HandlerOptions{Level: slog.LevelInfo}),
+		slog.NewTextHandler(&second, &slog.HandlerOptions{Level: slog.LevelDebug}),
+	)
+
+	if !handler.Enabled(context.Background(), slog.LevelInfo) {
+		t.Fatal("expected info level to be enabled by at least one delegate")
+	}
+	if !handler.Enabled(context.Background(), slog.LevelDebug) {
+		t.Fatal("expected debug level to be enabled by one delegate")
+	}
+
+	grouped := handler.WithAttrs([]slog.Attr{slog.String("request_id", "abc")}).WithGroup("api")
+	if err := grouped.Handle(context.Background(), slog.NewRecord(timeNow(), slog.LevelInfo, "hello", 0)); err != nil {
+		t.Fatalf("Handle returned error: %v", err)
+	}
+
+	for name, output := range map[string]string{"first": first.String(), "second": second.String()} {
+		if !strings.Contains(output, "hello") || !strings.Contains(output, "request_id") {
+			t.Fatalf("%s handler did not receive grouped record with attrs: %q", name, output)
+		}
+	}
+}
+
+func TestAPIError(t *testing.T) {
+	if err := Init(false, false); err != nil {
+		t.Fatalf("Init failed: %v", err)
+	}
+	defer Cleanup()
+
+	APIError(errors.New("provider failed"), 500)
+}
+
+func timeNow() time.Time {
+	return time.Unix(1700000000, 0)
 }

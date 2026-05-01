@@ -1,7 +1,7 @@
 # test-coverage-gap-fill Specification
 
 ## Purpose
-TBD - created by archiving change v02-consolidation-release. Update Purpose after archive.
+Define the baseline test coverage requirement for every Go package so each package has executable happy-path and error-path evidence.
 ## Requirements
 ### Requirement: Every Go package has baseline test coverage
 Each Go package under `internal/` and `pkg/` that currently has zero test files SHALL have at least one test file with at least one happy-path test and one error-path test. The full `go test ./...` suite SHALL pass with zero failures.

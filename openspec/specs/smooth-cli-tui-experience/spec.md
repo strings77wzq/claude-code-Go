@@ -1,4 +1,7 @@
-## ADDED Requirements
+## Purpose
+Define the CLI and TUI experience required for task-oriented entrypoints, consistent slash-command behavior, and concise user-facing errors.
+
+## Requirements
 
 ### Requirement: CLI supports task-oriented entrypoints
 The system SHALL provide consistent command-line entrypoints for setup, doctor, interactive TUI, single prompt execution, JSON output, quiet mode, version, and help.
@@ -32,4 +35,3 @@ The system SHALL convert common failures into concise messages that name the fai
 #### Scenario: Long connection delay
 - **WHEN** a provider request takes longer than the configured threshold
 - **THEN** the UI shows elapsed time and a clear connection status without freezing input rendering
-

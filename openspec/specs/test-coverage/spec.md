@@ -1,7 +1,7 @@
 # test-coverage Specification
 
 ## Purpose
-TBD - created by archiving change short-mid-term-roadmap. Update Purpose after archive.
+Define package-level coverage targets for core runtime modules so supported behavior remains guarded by automated tests.
 ## Requirements
 ### Requirement: 80% test coverage
 The project SHALL achieve 80% test coverage across all modules.

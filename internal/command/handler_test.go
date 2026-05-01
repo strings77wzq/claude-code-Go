@@ -58,14 +58,17 @@ func TestHandleUnsupportedModelSwitch(t *testing.T) {
 	handler := Handler{Agent: agent, Model: agent.model}
 
 	result := handler.Handle("/model made-up-model")
-	if !strings.Contains(result.Message, "not in the verified registry") {
-		t.Fatalf("expected passthrough warning message, got %s", result.Message)
+	if !strings.Contains(result.Message, "Unsupported model") {
+		t.Fatalf("expected unsupported model message, got %s", result.Message)
 	}
-	if agent.model != "made-up-model" {
-		t.Fatalf("expected model to passthrough to %s, but got %s", "made-up-model", agent.model)
+	if !strings.Contains(result.Message, "Keeping current model: claude-sonnet-4-6-20251001") {
+		t.Fatalf("expected current model to be reported, got %s", result.Message)
 	}
-	if result.Model != "made-up-model" {
-		t.Fatalf("expected result model to be updated, got %s", result.Model)
+	if agent.model != "claude-sonnet-4-6-20251001" {
+		t.Fatalf("expected model to remain unchanged, got %s", agent.model)
+	}
+	if result.Model != "claude-sonnet-4-6-20251001" {
+		t.Fatalf("expected result model to remain current, got %s", result.Model)
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/strings77wzq/claude-code-Go/internal/permission"
@@ -84,11 +85,72 @@ func TestMcpToolAdapterNoSchema(t *testing.T) {
 	}
 }
 
+func TestMcpToolAdapterInvalidSchema(t *testing.T) {
+	_, err := newMcpToolAdapter("srv", McpToolInfo{
+		Name:        "bad-schema-tool",
+		Description: "Tool with invalid input schema",
+		InputSchema: json.RawMessage(`{"type":`),
+	}, nil)
+	if err == nil {
+		t.Fatal("expected invalid schema to return an error")
+	}
+}
+
+func TestMcpToolAdapterExecuteReturnsClientError(t *testing.T) {
+	adapter := &McpToolAdapter{
+		serverName:  "srv",
+		toolName:    "tool",
+		description: "Tool backed by an unstarted client",
+		client:      NewMcpClient(NewStdioTransport(os.Args[0], nil, nil)),
+	}
+
+	result := adapter.Execute(context.Background(), map[string]any{"x": "y"})
+	if !result.IsError {
+		t.Fatal("expected Execute to return tool error")
+	}
+	if !strings.Contains(result.Content, "transport not started or closed") {
+		t.Fatalf("unexpected error content: %s", result.Content)
+	}
+}
+
 func TestMcpManagerCloseEmpty(t *testing.T) {
 	mgr := NewMcpManager()
 	err := mgr.Close()
 	if err != nil {
 		t.Fatalf("Close on empty manager returned error: %v", err)
+	}
+}
+
+func TestStdioTransportNotStartedAndClosedErrors(t *testing.T) {
+	transport := NewStdioTransport(os.Args[0], nil, nil)
+
+	if err := transport.SendRequest("tools/list", map[string]any{}, 1); err == nil {
+		t.Fatal("expected SendRequest before Start to fail")
+	}
+	if _, err := transport.ReadResponse(); err == nil {
+		t.Fatal("expected ReadResponse before Start to fail")
+	}
+	if err := transport.Close(); err != nil {
+		t.Fatalf("Close before Start returned error: %v", err)
+	}
+	if err := transport.SendRequest("tools/list", map[string]any{}, 2); err == nil {
+		t.Fatal("expected SendRequest after Close to fail")
+	}
+	if _, err := transport.ReadResponse(); err == nil {
+		t.Fatal("expected ReadResponse after Close to fail")
+	}
+	if err := transport.Close(); err != nil {
+		t.Fatalf("second Close returned error: %v", err)
+	}
+}
+
+func TestGetStringMissingOrWrongType(t *testing.T) {
+	values := map[string]any{"name": 123}
+	if got := getString(values, "name"); got != "" {
+		t.Fatalf("getString wrong type = %q, want empty", got)
+	}
+	if got := getString(values, "missing"); got != "" {
+		t.Fatalf("getString missing = %q, want empty", got)
 	}
 }
 

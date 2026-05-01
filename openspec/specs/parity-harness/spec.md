@@ -1,4 +1,7 @@
-## ADDED Requirements
+## Purpose
+Define the deterministic parity harness requirements used to prove core Claude Code-style workflows, CI gates, and documented parity status.
+
+## Requirements
 
 ### Requirement: Deterministic mock provider scenarios
 The system SHALL include deterministic mock-provider scenarios for streaming text, tool use, edit flows, bash flows, permission denial, retries, context pressure, and malformed provider responses.
@@ -24,4 +27,3 @@ The system SHALL maintain a parity matrix that maps important Claude Code-style 
 #### Scenario: Unsupported workflow
 - **WHEN** a workflow is not implemented
 - **THEN** the parity matrix marks it as unsupported or planned instead of implying support
-

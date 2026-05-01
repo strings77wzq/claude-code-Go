@@ -1,4 +1,7 @@
-## ADDED Requirements
+## Purpose
+Define the documentation experience required for a trustworthy product surface: users can reach a verified first success path, understand feature maturity, and trace public claims back to implemented behavior or reproducible evidence.
+
+## Requirements
 
 ### Requirement: Documentation starts with verified quick success
 The documentation SHALL guide new users from installation to a successful `doctor` check and first prompt using commands that are covered by tests or documented smoke checks.
@@ -31,4 +34,3 @@ The documentation MUST remove or revise placeholder testimonials, stale metrics,
 #### Scenario: Benchmark page
 - **WHEN** the benchmark page lists performance numbers
 - **THEN** it includes methodology, command, environment, date, and reproduction instructions
-

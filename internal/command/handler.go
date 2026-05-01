@@ -97,13 +97,7 @@ func (h Handler) switchModel(model string) Result {
 	}
 
 	if !isKnownModel(model) {
-		// Unknown model: allow via passthrough with a warning
-		setter.SetModel(model)
-		return Result{
-			Handled: true,
-			Message: fmt.Sprintf("Warning: model %q is not in the verified registry. Proceeding with inferred provider.", model),
-			Model:   model,
-		}
+		return h.message(fmt.Sprintf("Unsupported model: %s\nUse /models to list supported models. Keeping current model: %s", model, h.currentModel()))
 	}
 
 	setter.SetModel(model)
@@ -112,6 +106,17 @@ func (h Handler) switchModel(model string) Result {
 		Message: "Model switched to: " + model,
 		Model:   model,
 	}
+}
+
+func (h Handler) currentModel() string {
+	model := h.Model
+	if getter, ok := h.Agent.(interface{ Model() string }); ok {
+		model = getter.Model()
+	}
+	if strings.TrimSpace(model) == "" {
+		return "unknown"
+	}
+	return model
 }
 
 func isKnownModel(model string) bool {

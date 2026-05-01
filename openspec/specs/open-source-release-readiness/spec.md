@@ -1,4 +1,7 @@
-## ADDED Requirements
+## Purpose
+Define the release-readiness bar for an open-source project, including CI gates, reproducible artifacts, contribution paths, and roadmap clarity.
+
+## Requirements
 
 ### Requirement: CI gates release-quality changes
 The project SHALL run formatting, vet/static checks, Go tests, harness tests, docs build, and OpenSpec validation in CI.
