@@ -66,5 +66,5 @@ ls -la bin/go-code
 
 ## 下一步
 
-- [快速开始](quick-start.md) — 运行您的第一个命令
-- [配置说明](configuration.md) — 设置 API 密钥和偏好配置
+- [快速开始](quick-start) — 运行您的第一个命令
+- [配置说明](configuration) — 设置 API 密钥和偏好配置

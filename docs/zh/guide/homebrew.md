@@ -92,4 +92,4 @@ export ANTHROPIC_API_KEY=sk-ant-...
 }
 ```
 
-更多详情，请参阅[安装指南](./installation.md)或[快速开始](./quick-start.md)。
+更多详情，请参阅[安装指南](./installation)或[快速开始](./quick-start)。

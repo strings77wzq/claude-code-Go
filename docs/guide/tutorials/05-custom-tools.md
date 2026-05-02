@@ -412,5 +412,5 @@ func createGitHubIssue(args map[string]interface{}) (string, error) {
 
 ## Next Steps
 
-- [Tutorial 6: MCP Integration](06-mcp-integration.md)
-- [API Reference: Tools](../../api/tools.md)
+- [Tutorial 6: MCP Integration](06-mcp-integration)
+- [API Reference: Tools](../../api/tools)

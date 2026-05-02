@@ -724,6 +724,6 @@ Todo List:
 
 ## 相关文档
 
-- [工具系统概览](../tools/overview.md) — 架构和扩展指南
-- [配置指南](../guide/configuration.md) — 工具配置
-- [MCP 集成](../extension/mcp.md) — 通过 MCP 的外部工具
+- [工具系统概览](../tools/overview) — 架构和扩展指南
+- [配置指南](../guide/configuration) — 工具配置
+- [MCP 集成](../extension/mcp) — 通过 MCP 的外部工具

@@ -83,6 +83,6 @@ You should have familiarity with:
 
 ## Next Steps
 
-Ready to get started? Head to the [Quick Start](quick-start.md) guide to run your first command.
+Ready to get started? Head to the [Quick Start](quick-start) guide to run your first command.
 
-Or dive deeper into the [Architecture Overview](../architecture/overview.md) to understand how the pieces fit together.
+Or dive deeper into the [Architecture Overview](../architecture/overview) to understand how the pieces fit together.

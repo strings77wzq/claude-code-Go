@@ -198,6 +198,6 @@ For this request, trace through each state:
 
 ## Next Steps
 
-- [Tutorial 4: Permission System](04-permission-system.md) - Learn about security
-- [Architecture: Agent Loop](../../architecture/agent-loop.md) - Technical details
-- [ADR-001: Agent Loop Design](../../adr/001-agent-loop.md) - Design decisions
+- [Tutorial 4: Permission System](04-permission-system) - Learn about security
+- [Architecture: Agent Loop](../../architecture/agent-loop) - Technical details
+- [ADR-001: Agent Loop Design](../../adr/001-agent-loop) - Design decisions

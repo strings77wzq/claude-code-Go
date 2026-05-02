@@ -157,6 +157,6 @@ The REPL in `pkg/tty` only needs to interact with this single interface, keeping
 
 ## Next Steps
 
-- [Architecture Overview](../architecture/overview.md) — Deep dive into the system design
-- [Agent Loop Deep Dive](../architecture/agent-loop.md) — Understand the core execution cycle
-- [Tools Architecture](../architecture/tools.md) — Learn about the tool system and MCP support
+- [Architecture Overview](../architecture/overview) — Deep dive into the system design
+- [Agent Loop Deep Dive](../architecture/agent-loop) — Understand the core execution cycle
+- [Tools Architecture](../architecture/tools) — Learn about the tool system and MCP support

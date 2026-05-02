@@ -516,6 +516,6 @@ If `RequiresPermission()` returns `true`, the permission system will prompt the 
 
 ## Related Documentation
 
-- [Architecture Overview](overview.md) — System components
-- [Agent Loop Deep Dive](agent-loop.md) — Tool execution in the loop
-- [Configuration Guide](../api/config.md) — MCP configuration
+- [Architecture Overview](overview) — System components
+- [Agent Loop Deep Dive](agent-loop) — Tool execution in the loop
+- [Configuration Guide](../api/config) — MCP configuration

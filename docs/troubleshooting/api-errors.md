@@ -78,5 +78,5 @@ OpenAI-compatible providers transform their error payloads into the same categor
 
 ## Related
 
-- [Common Issues](common-issues.md) — API key setup, connection issues
-- [Provider Configuration](../architecture/providers.md) — Provider setup
+- [Common Issues](common-issues) — API key setup, connection issues
+- [Provider Configuration](../architecture/providers) — Provider setup

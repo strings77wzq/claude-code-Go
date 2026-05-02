@@ -77,5 +77,5 @@ Typical: 10-50 MB
 
 ## Next Steps
 
-- [Tutorial 10: Contributing](10-contributing.md)
-- [Benchmarks](../../benchmark.md)
+- [Tutorial 10: Contributing](10-contributing)
+- [Benchmarks](../../benchmark)

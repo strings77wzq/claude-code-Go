@@ -157,6 +157,6 @@ claude-code-Go/
 
 ## 下一步
 
-- [架构概览](../architecture/overview.md) — 深入了解系统设计
-- [智能体循环详解](../architecture/agent-loop.md) — 理解核心执行周期
-- [工具架构](../architecture/tools.md) — 了解工具系统和 MCP 支持
+- [架构概览](../architecture/overview) — 深入了解系统设计
+- [智能体循环详解](../architecture/agent-loop) — 理解核心执行周期
+- [工具架构](../architecture/tools) — 了解工具系统和 MCP 支持

@@ -240,6 +240,6 @@ The loop itself continues to process the full response — streaming is purely a
 
 ## Related Documentation
 
-- [Architecture Overview](overview.md) — System components and data flow
-- [Design Philosophy](design-philosophy.md) — Intelligence/reliability separation
-- [Tool System](tools.md) — Tool implementations and permission configuration
+- [Architecture Overview](overview) — System components and data flow
+- [Design Philosophy](design-philosophy) — Intelligence/reliability separation
+- [Tool System](tools) — Tool implementations and permission configuration

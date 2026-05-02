@@ -295,11 +295,11 @@ go-code uses a 3-tier permission system. Configuration is handled internally but
 2. **Glob rules**: File path patterns that grant automatic permission
 3. **Interactive prompts**: User is prompted for permission when needed
 
-See [Permission System](../architecture/tools.md#permission-system) for details.
+See [Permission System](../architecture/tools#permission-system) for details.
 
 ---
 
 ## Related Documentation
 
-- [Tool System](../tools/overview.md) — Tool execution and permissions
-- [MCP Integration](../extension/mcp.md) — MCP server configuration
+- [Tool System](../tools/overview) — Tool execution and permissions
+- [MCP Integration](../extension/mcp) — MCP server configuration

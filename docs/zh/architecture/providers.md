@@ -201,15 +201,15 @@ func (p *MyProvider) SendMessageStream(ctx context.Context, req *provider.Reques
 
 ## 相关文档
 
-- [Agent 循环实现](../core-code/agent-loop-impl.md) — Provider 在 Agent 循环中的使用
-- [配置指南](../guide/configuration.md) — 完整配置参考
-- [入口点](../core-code/entry-point.md) — 内部 API 详情
+- [Agent 循环实现](../core-code/agent-loop-impl) — Provider 在 Agent 循环中的使用
+- [配置指南](../guide/configuration) — 完整配置参考
+- [入口点](../core-code/entry-point) — 内部 API 详情
 
 ---
 
 <div class="nav-prev-next">
 
-- [工具系统概述](../tools/overview.md) ←
-- → [Agent 循环实现](../core-code/agent-loop-impl.md)
+- [工具系统概述](../tools/overview) ←
+- → [Agent 循环实现](../core-code/agent-loop-impl)
 
 </div>

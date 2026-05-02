@@ -161,6 +161,6 @@ This framework isn't perfect — some capabilities straddle the boundary. But it
 
 ## Related Documentation
 
-- [Architecture Overview](overview.md) — System components and data flow
-- [Agent Loop](agent-loop.md) — State machine mechanics and execution cycle
-- [Permission System](tools.md#permission-system) — Three-tier model and policy configuration
+- [Architecture Overview](overview) — System components and data flow
+- [Agent Loop](agent-loop) — State machine mechanics and execution cycle
+- [Permission System](tools#permission-system) — Three-tier model and policy configuration

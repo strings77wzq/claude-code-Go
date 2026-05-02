@@ -255,6 +255,6 @@ Edit `~/.go-code/settings.json`:
 
 ## Next Steps
 
-- [Tutorial 5: Building Custom Tools](05-custom-tools.md)
-- [ADR-002: Permission Model](../../adr/002-permission-model.md)
-- [ADR-002: Permission Model](../../adr/002-permission-model.md)
+- [Tutorial 5: Building Custom Tools](05-custom-tools)
+- [ADR-002: Permission Model](../../adr/002-permission-model)
+- [ADR-002: Permission Model](../../adr/002-permission-model)

@@ -144,8 +144,8 @@ JSONL format for sessions:
 
 ## Related Documents
 
-- [ADR-001: Agent Loop Design](../adr/001-agent-loop.md)
-- [ADR-002: Permission Model](../adr/002-permission-model.md)
-- [ADR-003: Context Management](../adr/003-context-management.md)
-- [ADR-004: Streaming Architecture](../adr/004-streaming-architecture.md)
-- [ADR-005: Session Persistence](../adr/005-session-persistence.md)
+- [ADR-001: Agent Loop Design](../adr/001-agent-loop)
+- [ADR-002: Permission Model](../adr/002-permission-model)
+- [ADR-003: Context Management](../adr/003-context-management)
+- [ADR-004: Streaming Architecture](../adr/004-streaming-architecture)
+- [ADR-005: Session Persistence](../adr/005-session-persistence)

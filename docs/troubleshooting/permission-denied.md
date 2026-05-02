@@ -89,5 +89,5 @@ Configure rules in `~/.go-code/settings.json` under the `permissions` key:
 
 ## Related
 
-- [Common Issues](common-issues.md) — General permission scenarios
+- [Common Issues](common-issues) — General permission scenarios
 - [PARITY.md](https://github.com/strings77wzq/claude-code-Go/blob/main/PARITY.md) — Verified workflow status

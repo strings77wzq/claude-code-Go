@@ -223,14 +223,14 @@ Skills 通过斜杠命令与 REPL 集成：
 
 ## 相关文档
 
-- [配置指南](../guide/configuration.md) — 配置文件位置
-- [工具系统概述](../tools/overview.md) — 工具接口和注册表
-- [Agent 循环实现](../core-code/agent-loop-impl.md) — 工具执行流程
+- [配置指南](../guide/configuration) — 配置文件位置
+- [工具系统概述](../tools/overview) — 工具接口和注册表
+- [Agent 循环实现](../core-code/agent-loop-impl) — 工具执行流程
 
 ---
 
 <div class="nav-prev-next">
 
-- → [钩子系统](./hooks.md)
+- → [钩子系统](./hooks)
 
 </div>

@@ -227,7 +227,7 @@ This guide covers common issues you might encounter when using go-code and provi
 > The tool requires permission approval. Confirm when prompted.
 
 **Q: How do I use MCP servers?**
-> Configure MCP servers in `~/.go-code/mcp.json`. See [MCP Integration](../extension/mcp.md).
+> Configure MCP servers in `~/.go-code/mcp.json`. See [MCP Integration](../extension/mcp).
 
 ### Troubleshooting
 
@@ -255,7 +255,7 @@ If you encounter an issue not covered here:
 
 ## Related Documentation
 
-- [Configuration Guide](../api/config.md) — Configuration options
-- [Tool System](../tools/overview.md) — Built-in tools
-- [MCP Integration](../extension/mcp.md) — MCP servers
-- [Session Management](../guide/session-management.md) — Session persistence
+- [Configuration Guide](../api/config) — Configuration options
+- [Tool System](../tools/overview) — Built-in tools
+- [MCP Integration](../extension/mcp) — MCP servers
+- [Session Management](../guide/session-management) — Session persistence

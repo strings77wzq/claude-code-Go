@@ -206,15 +206,15 @@ func (p *MyProvider) SendMessageStream(ctx context.Context, req *provider.Reques
 
 ## Related Documentation
 
-- [Agent Loop Implementation](./core-code-agent-loop.md) — Provider usage in agent loop
-- [Configuration Guide](../api/config.md) — Full configuration reference
-- [API Client](./core-code-entry.md) — Internal API details
+- [Agent Loop Implementation](./core-code-agent-loop) — Provider usage in agent loop
+- [Configuration Guide](../api/config) — Full configuration reference
+- [API Client](./core-code-entry) — Internal API details
 
 ---
 
 <div class="nav-prev-next">
 
-- [Tool System Overview](../tools/overview.md) ←
-- → [Agent Loop Implementation](./core-code-agent-loop.md)
+- [Tool System Overview](../tools/overview) ←
+- → [Agent Loop Implementation](./core-code-agent-loop)
 
 </div>

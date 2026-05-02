@@ -278,5 +278,5 @@ chore: update go.mod dependencies
 ## 相关文档
 
 - [CONTRIBUTING.md](https://github.com/strings77wzq/claude-code-Go/blob/main/CONTRIBUTING.md) — 项目贡献指南
-- [架构概览](../architecture/overview.md) — 系统架构
-- [工具系统](../tools/overview.md) — 工具开发指南
+- [架构概览](../architecture/overview) — 系统架构
+- [工具系统](../tools/overview) — 工具开发指南

@@ -389,6 +389,6 @@ go-code> /model claude-opus-4-20250514
 
 ## 相关文档
 
-- [配置指南](../guide/configuration.md) — 模型配置
-- [会话管理](../guide/session-management.md) — 会话持久化
-- [技能系统](../extension/skills.md) — 自定义命令
+- [配置指南](../guide/configuration) — 模型配置
+- [会话管理](../guide/session-management) — 会话持久化
+- [技能系统](../extension/skills) — 自定义命令

@@ -162,5 +162,5 @@ MCP uses JSON-RPC 2.0:
 
 ## Next Steps
 
-- [Tutorial 7: Session Management](07-session-management.md)
+- [Tutorial 7: Session Management](07-session-management)
 - [MCP Specification](https://modelcontextprotocol.io)

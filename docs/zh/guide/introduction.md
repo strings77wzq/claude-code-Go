@@ -83,6 +83,6 @@ claude-code-Go 遵循最小依赖原则构建：
 
 ## 下一步
 
-前往[快速开始](quick-start.md)运行你的第一个命令。
+前往[快速开始](quick-start)运行你的第一个命令。
 
-或深入[架构概览](../architecture/overview.md)理解各模块如何协同工作。
+或深入[架构概览](../architecture/overview)理解各模块如何协同工作。

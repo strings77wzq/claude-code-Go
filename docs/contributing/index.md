@@ -278,5 +278,5 @@ Your contributions make open source a better place. Thank you for taking the tim
 ## Related Documentation
 
 - [CONTRIBUTING.md](https://github.com/strings77wzq/claude-code-Go/blob/main/CONTRIBUTING.md) — Project contribution guidelines
-- [Architecture Overview](../architecture/overview.md) — System architecture
-- [Tool System](../tools/overview.md) — Tool development guide
+- [Architecture Overview](../architecture/overview) — System architecture
+- [Tool System](../tools/overview) — Tool development guide

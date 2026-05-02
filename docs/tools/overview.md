@@ -319,19 +319,19 @@ The adapter:
 | `internal/tool/mcp/transport.go` | Transport layer for stdio-based MCP communication |
 | `internal/tool/mcp/manager.go` | MCP server lifecycle management |
 
-See [MCP Integration](../extension/mcp.md) for detailed documentation.
+See [MCP Integration](../extension/mcp) for detailed documentation.
 
 ## Related Documentation
 
-- [Agent Loop Implementation](../architecture/core-code-agent-loop.md) — Tool execution in the loop
-- [MCP Integration](../extension/mcp.md) — Model Context Protocol support
-- [Entry Point Walkthrough](../architecture/core-code-entry.md) — Tool registration during startup
+- [Agent Loop Implementation](../architecture/core-code-agent-loop) — Tool execution in the loop
+- [MCP Integration](../extension/mcp) — Model Context Protocol support
+- [Entry Point Walkthrough](../architecture/core-code-entry) — Tool registration during startup
 
 ---
 
 <div class="nav-prev-next">
 
-- [Agent Loop Implementation](../architecture/core-code-agent-loop.md) ←
-- → [MCP Integration](../extension/mcp.md)
+- [Agent Loop Implementation](../architecture/core-code-agent-loop) ←
+- → [MCP Integration](../extension/mcp)
 
 </div>

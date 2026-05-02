@@ -231,7 +231,7 @@ agentInstance := agent.NewAgent(client, registry, policy, systemPrompt, model)
 
 <div class="nav-prev-next">
 
-- [架构概述](../architecture/overview.md) ←
-- → [代理循环实现](agent-loop-impl.md)
+- [架构概述](../architecture/overview) ←
+- → [代理循环实现](agent-loop-impl)
 
 </div>

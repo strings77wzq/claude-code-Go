@@ -398,15 +398,15 @@ registry.Register(notifHook)
 
 ## 相关文档
 
-- [Skills 系统](./skills.md) — 自定义 agent 行为的命名提示词
-- [MCP 集成](./mcp.md) — 外部工具集成
-- [工具系统概述](../tools/overview.md) — 工具接口和注册表
-- [Agent 循环实现](../core-code/agent-loop-impl.md) — 工具执行流程
+- [Skills 系统](./skills) — 自定义 agent 行为的命名提示词
+- [MCP 集成](./mcp) — 外部工具集成
+- [工具系统概述](../tools/overview) — 工具接口和注册表
+- [Agent 循环实现](../core-code/agent-loop-impl) — 工具执行流程
 
 ---
 
 <div class="nav-prev-next">
 
-- [MCP 集成](./mcp.md) ←
+- [MCP 集成](./mcp) ←
 
 </div>

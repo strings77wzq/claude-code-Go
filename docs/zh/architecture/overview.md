@@ -109,7 +109,7 @@ end_turn│                 error│
 
 ## 相关文档
 
-- [设计理念](design-philosophy.md) — 深入探讨智能/可靠性分离
-- [Agent Loop](agent-loop.md) — 状态机机制和历史管理
-- [工具系统](tools.md) — 内置工具和扩展机制
-- [配置指南](../guide/configuration.md) — 权限策略和模型设置
+- [设计理念](design-philosophy) — 深入探讨智能/可靠性分离
+- [Agent Loop](agent-loop) — 状态机机制和历史管理
+- [工具系统](tools) — 内置工具和扩展机制
+- [配置指南](../guide/configuration) — 权限策略和模型设置

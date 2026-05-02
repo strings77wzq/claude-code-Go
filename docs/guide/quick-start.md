@@ -11,7 +11,7 @@ This guide walks you through running go-code for the first time.
 
 Before running go-code, ensure you have:
 
-1. A built binary (see [Installation Guide](installation.md))
+1. A built binary (see [Installation Guide](installation))
 2. An API key (Anthropic, OpenAI, or compatible)
 
 ## Configure Your API Key
@@ -226,6 +226,6 @@ The permission system controls:
 
 ## Next Steps
 
-- [Configuration Guide](../api/config.md) — Customize behavior with advanced settings
-- [Architecture Overview](../architecture/overview.md) — Understand how go-code works
-- [Agent Loop Deep Dive](../architecture/agent-loop.md) — Learn about the core execution cycle
+- [Configuration Guide](../api/config) — Customize behavior with advanced settings
+- [Architecture Overview](../architecture/overview) — Understand how go-code works
+- [Agent Loop Deep Dive](../architecture/agent-loop) — Learn about the core execution cycle

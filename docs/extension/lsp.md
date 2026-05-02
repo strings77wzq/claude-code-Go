@@ -79,6 +79,6 @@ Current coverage lives in `internal/lsp/gate_test.go` and proves unavailable, in
 
 ## Related
 
-- [MCP Integration](./mcp.md)
-- [Hooks System](./hooks.md)
-- [Skills System](./skills.md)
+- [MCP Integration](./mcp)
+- [Hooks System](./hooks)
+- [Skills System](./skills)

@@ -258,5 +258,5 @@ auto_approve_bash: false  # 命令执行需确认
 
 ## 相关文档
 
-- [Agent Loop 核心](agent-loop.md) — 工具调用的触发机制
-- [架构概览](overview.md) — 权限系统详情
+- [Agent Loop 核心](agent-loop) — 工具调用的触发机制
+- [架构概览](overview) — 权限系统详情

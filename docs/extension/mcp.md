@@ -443,16 +443,16 @@ Startup behavior remains non-fatal: if a configured MCP server cannot start or l
 
 ## Related Documentation
 
-- [Skills System](./skills.md) — Named prompts for customizing agent behavior
-- [Hooks System](./hooks.md) — Pre/post execution callbacks
-- [Tool System Overview](../tools/overview.md) — Tool interface and registry
-- [Configuration Guide](../api/config.md) — MCP configuration options
+- [Skills System](./skills) — Named prompts for customizing agent behavior
+- [Hooks System](./hooks) — Pre/post execution callbacks
+- [Tool System Overview](../tools/overview) — Tool interface and registry
+- [Configuration Guide](../api/config) — MCP configuration options
 
 ---
 
 <div class="nav-prev-next">
 
-- [Skills System](./skills.md) ←
-- → [Hooks System](./hooks.md)
+- [Skills System](./skills) ←
+- → [Hooks System](./hooks)
 
 </div>

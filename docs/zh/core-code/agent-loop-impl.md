@@ -306,7 +306,7 @@ func (a *Agent) saveSession(turnCount, inputTokens, outputTokens int) {
 
 <div class="nav-prev-next">
 
-- [入口点架构](entry-point.md) ←
-- → [工具系统概述](../tools/overview.md)
+- [入口点架构](entry-point) ←
+- → [工具系统概述](../tools/overview)
 
 </div>

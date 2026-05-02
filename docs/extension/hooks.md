@@ -412,15 +412,15 @@ registry.Register(notifHook)
 
 ## Related Documentation
 
-- [Skills System](./skills.md) — Named prompts for customizing agent behavior
-- [MCP Integration](./mcp.md) — External tool integration
-- [Tool System Overview](../tools/overview.md) — Tool interface and registry
-- [Agent Loop Implementation](../architecture/core-code-agent-loop.md) — Tool execution flow
+- [Skills System](./skills) — Named prompts for customizing agent behavior
+- [MCP Integration](./mcp) — External tool integration
+- [Tool System Overview](../tools/overview) — Tool interface and registry
+- [Agent Loop Implementation](../architecture/core-code-agent-loop) — Tool execution flow
 
 ---
 
 <div class="nav-prev-next">
 
-- [MCP Integration](./mcp.md) ←
+- [MCP Integration](./mcp) ←
 
 </div>

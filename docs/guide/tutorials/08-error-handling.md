@@ -75,4 +75,4 @@ When all else fails:
 
 ## Next Steps
 
-- [Troubleshooting Guide](../../troubleshooting/common-issues.md)
+- [Troubleshooting Guide](../../troubleshooting/common-issues)

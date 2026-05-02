@@ -275,6 +275,6 @@ cat ~/.go-code/settings.json | python -m json.tool
 
 ## 相关文档
 
-- [快速开始](quick-start.md) — 基本设置和首次运行
-- [架构概览](../architecture/overview.md) — 系统组件
-- [工具系统](../architecture/tools.md) — 内置和 MCP 工具
+- [快速开始](quick-start) — 基本设置和首次运行
+- [架构概览](../architecture/overview) — 系统组件
+- [工具系统](../architecture/tools) — 内置和 MCP 工具

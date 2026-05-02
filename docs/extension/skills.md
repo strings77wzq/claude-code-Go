@@ -226,14 +226,14 @@ Create `~/.go-code/skills/refactor.json`:
 
 ## Related Documentation
 
-- [Configuration Guide](../api/config.md) — Configuration file locations
-- [Tool System Overview](../tools/overview.md) — Tool interface and registry
-- [Agent Loop Implementation](../architecture/core-code-agent-loop.md) — Tool execution flow
+- [Configuration Guide](../api/config) — Configuration file locations
+- [Tool System Overview](../tools/overview) — Tool interface and registry
+- [Agent Loop Implementation](../architecture/core-code-agent-loop) — Tool execution flow
 
 ---
 
 <div class="nav-prev-next">
 
-- → [Hooks System](./hooks.md)
+- → [Hooks System](./hooks)
 
 </div>

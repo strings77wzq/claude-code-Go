@@ -238,6 +238,6 @@ API 客户端增量接收 token，并为每个 token 增量调用回调。Harnes
 
 ## 相关文档
 
-- [架构概览](overview.md) — 系统组件和数据流
-- [设计理念](design-philosophy.md) — 智能/可靠性分离
-- [工具系统](tools.md) — 工具实现和权限配置
+- [架构概览](overview) — 系统组件和数据流
+- [设计理念](design-philosophy) — 智能/可靠性分离
+- [工具系统](tools) — 工具实现和权限配置

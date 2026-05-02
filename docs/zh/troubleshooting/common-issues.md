@@ -164,9 +164,9 @@ rm ~/.go-code/sessions/*.jsonl
 
 ## 获取更多帮助
 
-1. 查看 [API 错误](api-errors.md)
-2. 查看 [权限被拒绝](permission-denied.md)
-3. 查看 [性能问题](performance-issues.md)
+1. 查看 [API 错误](api-errors)
+2. 查看 [权限被拒绝](permission-denied)
+3. 查看 [性能问题](performance-issues)
 4. 在 [GitHub Discussions](https://github.com/strings77wzq/claude-code-Go/discussions) 中提问
 5. 搜索 [GitHub Issues](https://github.com/strings77wzq/claude-code-Go/issues)
 

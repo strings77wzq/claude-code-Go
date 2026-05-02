@@ -156,6 +156,6 @@ The AI is smart about tool selection, but you can be explicit:
 
 ## Next Steps
 
-- [Tutorial 3: Understanding the Agent Loop](03-agent-loop.md) - Learn how the AI makes decisions
-- [Tutorial 4: Permission System](04-permission-system.md) - Deep dive into security
-- [API Reference](../../api/tools.md) - Complete tool documentation
+- [Tutorial 3: Understanding the Agent Loop](03-agent-loop) - Learn how the AI makes decisions
+- [Tutorial 4: Permission System](04-permission-system) - Deep dive into security
+- [API Reference](../../api/tools) - Complete tool documentation

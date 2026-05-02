@@ -109,7 +109,7 @@ The emphasis throughout is on *why* rather than *what* — the code reveals impl
 
 ## Related Documentation
 
-- [Design Philosophy](design-philosophy.md) — Deep dive into the intelligence/reliability separation
-- [Agent Loop](agent-loop.md) — State machine mechanics and history management
-- [Tool System](tools.md) — Built-in tools and extension mechanisms
-- [Configuration Guide](../api/config.md) — Permission policies and model settings
+- [Design Philosophy](design-philosophy) — Deep dive into the intelligence/reliability separation
+- [Agent Loop](agent-loop) — State machine mechanics and history management
+- [Tool System](tools) — Built-in tools and extension mechanisms
+- [Configuration Guide](../api/config) — Permission policies and model settings

@@ -289,19 +289,19 @@ type McpToolAdapter struct {
 | `internal/tool/mcp/transport.go` | 基于 stdio 的 MCP 通信传输层 |
 | `internal/tool/mcp/manager.go` | MCP 服务器生命周期管理 |
 
-详见 [MCP 集成](../extension/mcp.md)。
+详见 [MCP 集成](../extension/mcp)。
 
 ## 相关文档
 
-- [智能体循环实现](../core-code/agent-loop-impl.md) — 循环中的工具执行
-- [MCP 集成](../extension/mcp.md) — Model Context Protocol 支持
-- [入口点详解](../core-code/entry-point.md) — 启动时的工具注册
+- [智能体循环实现](../core-code/agent-loop-impl) — 循环中的工具执行
+- [MCP 集成](../extension/mcp) — Model Context Protocol 支持
+- [入口点详解](../core-code/entry-point) — 启动时的工具注册
 
 ---
 
 <div class="nav-prev-next">
 
-- [智能体循环实现](../core-code/agent-loop-impl.md) ←
-- → [MCP 集成](../extension/mcp.md)
+- [智能体循环实现](../core-code/agent-loop-impl) ←
+- → [MCP 集成](../extension/mcp)
 
 </div>

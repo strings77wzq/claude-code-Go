@@ -104,5 +104,5 @@ Session compacted successfully
 
 ## Next Steps
 
-- [Tutorial 8: Error Handling](08-error-handling.md)
-- [ADR-005: Session Persistence](../../adr/005-session-persistence.md)
+- [Tutorial 8: Error Handling](08-error-handling)
+- [ADR-005: Session Persistence](../../adr/005-session-persistence)

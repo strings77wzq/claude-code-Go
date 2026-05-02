@@ -295,12 +295,12 @@ go-code 使用三级权限系统。配置由内部处理，但可以通过以下
 2. **Glob 规则**：自动授予权限的文件路径模式
 3. **交互式提示**：需要时向用户请求权限
 
-详情请参阅 [权限系统](../architecture/tools.md#permission-system)。
+详情请参阅 [权限系统](../architecture/tools#permission-system)。
 
 ---
 
 ## 相关文档
 
-- [配置指南](../guide/configuration.md) — 用户友好的配置指南
-- [工具系统](../tools/overview.md) — 工具执行和权限
-- [MCP 集成](../extension/mcp.md) — MCP 服务器配置
+- [配置指南](../guide/configuration) — 用户友好的配置指南
+- [工具系统](../tools/overview) — 工具执行和权限
+- [MCP 集成](../extension/mcp) — MCP 服务器配置

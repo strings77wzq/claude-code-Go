@@ -443,16 +443,16 @@ doctor 命令会报告：
 
 ## 相关文档
 
-- [Skills 系统](./skills.md) — 自定义 agent 行为的命名提示词
-- [Hooks 系统](./hooks.md) — 预/后执行回调
-- [工具系统概述](../tools/overview.md) — 工具接口和注册表
-- [配置指南](../api/config.md) — MCP 配置选项
+- [Skills 系统](./skills) — 自定义 agent 行为的命名提示词
+- [Hooks 系统](./hooks) — 预/后执行回调
+- [工具系统概述](../tools/overview) — 工具接口和注册表
+- [配置指南](../api/config) — MCP 配置选项
 
 ---
 
 <div class="nav-prev-next">
 
-- [Skills 系统](./skills.md) ←
-- → [钩子系统](./hooks.md)
+- [Skills 系统](./skills) ←
+- → [钩子系统](./hooks)
 
 </div>

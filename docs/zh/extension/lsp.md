@@ -79,6 +79,6 @@ LSP 健康检查结果会作为非致命 extension 事件写入 session trace：
 
 ## 相关
 
-- [MCP 集成](./mcp.md)
-- [Hooks 系统](./hooks.md)
-- [Skills 系统](./skills.md)
+- [MCP 集成](./mcp)
+- [Hooks 系统](./hooks)
+- [Skills 系统](./skills)

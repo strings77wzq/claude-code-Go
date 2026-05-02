@@ -105,9 +105,9 @@ Available slash commands:
 
 ## Next Steps
 
-- [Tutorial 2: Your First Tool Call](02-first-tool-call.md) - Learn how tools work
-- [Tutorial 3: Understanding the Agent Loop](03-agent-loop.md) - Deep dive into how the AI thinks
-- Check out the [Architecture Overview](../../architecture/overview.md) for technical details
+- [Tutorial 2: Your First Tool Call](02-first-tool-call) - Learn how tools work
+- [Tutorial 3: Understanding the Agent Loop](03-agent-loop) - Deep dive into how the AI thinks
+- Check out the [Architecture Overview](../../architecture/overview) for technical details
 
 ## Troubleshooting
 
@@ -142,6 +142,6 @@ curl -H "x-api-key: $ANTHROPIC_API_KEY" \
 
 ## Getting Help
 
-- [Troubleshooting Guide](../../troubleshooting/common-issues.md)
+- [Troubleshooting Guide](../../troubleshooting/common-issues)
 - [GitHub Discussions](https://github.com/strings77wzq/claude-code-Go/discussions)
 - [GitHub Issues](https://github.com/strings77wzq/claude-code-Go/issues)

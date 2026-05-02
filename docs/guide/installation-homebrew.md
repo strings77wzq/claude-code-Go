@@ -92,4 +92,4 @@ Or create `~/.go-code/settings.json`:
 }
 ```
 
-For more details, see the [Installation Guide](./installation.md) or [Quick Start](./quick-start.md).
+For more details, see the [Installation Guide](./installation) or [Quick Start](./quick-start).

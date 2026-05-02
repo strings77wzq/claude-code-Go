@@ -85,5 +85,5 @@ go-code --help
 
 ## Next Steps
 
-- [Quick Start Guide](quick-start.md) — Run your first command
-- [Configuration Guide](../api/config.md) — Set up API keys and preferences
+- [Quick Start Guide](quick-start) — Run your first command
+- [Configuration Guide](../api/config) — Set up API keys and preferences

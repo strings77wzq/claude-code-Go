@@ -90,5 +90,5 @@ If PATH is correct but the command is still not found:
 
 ## Related
 
-- [Installation Guide](../guide/installation.md) — Full install instructions
-- [Common Issues](common-issues.md) — Other installation and config problems
+- [Installation Guide](../guide/installation) — Full install instructions
+- [Common Issues](common-issues) — Other installation and config problems

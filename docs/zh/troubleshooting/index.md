@@ -11,10 +11,10 @@ description: go-code 常见问题及解决方案
 
 针对特定问题的详细排查文档:
 
-- [常见问题](common-issues.md) — 安装、配置、连接和运行时问题的解决方案
-- [API 错误](api-errors.md) — 速率限制、认证错误、内容错误和服务端错误
-- [权限被拒绝](permission-denied.md) — 权限模型、自定义规则和调试
-- [性能问题](performance-issues.md) — 启动缓慢、内存过高、响应延迟和 Token 优化
+- [常见问题](common-issues) — 安装、配置、连接和运行时问题的解决方案
+- [API 错误](api-errors) — 速率限制、认证错误、内容错误和服务端错误
+- [权限被拒绝](permission-denied) — 权限模型、自定义规则和调试
+- [性能问题](performance-issues) — 启动缓慢、内存过高、响应延迟和 Token 优化
 
 ---
 
@@ -250,7 +250,7 @@ go-code 默认以 `WorkspaceWrite` 启动：读取工作区文件通常直接允
 > 该工具需要权限批准。确认提示时批准。
 
 **问：如何使用 MCP 服务器？**
-> 在 `~/.go-code/mcp.json` 中配置 MCP 服务器。请参阅 [MCP 集成](../extension/mcp.md)。
+> 在 `~/.go-code/mcp.json` 中配置 MCP 服务器。请参阅 [MCP 集成](../extension/mcp)。
 
 ### 故障排除问题
 
@@ -278,7 +278,7 @@ go-code 默认以 `WorkspaceWrite` 启动：读取工作区文件通常直接允
 
 ## 相关文档
 
-- [配置指南](../guide/configuration.md) — 配置选项
-- [工具系统](../tools/overview.md) — 内置工具
-- [MCP 集成](../extension/mcp.md) — MCP 服务器
-- [会话管理](../guide/session-management.md) — 会话持久化
+- [配置指南](../guide/configuration) — 配置选项
+- [工具系统](../tools/overview) — 内置工具
+- [MCP 集成](../extension/mcp) — MCP 服务器
+- [会话管理](../guide/session-management) — 会话持久化

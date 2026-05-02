@@ -159,8 +159,8 @@ rm ~/.go-code/sessions/*.jsonl
 
 ## Getting More Help
 
-1. Check [API Errors](api-errors.md)
-2. Check [Permission Denied](permission-denied.md)
-3. Check [Performance Issues](performance-issues.md)
+1. Check [API Errors](api-errors)
+2. Check [Permission Denied](permission-denied)
+3. Check [Performance Issues](performance-issues)
 4. Open [GitHub Discussion](https://github.com/strings77wzq/claude-code-Go/discussions)
 5. Search [GitHub Issues](https://github.com/strings77wzq/claude-code-Go/issues)
