@@ -154,25 +154,20 @@ func extractPaths(command string) []string {
 			continue
 		}
 
-		// Check if this part might be a path
-		isPath := false
+		// If part itself looks like a path, extract it directly
+		if strings.Contains(part, "/") || strings.HasPrefix(part, "~") || strings.HasPrefix(part, ".") {
+			paths = append(paths, part)
+			continue
+		}
+
+		// Check if this part is a path indicator; if so, extract the next part
 		for _, indicator := range pathIndicators {
 			if part == indicator && i+1 < len(parts) {
-				isPath = true
+				next := parts[i+1]
+				if !strings.HasPrefix(next, "-") {
+					paths = append(paths, next)
+				}
 				break
-			}
-		}
-
-		// Also check if part looks like a path (contains / or starts with ~)
-		if !isPath && (strings.Contains(part, "/") || strings.HasPrefix(part, "~") || strings.HasPrefix(part, ".")) {
-			isPath = true
-		}
-
-		if isPath && i+1 < len(parts) {
-			path := parts[i+1]
-			// Skip if it looks like a flag value
-			if !strings.HasPrefix(path, "-") {
-				paths = append(paths, path)
 			}
 		}
 	}
