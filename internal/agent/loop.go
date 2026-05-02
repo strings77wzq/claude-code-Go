@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -94,6 +95,21 @@ func NewAgent(
 // SetHooksRegistry sets the hooks registry for the agent.
 func (a *Agent) SetHooksRegistry(reg *hooks.Registry) {
 	a.hooksRegistry = reg
+}
+
+// LoadExternalHooks loads hook definitions from a directory and registers them.
+// Invalid hook files are skipped with warnings.
+func (a *Agent) LoadExternalHooks(dir string) {
+	loaded, err := hooks.LoadHooksFromDir(dir)
+	if err != nil {
+		slog.Warn("failed to load external hooks", "dir", dir, "error", err)
+		return
+	}
+	for _, hook := range loaded {
+		if err := a.hooksRegistry.Register(hook); err != nil {
+			slog.Warn("failed to register external hook", "name", hook.Name(), "error", err)
+		}
+	}
 }
 
 // SetPermissionPrompter sets the prompter used when a tool requires approval.

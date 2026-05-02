@@ -2,6 +2,7 @@ package skills
 
 import (
 	"errors"
+	"sync"
 	"testing"
 )
 
@@ -130,6 +131,37 @@ func TestRegistryExecute(t *testing.T) {
 	if result != "Execute this prompt" {
 		t.Errorf("Expected prompt, got '%s'", result)
 	}
+}
+
+func TestRegistryConcurrency(t *testing.T) {
+	registry := NewRegistry()
+	for i := 0; i < 10; i++ {
+		skill := Skill{Name: "skill-" + string(rune('a'+i)), Prompt: "p"}
+		_ = registry.Register(skill)
+	}
+
+	var wg sync.WaitGroup
+	// Concurrent reads interleaved with writes
+	for g := 0; g < 5; g++ {
+		wg.Add(2)
+		// Writer goroutine: Register new skills
+		go func(id int) {
+			defer wg.Done()
+			for i := 0; i < 20; i++ {
+				name := "concurrent-" + string(rune('a'+id)) + "-" + string(rune('0'+i))
+				_ = registry.Register(Skill{Name: name, Prompt: "p"})
+			}
+		}(g)
+		// Reader goroutine: List and Execute
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 50; i++ {
+				_ = registry.List()
+				_, _ = registry.Execute("skill-a0")
+			}
+		}()
+	}
+	wg.Wait()
 }
 
 func TestRegistryExecuteInvalidName(t *testing.T) {

@@ -1,31 +1,24 @@
-// Package hooks provides a system for registering and executing pre/post tool execution callbacks.
 package hooks
 
 import (
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/strings77wzq/claude-code-Go/internal/diagnostic"
 )
 
-// Hook defines the interface for tool execution hooks.
-// Implementations can intercept tool calls before and after execution.
 type Hook interface {
-	// Name returns the unique identifier for this hook.
 	Name() string
-
-	// PreExecute is called before a tool is executed.
-	// It receives the tool name and input parameters.
-	// Returning an error will prevent tool execution.
 	PreExecute(toolName string, input map[string]any) error
-
-	// PostExecute is called after a tool has been executed.
-	// It receives the tool name, input parameters, execution result, and whether the result is an error.
-	// Errors from PostExecute are logged but do not affect the tool result.
 	PostExecute(toolName string, input map[string]any, result string, isError bool) error
 }
 
-// Registry manages the registration and execution of hooks.
-// It is safe for concurrent use.
 type Registry struct {
 	mu        sync.RWMutex
 	preHooks  []Hook
@@ -44,7 +37,6 @@ type HookPolicy struct {
 	PreFailure HookFailureMode
 }
 
-// NewRegistry creates a new empty hook registry.
 func NewRegistry() *Registry {
 	return &Registry{
 		preHooks:  make([]Hook, 0),
@@ -53,14 +45,10 @@ func NewRegistry() *Registry {
 	}
 }
 
-// Register adds a hook to the registry.
-// The hook will be called on all tool executions.
-// Returns an error if a hook with the same name is already registered.
 func (r *Registry) Register(hook Hook) error {
 	return r.RegisterWithPolicy(hook, HookPolicy{PreFailure: HookFailureBlock})
 }
 
-// RegisterWithPolicy adds a hook with explicit failure behavior.
 func (r *Registry) RegisterWithPolicy(hook Hook, policy HookPolicy) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -78,8 +66,6 @@ func (r *Registry) RegisterWithPolicy(hook Hook, policy HookPolicy) error {
 	return nil
 }
 
-// GetPreHooks returns a slice of all registered pre-execute hooks.
-// The returned slice is a copy and is safe for iteration.
 func (r *Registry) GetPreHooks() []Hook {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -89,8 +75,6 @@ func (r *Registry) GetPreHooks() []Hook {
 	return result
 }
 
-// GetPostHooks returns a slice of all registered post-execute hooks.
-// The returned slice is a copy and is safe for iteration.
 func (r *Registry) GetPostHooks() []Hook {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -100,9 +84,6 @@ func (r *Registry) GetPostHooks() []Hook {
 	return result
 }
 
-// RunPreHooks executes all pre-execute hooks in order.
-// It stops and returns the first error encountered.
-// If a pre-hook returns an error, subsequent hooks are not executed.
 func (r *Registry) RunPreHooks(toolName string, input map[string]any) error {
 	hooks := r.GetPreHooks()
 
@@ -117,21 +98,16 @@ func (r *Registry) RunPreHooks(toolName string, input map[string]any) error {
 	return nil
 }
 
-// RunPostHooks executes all post-execute hooks in order.
-// Errors from post-hooks are logged but do not stop execution of subsequent hooks.
 func (r *Registry) RunPostHooks(toolName string, input map[string]any, result string, isError bool) {
 	hooks := r.GetPostHooks()
 
 	for _, hook := range hooks {
 		if err := hook.PostExecute(toolName, input, result, isError); err != nil {
-			// Log the error - PostExecute errors should not stop execution
-			// Using the hook name for logging context
-			_ = err // In production, would use proper logging
+			slog.Warn("post-hook error", "hook", hook.Name(), "tool", toolName, "error", err)
 		}
 	}
 }
 
-// DuplicateHookError is returned when attempting to register a hook with a duplicate name.
 type DuplicateHookError struct {
 	Name string
 }
@@ -140,7 +116,6 @@ func (e *DuplicateHookError) Error() string {
 	return "hook already registered: " + e.Name
 }
 
-// PreHookError wraps an error from a pre-execute hook.
 type PreHookError struct {
 	HookName string
 	ToolName string
@@ -183,4 +158,74 @@ func normalizeHookPolicy(policy HookPolicy) HookPolicy {
 		policy.PreFailure = HookFailureBlock
 	}
 	return policy
+}
+
+// ShellHook implements Hook by running a shell command.
+type ShellHook struct {
+	name    string
+	command string
+}
+
+func (h *ShellHook) Name() string { return h.name }
+
+func (h *ShellHook) PreExecute(toolName string, input map[string]any) error {
+	return h.run(toolName, input, "")
+}
+
+func (h *ShellHook) PostExecute(toolName string, input map[string]any, result string, isError bool) error {
+	return h.run(toolName, input, result)
+}
+
+func (h *ShellHook) run(toolName string, input map[string]any, result string) error {
+	inputJSON, _ := json.Marshal(map[string]any{
+		"tool":   toolName,
+		"input":  input,
+		"result": result,
+	})
+	cmd := exec.Command("sh", "-c", h.command)
+	cmd.Stdin = strings.NewReader(string(inputJSON))
+	return cmd.Run()
+}
+
+// hookFileDef is the JSON schema for a hook file in ~/.go-code/hooks/.
+type hookFileDef struct {
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	Command string `json:"command"`
+}
+
+// LoadHooksFromDir loads hook definitions from JSON files in a directory.
+// Only .json files are read. Invalid files are skipped.
+func LoadHooksFromDir(dir string) ([]Hook, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("read hooks dir %s: %w", dir, err)
+	}
+
+	var hooks []Hook
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
+			continue
+		}
+		path := filepath.Join(dir, entry.Name())
+		data, err := os.ReadFile(path)
+		if err != nil {
+			slog.Warn("failed to read hook file", "path", path, "error", err)
+			continue
+		}
+		var def hookFileDef
+		if err := json.Unmarshal(data, &def); err != nil {
+			slog.Warn("invalid hook JSON", "path", path, "error", err)
+			continue
+		}
+		if def.Name == "" || def.Command == "" {
+			slog.Warn("hook missing required fields", "path", path)
+			continue
+		}
+		hooks = append(hooks, &ShellHook{name: def.Name, command: def.Command})
+	}
+	return hooks, nil
 }

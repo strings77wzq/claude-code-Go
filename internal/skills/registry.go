@@ -1,11 +1,15 @@
 package skills
 
-import "errors"
+import (
+	"errors"
+	"sync"
+)
 
 var ErrSkillNotFound = errors.New("skill not found")
 var ErrSkillAlreadyExists = errors.New("skill already exists")
 
 type Registry struct {
+	mu     sync.RWMutex
 	skills map[string]Skill
 }
 
@@ -19,6 +23,8 @@ func (r *Registry) Register(skill Skill) error {
 	if skill.Name == "" {
 		return ErrInvalidSkill
 	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	if _, exists := r.skills[skill.Name]; exists {
 		return ErrSkillAlreadyExists
 	}
@@ -27,6 +33,8 @@ func (r *Registry) Register(skill Skill) error {
 }
 
 func (r *Registry) Get(name string) *Skill {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	skill, ok := r.skills[name]
 	if !ok {
 		return nil
@@ -35,6 +43,8 @@ func (r *Registry) Get(name string) *Skill {
 }
 
 func (r *Registry) List() []Skill {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	result := make([]Skill, 0, len(r.skills))
 	for _, skill := range r.skills {
 		result = append(result, skill)
@@ -43,6 +53,8 @@ func (r *Registry) List() []Skill {
 }
 
 func (r *Registry) Execute(name string) (string, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	skill, ok := r.skills[name]
 	if !ok {
 		return "", ErrSkillNotFound

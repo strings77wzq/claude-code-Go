@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"errors"
+	"os"
 	"strings"
 	"testing"
 )
@@ -297,6 +298,71 @@ func TestPreHookError(t *testing.T) {
 	}
 
 	// Verify Unwrap() method
+}
+
+func TestLoadHooksFromDir(t *testing.T) {
+	tmpDir := t.TempDir()
+	hookJSON := `{"name": "test-hook", "type": "pre", "command": "echo test"}`
+	writeFile(t, tmpDir, "test.json", hookJSON)
+
+	hooks, err := LoadHooksFromDir(tmpDir)
+	if err != nil {
+		t.Fatalf("LoadHooksFromDir failed: %v", err)
+	}
+	if len(hooks) != 1 {
+		t.Fatalf("expected 1 hook, got %d", len(hooks))
+	}
+	if hooks[0].Name() != "test-hook" {
+		t.Errorf("expected hook name 'test-hook', got '%s'", hooks[0].Name())
+	}
+}
+
+func TestLoadHooksFromDirEmptyDir(t *testing.T) {
+	tmpDir := t.TempDir()
+	hooks, err := LoadHooksFromDir(tmpDir)
+	if err != nil {
+		t.Fatalf("LoadHooksFromDir failed: %v", err)
+	}
+	if len(hooks) != 0 {
+		t.Errorf("expected 0 hooks, got %d", len(hooks))
+	}
+}
+
+func TestLoadHooksFromDirInvalidJSON(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeFile(t, tmpDir, "bad.json", "not json")
+	hooks, err := LoadHooksFromDir(tmpDir)
+	if err != nil {
+		t.Fatalf("LoadHooksFromDir failed: %v", err)
+	}
+	if len(hooks) != 0 {
+		t.Errorf("expected 0 hooks from bad JSON, got %d", len(hooks))
+	}
+}
+
+func TestLoadHooksFromDirMissingFields(t *testing.T) {
+	tmpDir := t.TempDir()
+	writeFile(t, tmpDir, "no-name.json", `{"type": "pre", "command": "echo"}`)
+	writeFile(t, tmpDir, "no-command.json", `{"name": "h", "type": "pre"}`)
+	hooks, err := LoadHooksFromDir(tmpDir)
+	if err != nil {
+		t.Fatalf("LoadHooksFromDir failed: %v", err)
+	}
+	if len(hooks) != 0 {
+		t.Errorf("expected 0 hooks with missing fields, got %d", len(hooks))
+	}
+}
+
+func writeFile(t *testing.T, dir, name, content string) {
+	t.Helper()
+	if err := os.WriteFile(dir+"/"+name, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestPreHookErrorUnwrap(t *testing.T) {
+	innerErr := errors.New("inner error")
+	err := &PreHookError{HookName: "h", ToolName: "R", Err: innerErr}
 	if !errors.Is(err, innerErr) {
 		t.Error("Unwrap should return the inner error")
 	}

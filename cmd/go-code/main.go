@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -195,6 +196,12 @@ func main() {
 	} else {
 		agentInstance.SetPermissionPrompter(permission.NewStdinPrompter(bufio.NewReader(os.Stdin), os.Stdout))
 	}
+
+	if homeDir, err := os.UserHomeDir(); err == nil {
+		hooksDir := filepath.Join(homeDir, ".go-code", "hooks")
+		agentInstance.LoadExternalHooks(hooksDir)
+	}
+
 	logger.Info("Agent started", "model", cfg.Model)
 
 	// Non-interactive mode: run single prompt and exit
