@@ -141,7 +141,48 @@ h1, h2, h3, h4, .VPHero .name, .vp-doc h1 {
 }
 
 /* ============================================
-   5. Hero Section
+   5. Global Background Effects
+   ============================================ */
+
+.VPContent {
+  position: relative;
+}
+
+/* Ambient glow orb — top right */
+.VPContent::before {
+  content: '';
+  position: fixed;
+  top: -200px;
+  right: -200px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(110, 64, 201, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ambient glow orb — bottom left */
+.VPContent::after {
+  content: '';
+  position: fixed;
+  bottom: -200px;
+  left: -200px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(0, 102, 255, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Subtle noise texture overlay (dark mode only) */
+.dark .VPContent {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* ============================================
+   6. Hero Section
    ============================================ */
 
 .VPHero {
@@ -1132,4 +1173,159 @@ h1, h2, h3, h4, .VPHero .name, .vp-doc h1 {
 @media (max-width: 640px) {
   .metric-item { padding: var(--space-6) var(--space-3); }
   .metric-value { font-size: 2rem; }
+}
+
+/* ============================================
+   19. Premium Gradient Border Cards
+   ============================================ */
+
+/* Gradient border effect via pseudo-element */
+.feature-block.gradient-border,
+.role-card.gradient-border {
+  position: relative;
+  border: none;
+  background: var(--vp-c-bg-soft);
+}
+
+.feature-block.gradient-border::after,
+.role-card.gradient-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 102, 255, 0.2),
+    rgba(0, 212, 170, 0.2),
+    rgba(110, 64, 201, 0.2)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity var(--duration-normal) var(--ease-out-expo);
+  opacity: 0;
+}
+
+.feature-block.gradient-border:hover::after,
+.role-card.gradient-border:hover::after {
+  opacity: 1;
+}
+
+/* Enhanced glassmorphism for cards */
+.glass-card {
+  background: rgba(20, 21, 24, 0.6) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-card:hover {
+  background: rgba(20, 21, 24, 0.8) !important;
+  border-color: rgba(0, 102, 255, 0.25);
+}
+
+/* ============================================
+   20. Animated Section Dividers
+   ============================================ */
+
+.section-divider {
+  width: 100%;
+  max-width: 200px;
+  height: 2px;
+  margin: var(--space-12) auto;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--vp-c-brand-1),
+    var(--vp-c-brand-2),
+    transparent
+  );
+  opacity: 0.4;
+  border-radius: 1px;
+}
+
+/* ============================================
+   21. Home Page Hero Glow Enhancement
+   ============================================ */
+
+.VPHero .container {
+  position: relative;
+}
+
+.VPHero .container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(
+    circle,
+    rgba(110, 64, 201, 0.08) 0%,
+    rgba(0, 102, 255, 0.04) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ============================================
+   22. Docs Typography Refinements
+   ============================================ */
+
+.vp-doc h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--vp-c-text-1), var(--vp-c-brand-1));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--space-4);
+}
+
+.vp-doc h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: var(--space-12);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.vp-doc h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--vp-c-brand-1);
+  margin-top: var(--space-8);
+}
+
+.vp-doc p {
+  line-height: 1.75;
+  color: var(--vp-c-text-2);
+}
+
+.vp-doc a {
+  color: var(--vp-c-brand-1);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--duration-fast) ease;
+}
+
+.vp-doc a:hover {
+  color: var(--vp-c-brand-2);
+}
+
+/* Inline code in docs */
+.vp-doc :not(pre) > code {
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875em;
+  font-family: var(--font-mono);
 }

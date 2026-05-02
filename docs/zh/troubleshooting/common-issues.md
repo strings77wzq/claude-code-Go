@@ -170,4 +170,4 @@ rm ~/.go-code/sessions/*.jsonl
 4. 在 [GitHub Discussions](https://github.com/strings77wzq/claude-code-Go/discussions) 中提问
 5. 搜索 [GitHub Issues](https://github.com/strings77wzq/claude-code-Go/issues)
 
-> 英文版本: [Common Issues](/troubleshooting/common-issues.md)
+> 英文版本: [Common Issues](/troubleshooting/common-issues)

@@ -13,4 +13,4 @@ description: claude-code-Go 性能基准测试数据（即将推出）
 
 ---
 
-> 英文版本: [Benchmark](/benchmark.md)
+> 英文版本: [Benchmark](/benchmark)

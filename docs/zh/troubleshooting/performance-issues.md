@@ -132,4 +132,4 @@ time go-code -p "Hello"
 /usr/bin/time -v go-code -p "Hello"
 ```
 
-> 英文版本: [Performance Issues](/troubleshooting/performance-issues.md)
+> 英文版本: [Performance Issues](/troubleshooting/performance-issues)

@@ -13,4 +13,4 @@ description: claude-code-Go 使用案例展示（即将推出）
 
 ---
 
-> 英文版本: [Showcase](/showcase.md)
+> 英文版本: [Showcase](/showcase)

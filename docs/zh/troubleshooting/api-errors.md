@@ -90,4 +90,4 @@ claude-code-Go 会自动重试:
 > 执行失败了，请重试一次
 ```
 
-> 英文版本: [API Errors](/troubleshooting/api-errors.md)
+> 英文版本: [API Errors](/troubleshooting/api-errors)

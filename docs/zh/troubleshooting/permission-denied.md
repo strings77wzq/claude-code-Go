@@ -106,4 +106,4 @@ description: 理解并解决 claude-code-Go 的权限错误
 - * → 询问
 ```
 
-> 英文版本: [Permission Denied](/troubleshooting/permission-denied.md)
+> 英文版本: [Permission Denied](/troubleshooting/permission-denied)

@@ -23,4 +23,4 @@ Pro plan、Enterprise support、SSO/SAML、RBAC、团队管理和 on-premise 承
 
 ---
 
-> 英文版本: [Pricing](/pricing.md)
+> 英文版本: [Pricing](/pricing)

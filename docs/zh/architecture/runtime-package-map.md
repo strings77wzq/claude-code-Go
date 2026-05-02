@@ -50,4 +50,4 @@ cmd/go-code
 - 需要 socket、家目录写入或构建二进制文件的测试必须记录这些要求。
 - 公开文档只能声明经过测试验证或在 `PARITY.md` 中列出的工作流。
 
-> 英文版本: [Runtime Package Map](/architecture/runtime-package-map.md)
+> 英文版本: [Runtime Package Map](/architecture/runtime-package-map)
