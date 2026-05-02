@@ -2,40 +2,45 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'claude-code-Go',
-  description: 'Claude Code in Go — AI-powered coding assistant',
+  description: 'AI-powered coding assistant built in pure Go — single binary, zero runtime dependencies',
   base: '/claude-code-Go/',
+
+  head: [
+    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
+  ],
 
   locales: {
     root: {
       label: 'English',
       lang: 'en',
       title: 'claude-code-Go',
-      description: 'Claude Code in Go — AI-powered coding assistant',
+      description: 'AI-powered coding assistant built in pure Go',
       themeConfig: {
         nav: [
           { text: 'Home', link: '/' },
           { text: 'Guide', link: '/guide/introduction' },
-          { 
-            text: 'Tutorials',
+          {
+            text: 'Learn',
             items: [
-              { text: 'Quick Start', link: '/guide/tutorials/01-quickstart' },
-              { text: 'First Tool Call', link: '/guide/tutorials/02-first-tool-call' },
-              { text: 'Agent Loop', link: '/guide/tutorials/03-agent-loop' },
-              { text: 'All Tutorials', link: '/guide/tutorials/' }
+              { text: 'Quick Start', link: '/guide/quick-start' },
+              { text: 'Tutorials', link: '/guide/tutorials/' },
+              { text: 'Project Structure', link: '/guide/project-structure' },
             ]
           },
           { text: 'Architecture', link: '/architecture/overview' },
           { text: 'API', link: '/api/tools' },
-          { 
-            text: 'Resources',
+          {
+            text: 'More',
             items: [
+              { text: 'Extensions', link: '/extension/mcp' },
               { text: 'Roadmap', link: '/roadmap' },
               { text: 'Troubleshooting', link: '/troubleshooting/common-issues' },
               { text: 'Benchmarks', link: '/benchmark' },
-              { text: 'Showcase', link: '/showcase' }
+              { text: 'Showcase', link: '/showcase' },
             ]
           },
-          { text: 'GitHub ⭐', link: 'https://github.com/strings77wzq/claude-code-Go' }
+          { text: 'GitHub', link: 'https://github.com/strings77wzq/claude-code-Go' }
         ],
         footer: {
           message: 'Released under the MIT License.',
@@ -47,19 +52,28 @@ export default defineConfig({
       label: '中文',
       lang: 'zh-CN',
       title: 'claude-code-Go',
-      description: 'Go 实现的 Claude Code — AI 编程助手',
+      description: '纯 Go 打造的 AI 编程助手 — 单二进制，零运行时依赖',
       themeConfig: {
         nav: [
+          { text: '首页', link: '/zh/' },
           { text: '指南', link: '/zh/guide/introduction' },
+          {
+            text: '学习',
+            items: [
+              { text: '快速开始', link: '/zh/guide/quick-start' },
+              { text: '项目结构', link: '/zh/guide/project-structure' },
+            ]
+          },
           { text: '架构', link: '/zh/architecture/overview' },
           { text: 'API', link: '/zh/api/tools' },
           {
-            text: '资源',
+            text: '更多',
             items: [
-              { text: 'Roadmap', link: '/zh/roadmap' },
+              { text: '扩展', link: '/zh/extension/mcp' },
+              { text: '路线图', link: '/zh/roadmap' },
               { text: '故障排除', link: '/zh/troubleshooting' },
-              { text: '性能基准测试', link: '/zh/benchmark' },
-              { text: '案例展示', link: '/zh/showcase' }
+              { text: '性能基准', link: '/zh/benchmark' },
+              { text: '案例展示', link: '/zh/showcase' },
             ]
           },
           { text: 'GitHub', link: 'https://github.com/strings77wzq/claude-code-Go' }
@@ -86,7 +100,9 @@ export default defineConfig({
           items: [
             { text: 'Introduction', link: '/guide/introduction' },
             { text: 'Quick Start', link: '/guide/quick-start' },
-            { text: 'Project Structure', link: '/guide/project-structure' }
+            { text: 'Installation', link: '/guide/installation' },
+            { text: 'Project Structure', link: '/guide/project-structure' },
+            { text: 'Session Management', link: '/guide/session-management' },
           ]
         },
         {
@@ -97,7 +113,9 @@ export default defineConfig({
             { text: 'Design Philosophy', link: '/architecture/design-philosophy' },
             { text: 'Agent Loop', link: '/architecture/agent-loop' },
             { text: 'Tools', link: '/architecture/tools' },
-            { text: 'Providers', link: '/architecture/providers' }
+            { text: 'Providers', link: '/architecture/providers' },
+            { text: 'Deep Dive', link: '/architecture/deep-dive' },
+            { text: 'Interactive Diagram', link: '/architecture/interactive-diagram' },
           ]
         },
         {
@@ -106,7 +124,7 @@ export default defineConfig({
           items: [
             { text: 'Tools', link: '/api/tools' },
             { text: 'Commands', link: '/api/commands' },
-            { text: 'Configuration', link: '/api/config' }
+            { text: 'Configuration', link: '/api/config' },
           ]
         },
         {
@@ -116,7 +134,7 @@ export default defineConfig({
             { text: 'MCP', link: '/extension/mcp' },
             { text: 'LSP', link: '/extension/lsp' },
             { text: 'Hooks', link: '/extension/hooks' },
-            { text: 'Skills', link: '/extension/skills' }
+            { text: 'Skills', link: '/extension/skills' },
           ]
         },
         {
@@ -126,7 +144,7 @@ export default defineConfig({
             { text: 'Roadmap', link: '/roadmap' },
             { text: 'Troubleshooting', link: '/troubleshooting' },
             { text: 'Contributing', link: '/contributing' },
-            { text: 'Feedback', link: '/feedback' }
+            { text: 'Feedback', link: '/feedback' },
           ]
         }
       ],
@@ -137,7 +155,11 @@ export default defineConfig({
           items: [
             { text: '项目简介', link: '/zh/guide/introduction' },
             { text: '快速开始', link: '/zh/guide/quick-start' },
-            { text: '项目结构', link: '/zh/guide/project-structure' }
+            { text: '安装指南', link: '/zh/guide/installation' },
+            { text: '项目结构', link: '/zh/guide/project-structure' },
+            { text: '会话管理', link: '/zh/guide/session-management' },
+            { text: '配置说明', link: '/zh/guide/configuration' },
+            { text: '技能系统', link: '/zh/guide/skills' },
           ]
         },
         {
@@ -148,7 +170,8 @@ export default defineConfig({
             { text: '设计理念', link: '/zh/architecture/design-philosophy' },
             { text: 'Agent Loop', link: '/zh/architecture/agent-loop' },
             { text: '工具系统', link: '/zh/architecture/tools' },
-            { text: 'Providers', link: '/zh/architecture/providers' }
+            { text: 'Providers', link: '/zh/architecture/providers' },
+            { text: '运行时包映射', link: '/zh/architecture/runtime-package-map' },
           ]
         },
         {
@@ -157,7 +180,7 @@ export default defineConfig({
           items: [
             { text: '工具', link: '/zh/api/tools' },
             { text: '命令', link: '/zh/api/commands' },
-            { text: '配置', link: '/zh/api/config' }
+            { text: '配置', link: '/zh/api/config' },
           ]
         },
         {
@@ -167,31 +190,29 @@ export default defineConfig({
             { text: 'MCP', link: '/zh/extension/mcp' },
             { text: 'LSP', link: '/zh/extension/lsp' },
             { text: 'Hooks', link: '/zh/extension/hooks' },
-            { text: 'Skills', link: '/zh/extension/skills' }
+            { text: 'Skills', link: '/zh/extension/skills' },
           ]
         },
         {
           text: '资源',
           collapsed: false,
           items: [
-            { text: 'Roadmap', link: '/zh/roadmap' },
+            { text: '路线图', link: '/zh/roadmap' },
             {
               text: '故障排除',
-              collapsed: false,
+              collapsed: true,
               items: [
                 { text: '总览', link: '/zh/troubleshooting' },
                 { text: '常见问题', link: '/zh/troubleshooting/common-issues' },
                 { text: 'API 错误', link: '/zh/troubleshooting/api-errors' },
                 { text: '权限被拒绝', link: '/zh/troubleshooting/permission-denied' },
-                { text: '性能问题', link: '/zh/troubleshooting/performance-issues' }
+                { text: '性能问题', link: '/zh/troubleshooting/performance-issues' },
               ]
             },
             { text: '案例展示', link: '/zh/showcase' },
-            { text: '性能基准测试', link: '/zh/benchmark' },
+            { text: '性能基准', link: '/zh/benchmark' },
             { text: '贡献指南', link: '/zh/contributing' },
             { text: '反馈', link: '/zh/feedback' },
-            { text: '定价', link: '/zh/pricing' },
-            { text: '隐私政策', link: '/zh/privacy' }
           ]
         }
       ]
@@ -211,10 +232,13 @@ export default defineConfig({
   },
 
   markdown: {
-    lineNumbers: true
+    lineNumbers: true,
+    theme: {
+      light: 'github-light',
+      dark: 'github-dark'
+    }
   },
 
   lastUpdated: true,
-
   ignoreDeadLinks: false
 })

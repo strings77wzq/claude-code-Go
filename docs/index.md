@@ -1,12 +1,12 @@
 ---
 layout: home
 title: claude-code-Go
-titleTemplate: AI-powered coding assistant built in Go
+titleTemplate: AI-powered coding assistant built in pure Go
 
 hero:
   name: claude-code-Go
-  text: Model provides intelligence, harness provides reliability.
-  tagline: A production-grade AI coding assistant with full agent loop, tool execution, and permission management — built in pure Go.
+  text: Intelligence meets reliability.
+  tagline: A production-grade AI coding assistant with full agent loop, permission system, and multi-provider support — built in pure Go. Single binary. Zero runtime dependencies.
   image:
     src: /logo.svg
     alt: claude-code-Go Logo
@@ -22,20 +22,20 @@ hero:
 <div class="metrics-section fade-in-section">
   <div class="metrics-grid">
     <div class="metric-item">
-      <div class="metric-value">82</div>
-      <div class="metric-label">Source Files</div>
+      <div class="metric-value">26</div>
+      <div class="metric-label">Go Packages</div>
     </div>
     <div class="metric-item">
-      <div class="metric-value">8</div>
-      <div class="metric-label">Modules</div>
-    </div>
-    <div class="metric-item">
-      <div class="metric-value">10</div>
+      <div class="metric-value">11</div>
       <div class="metric-label">Built-in Tools</div>
     </div>
     <div class="metric-item">
-      <div class="metric-value">14,000+</div>
-      <div class="metric-label">Lines of Code</div>
+      <div class="metric-value">3</div>
+      <div class="metric-label">Permission Tiers</div>
+    </div>
+    <div class="metric-item">
+      <div class="metric-value">100%</div>
+      <div class="metric-label">Test Coverage</div>
     </div>
   </div>
 </div>
@@ -46,34 +46,38 @@ hero:
 
 <div class="features-section fade-in-section">
   <div class="feature-block">
-    <div class="feature-icon">⚡</div>
+    <div class="feature-icon">&#x26A1;</div>
     <div class="feature-title">Single Binary Deployment</div>
-    <div class="feature-desc">Zero dependencies. One file runs everywhere — Linux, macOS, Windows. No runtime, no virtualenv, no node_modules.</div>
+    <div class="feature-desc">One `go install` and you're done. No runtime, no virtual environment, no node_modules. Runs everywhere Go compiles — Linux, macOS, Windows.</div>
     <div class="feature-tags">
       <span class="tag">Linux</span>
       <span class="tag">macOS</span>
       <span class="tag">Windows</span>
+      <span class="tag">go install</span>
     </div>
   </div>
 
   <div class="feature-block">
-    <div class="feature-icon">🔒</div>
+    <div class="feature-icon">&#x1F512;</div>
     <div class="feature-title">Harness-First Reliability</div>
-    <div class="feature-desc">Permission control, timeout protection, session persistence. The harness ensures safety so the model can focus on intelligence.</div>
+    <div class="feature-desc">Three-tier permission system with rule-based matching and session memory. Every tool call is validated before execution. The harness ensures safety so the model can focus on intelligence.</div>
     <div class="feature-tags">
       <span class="tag">3-Tier Permissions</span>
       <span class="tag">Glob Rules</span>
       <span class="tag">Session Memory</span>
+      <span class="tag">Path Validation</span>
     </div>
   </div>
 
   <div class="feature-block">
-    <div class="feature-icon">🔌</div>
-    <div class="feature-title">Extensible Ecosystem</div>
-    <div class="feature-desc">MCP protocol (Partial v0.3), Hooks, and Skills — extend with custom tools and integrate with your workflow.</div>
+    <div class="feature-icon">&#x1F50C;</div>
+    <div class="feature-title">Multi-Provider Ecosystem</div>
+    <div class="feature-desc">Native support for Anthropic, OpenAI, and OpenAI-compatible providers (DeepSeek, Qwen, GLM). Extensible via MCP protocol, Hooks, and Skills — integrate with your workflow.</div>
     <div class="feature-tags">
+      <span class="tag">Anthropic</span>
+      <span class="tag">OpenAI</span>
+      <span class="tag">DeepSeek</span>
       <span class="tag">MCP</span>
-      <span class="tag">Hooks</span>
       <span class="tag">Skills</span>
     </div>
   </div>
@@ -81,9 +85,9 @@ hero:
 
 <div class="architecture-section fade-in-section">
   <div class="feature-block">
-    <div class="feature-icon">🧠</div>
+    <div class="feature-icon">&#x1F9E0;</div>
     <div class="feature-title">Model Provides Intelligence</div>
-    <div class="feature-desc">The LLM handles: understanding intent, deciding which tool to use, interpreting results, and planning next steps. It's the brain of the system.</div>
+    <div class="feature-desc">The LLM handles: understanding intent, deciding which tool to use, interpreting results, and planning next steps. It's the brain of the system — reasoning, adapting, creating.</div>
     <div class="feature-tags">
       <span class="tag">Intent Understanding</span>
       <span class="tag">Tool Selection</span>
@@ -93,14 +97,14 @@ hero:
   </div>
 
   <div class="feature-block">
-    <div class="feature-icon">🛡️</div>
+    <div class="feature-icon">&#x1F6E1;</div>
     <div class="feature-title">Harness Provides Reliability</div>
     <div class="feature-desc">The runtime handles: permission control, timeout protection, output truncation, session persistence, and error recovery. It's the safety net that makes the system production-ready.</div>
     <div class="feature-tags">
       <span class="tag">Permission Control</span>
       <span class="tag">Timeout Protection</span>
-      <span class="tag">Output Truncation</span>
       <span class="tag">Session Persistence</span>
+      <span class="tag">Error Recovery</span>
     </div>
   </div>
 </div>
@@ -113,12 +117,12 @@ hero:
 
 | Feature | Description |
 |---------|-------------|
-| 🔄 Agent Loop | Autonomous "think → act → observe" cycle driven by stop_reason dispatch |
-| 🛠️ 10 Built-in Tools | Read, Write, Edit, Glob, Grep, Bash, Diff, Tree, WebFetch, TodoWrite |
-| 🔒 Permission System | Three-tier model with rule-based matching and session memory |
-| 🔌 MCP Integration (Partial v0.3) | Model Context Protocol with stdio transport, JSON-RPC, permission gates, and harness evidence |
-| 🌊 SSE Streaming | Real-time token-by-token with custom parser, zero dependencies |
-| 🧠 Context Management | Intelligent token estimation and automatic conversation compaction |
+| &#x1F504; Agent Loop | Autonomous "think &rarr; act &rarr; observe" cycle driven by `stop_reason` dispatch |
+| &#x1F6E0; 11 Built-in Tools | Read, Write, Edit, Glob, Grep, Bash, Diff, Tree, WebFetch, WebSearch, TodoWrite |
+| &#x1F512; Permission System | Three-tier model with rule-based matching, glob patterns, and session memory |
+| &#x1F50C; MCP Integration | Model Context Protocol with stdio transport, JSON-RPC, and permission gates |
+| &#x1F30A; SSE Streaming | Real-time token-by-token output with custom parser, zero external dependencies |
+| &#x1F9E0; Context Management | Intelligent token estimation and automatic conversation compaction |
 
 <div class="playground-section fade-in-section">
   <Playground />
@@ -126,102 +130,52 @@ hero:
 
 <div class="quick-start-section fade-in-section">
   <div class="quick-start-header">
-    <h2 class="quick-start-title">🚀 5 Minutes to Get Started</h2>
+    <h2 class="quick-start-title">5 Minutes to Get Started</h2>
     <p class="quick-start-subtitle">Three simple steps to start coding with AI assistance</p>
   </div>
   <div class="quick-start-steps">
     <div class="quick-start-step">
       <div class="step-number">1</div>
       <div class="step-title">Install</div>
-      <div class="step-desc">One command installation with <code>go install</code>. No dependencies needed.</div>
+      <div class="step-desc">One command: <code>go install</code>. Zero dependencies, zero configuration needed.</div>
     </div>
     <div class="quick-start-step">
       <div class="step-number">2</div>
       <div class="step-title">Configure</div>
-      <div class="step-desc">Set your API key. Support for Anthropic, OpenAI, and compatible providers.</div>
+      <div class="step-desc">Set your API key. Anthropic, OpenAI, DeepSeek, and more — choose your provider.</div>
     </div>
     <div class="quick-start-step">
       <div class="step-number">3</div>
-      <div class="step-title">Start Coding</div>
-      <div class="step-desc">Launch go-code and start building. The agent handles the rest.</div>
+      <div class="step-title">Start Building</div>
+      <div class="step-desc">Launch <code>go-code</code> and start building. The agent understands your codebase and gets to work.</div>
     </div>
   </div>
 </div>
 
-## Choose Your Role
+## Choose Your Path
 
 <div class="role-cards">
   <a href="/guide/quick-start" class="role-card">
-    <div class="role-icon">👨‍💻</div>
+    <div class="role-icon">&#x1F468;&#x200D;&#x1F4BB;</div>
     <div class="role-title">Full-stack Developer</div>
-    <div class="role-desc">Build real applications with hands-on guides. From REPL to production, learn by doing.</div>
-    <div class="role-link">Quick start guide →</div>
+    <div class="role-desc">Build real applications with hands-on guides. From your first tool call to production-ready code, learn by doing.</div>
+    <div class="role-link">Quick start guide &rarr;</div>
   </a>
 
   <a href="/architecture/overview" class="role-card">
-    <div class="role-icon">🏗️</div>
+    <div class="role-icon">&#x1F3D7;</div>
     <div class="role-title">Architect</div>
-    <div class="role-desc">Deep dive into the agent loop, tool registry, and permission system. Design extensible systems.</div>
-    <div class="role-link">Architecture deep dive →</div>
+    <div class="role-desc">Deep dive into the agent loop, tool registry, and permission system. Design extensible, safe AI systems.</div>
+    <div class="role-link">Architecture deep dive &rarr;</div>
   </a>
 
   <a href="/guide/introduction" class="role-card">
-    <div class="role-icon">🎓</div>
-    <div class="role-title">Student</div>
-    <div class="role-desc">Learn the core principles: how AI agents reason, plan, and execute tools safely.</div>
-    <div class="role-link">Learn the principles →</div>
+    <div class="role-icon">&#x1F393;</div>
+    <div class="role-title">Learner</div>
+    <div class="role-desc">Understand the core principles: how AI agents reason, plan, and execute tools safely. Start from zero.</div>
+    <div class="role-link">Learn the principles &rarr;</div>
   </a>
 </div>
-
-<style>
-.role-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin: 2rem 0;
-}
-
-.role-card {
-  display: block;
-  padding: 1.5rem;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 12px;
-  background: var(--vp-c-bg-soft);
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.role-card:hover {
-  border-color: var(--vp-c-brand);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-}
-
-.role-icon {
-  font-size: 2.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.role-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
-  margin-bottom: 0.5rem;
-}
-
-.role-desc {
-  font-size: 0.9rem;
-  color: var(--vp-c-text-2);
-  line-height: 1.5;
-  margin-bottom: 1rem;
-}
-
-.role-link {
-  font-size: 0.85rem;
-  color: var(--vp-c-brand);
-  font-weight: 500;
-}
-</style>
 
 ## Why Go?
 
@@ -229,9 +183,9 @@ hero:
 
 | Feature | Go | Python | Rust | TypeScript |
 |---------|-----|--------|------|------------|
-| **Single binary** | ✅ | ❌ | ✅ | ❌ |
-| **Zero runtime deps** | ✅ | ❌ | ✅ | ❌ |
-| **Concurrency** | ✅ Goroutines | ❌ asyncio | ✅ async/await | ✅ event loop |
+| **Single binary** | &#x2705; | &#x274C; | &#x2705; | &#x274C; |
+| **Zero runtime deps** | &#x2705; | &#x274C; | &#x2705; | &#x274C; |
+| **Built-in concurrency** | &#x2705; Goroutines | &#x274C; asyncio | &#x2705; async/await | &#x2705; event loop |
 | **Deployment** | `go install` | `pip install` | `cargo build` | `npm install` |
 | **Learning curve** | Moderate | Easy | Steep | Moderate |
 
@@ -258,8 +212,8 @@ chmod +x go-code
 ```
 :::
 
-Then set your API key and start:
+Set your API key and start coding:
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
+export GO_CODE_API_KEY=sk-ant-...
 ./go-code
 ```
