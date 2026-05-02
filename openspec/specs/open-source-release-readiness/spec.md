@@ -1,8 +1,6 @@
 ## Purpose
 Define the release-readiness bar for an open-source project, including CI gates, reproducible artifacts, contribution paths, and roadmap clarity.
-
 ## Requirements
-
 ### Requirement: CI gates release-quality changes
 The project SHALL run formatting, vet/static checks, Go tests, harness tests, docs build, and OpenSpec validation in CI.
 
@@ -30,3 +28,17 @@ The project MUST maintain a roadmap that separates now, next, later, and not-pla
 #### Scenario: Unsupported feature request
 - **WHEN** users ask for a feature outside the current scope
 - **THEN** maintainers can point to roadmap status and acceptance criteria
+
+### Requirement: Install smoke test gates published versions
+The project MUST run an install smoke test for the target release artifact before publishing or recommending a version.
+
+#### Scenario: Binary is built for release
+- **WHEN** a release binary or package is produced
+- **THEN** the smoke test verifies installation, `--help`, doctor or offline status, and one deterministic non-provider command
+
+### Requirement: Release checklist includes spec and docs validation
+The release checklist SHALL include strict OpenSpec validation, docs truth checks, harness gate status, and known-risk notes.
+
+#### Scenario: Release checklist is incomplete
+- **WHEN** required validation evidence is missing
+- **THEN** the release is not marked ready

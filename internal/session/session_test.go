@@ -1,6 +1,8 @@
 package session
 
 import (
+	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -329,5 +331,85 @@ func TestTraceRedactsSecretsInStoredOutputAndReplay(t *testing.T) {
 		if strings.Contains(replay, leaked) {
 			t.Fatalf("replay leaked secret %q:\n%s", leaked, replay)
 		}
+	}
+}
+
+func TestTraceEventsUseVersionedEnvelopeAndRedactionStatus(t *testing.T) {
+	sessionFile := filepath.Join(t.TempDir(), "session-versioned.jsonl")
+
+	if err := AppendTracePermission(sessionFile, "Bash", "Deny", "Authorization: Bearer secret-token"); err != nil {
+		t.Fatalf("failed to append permission: %v", err)
+	}
+
+	raw, err := os.ReadFile(sessionFile)
+	if err != nil {
+		t.Fatalf("failed to read trace file: %v", err)
+	}
+
+	var line map[string]any
+	if err := json.Unmarshal(bytes.TrimSpace(raw), &line); err != nil {
+		t.Fatalf("failed to decode trace line: %v\n%s", err, raw)
+	}
+
+	if line["schema_version"] != "trace.v1" {
+		t.Fatalf("schema_version = %#v, want trace.v1 in %s", line["schema_version"], raw)
+	}
+	if line["redaction_status"] != "applied" {
+		t.Fatalf("redaction_status = %#v, want applied in %s", line["redaction_status"], raw)
+	}
+	if strings.Contains(string(raw), "secret-token") {
+		t.Fatalf("trace leaked secret token:\n%s", raw)
+	}
+}
+
+func TestTracePermissionIncludesReasonCode(t *testing.T) {
+	sessionFile := filepath.Join(t.TempDir(), "session-permission-reason.jsonl")
+
+	if err := AppendTracePermissionWithReason(sessionFile, "Write", "Deny", "notes.md", "insufficient_mode"); err != nil {
+		t.Fatalf("failed to append permission: %v", err)
+	}
+
+	raw, err := os.ReadFile(sessionFile)
+	if err != nil {
+		t.Fatalf("failed to read trace file: %v", err)
+	}
+	var line map[string]any
+	if err := json.Unmarshal(bytes.TrimSpace(raw), &line); err != nil {
+		t.Fatalf("failed to decode trace line: %v\n%s", err, raw)
+	}
+	if line["reason"] != "insufficient_mode" {
+		t.Fatalf("reason = %#v, want insufficient_mode in %s", line["reason"], raw)
+	}
+}
+
+func TestAppendTraceRuntimeIncludesRequestIDAndEventSubtype(t *testing.T) {
+	sessionFile := filepath.Join(t.TempDir(), "session-runtime.jsonl")
+
+	if err := AppendTraceRuntime(sessionFile, "req-123", "request_cancelled", "Authorization: Bearer runtime-token"); err != nil {
+		t.Fatalf("failed to append runtime event: %v", err)
+	}
+
+	raw, err := os.ReadFile(sessionFile)
+	if err != nil {
+		t.Fatalf("failed to read trace file: %v", err)
+	}
+	var line map[string]any
+	if err := json.Unmarshal(bytes.TrimSpace(raw), &line); err != nil {
+		t.Fatalf("failed to decode trace line: %v\n%s", err, raw)
+	}
+
+	for key, want := range map[string]any{
+		"type":             "runtime",
+		"schema_version":   "trace.v1",
+		"redaction_status": "applied",
+		"request_id":       "req-123",
+		"event":            "request_cancelled",
+	} {
+		if line[key] != want {
+			t.Fatalf("%s = %#v, want %#v in %s", key, line[key], want, raw)
+		}
+	}
+	if strings.Contains(string(raw), "runtime-token") {
+		t.Fatalf("runtime trace leaked token:\n%s", raw)
 	}
 }

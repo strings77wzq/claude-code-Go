@@ -3,6 +3,7 @@ package skills
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -189,6 +190,25 @@ func TestLoadSkillsWithWarnings(t *testing.T) {
 	}
 	if !foundReasons["missing required field \"name\""] {
 		t.Error("expected warning for missing name field")
+	}
+}
+
+func TestSkillWarningsDiagnostics(t *testing.T) {
+	warnings := []SkillWarning{{
+		File:   "bad.json",
+		Reason: "invalid JSON: token=secret-token",
+	}}
+
+	diagnostics := SkillWarningsDiagnostics(warnings)
+
+	if len(diagnostics) != 1 {
+		t.Fatalf("expected one diagnostic, got %#v", diagnostics)
+	}
+	if diagnostics[0].Component != "skills" || diagnostics[0].Code != "skills.invalid" {
+		t.Fatalf("unexpected diagnostic: %#v", diagnostics[0])
+	}
+	if strings.Contains(diagnostics[0].Format(), "secret-token") {
+		t.Fatalf("diagnostic leaked secret: %s", diagnostics[0].Format())
 	}
 }
 

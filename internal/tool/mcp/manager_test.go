@@ -5,9 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/strings77wzq/claude-code-Go/internal/permission"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
@@ -141,6 +143,53 @@ func TestStdioTransportNotStartedAndClosedErrors(t *testing.T) {
 	}
 	if err := transport.Close(); err != nil {
 		t.Fatalf("second Close returned error: %v", err)
+	}
+}
+
+func TestStdioTransportReadResponseContextTimesOut(t *testing.T) {
+	reader, writer := io.Pipe()
+	defer writer.Close()
+
+	transport := &StdioTransport{
+		stdout: bufio.NewReader(reader),
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+
+	_, err := transport.ReadResponseContext(ctx)
+	if err == nil {
+		t.Fatal("expected context timeout")
+	}
+	if !strings.Contains(err.Error(), "context deadline exceeded") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestMcpClientListToolsContextTimesOut(t *testing.T) {
+	stdinReader, stdinWriter, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer stdinReader.Close()
+	defer stdinWriter.Close()
+
+	stdoutReader, stdoutWriter := io.Pipe()
+	defer stdoutWriter.Close()
+
+	transport := &StdioTransport{
+		stdin:  stdinWriter,
+		stdout: bufio.NewReader(stdoutReader),
+	}
+	client := NewMcpClient(transport)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+
+	_, err = client.ListToolsContext(ctx)
+	if err == nil {
+		t.Fatal("expected list tools timeout")
+	}
+	if !strings.Contains(err.Error(), "context deadline exceeded") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

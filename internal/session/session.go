@@ -55,136 +55,192 @@ type messageLine struct {
 
 // traceRequestLine is the JSONL line type for API request traces.
 type traceRequestLine struct {
-	Type          string `json:"type"`
-	Model         string `json:"model"`
-	MessagesCount int    `json:"messages_count"`
-	Timestamp     int64  `json:"timestamp_ms"`
+	SchemaVersion   string `json:"schema_version"`
+	RedactionStatus string `json:"redaction_status"`
+	Type            string `json:"type"`
+	Model           string `json:"model"`
+	MessagesCount   int    `json:"messages_count"`
+	Timestamp       int64  `json:"timestamp_ms"`
 }
 
 // traceResponseLine is the JSONL line type for API response traces.
 type traceResponseLine struct {
-	Type         string `json:"type"`
-	StopReason   string `json:"stop_reason"`
-	InputTokens  int    `json:"input_tokens"`
-	OutputTokens int    `json:"output_tokens"`
-	Timestamp    int64  `json:"timestamp_ms"`
+	SchemaVersion   string `json:"schema_version"`
+	RedactionStatus string `json:"redaction_status"`
+	Type            string `json:"type"`
+	StopReason      string `json:"stop_reason"`
+	InputTokens     int    `json:"input_tokens"`
+	OutputTokens    int    `json:"output_tokens"`
+	Timestamp       int64  `json:"timestamp_ms"`
 }
 
 // traceToolLine is the JSONL line type for tool execution traces.
 type traceToolLine struct {
-	Type       string      `json:"type"`
-	Name       string      `json:"name"`
-	Input      interface{} `json:"input"`
-	Output     string      `json:"output"`
-	DurationMs int64       `json:"duration_ms"`
-	Timestamp  int64       `json:"timestamp_ms"`
+	SchemaVersion   string      `json:"schema_version"`
+	RedactionStatus string      `json:"redaction_status"`
+	Type            string      `json:"type"`
+	Name            string      `json:"name"`
+	Input           interface{} `json:"input"`
+	Output          string      `json:"output"`
+	DurationMs      int64       `json:"duration_ms"`
+	Timestamp       int64       `json:"timestamp_ms"`
 }
 
 // traceErrorLine is the JSONL line type for error traces.
 type traceErrorLine struct {
-	Type      string `json:"type"`
-	Message   string `json:"message"`
-	Timestamp int64  `json:"timestamp_ms"`
+	SchemaVersion   string `json:"schema_version"`
+	RedactionStatus string `json:"redaction_status"`
+	Type            string `json:"type"`
+	Message         string `json:"message"`
+	Timestamp       int64  `json:"timestamp_ms"`
 }
 
 // tracePermissionLine is the JSONL line type for permission decisions.
 type tracePermissionLine struct {
-	Type      string `json:"type"`
-	Tool      string `json:"tool"`
-	Decision  string `json:"decision"`
-	Summary   string `json:"summary"`
-	Timestamp int64  `json:"timestamp_ms"`
+	SchemaVersion   string `json:"schema_version"`
+	RedactionStatus string `json:"redaction_status"`
+	Type            string `json:"type"`
+	Tool            string `json:"tool"`
+	Decision        string `json:"decision"`
+	Summary         string `json:"summary"`
+	Reason          string `json:"reason,omitempty"`
+	Timestamp       int64  `json:"timestamp_ms"`
 }
 
 type traceStatusLine struct {
-	Type         string `json:"type"`
-	Status       string `json:"status"`
-	TurnCount    int    `json:"turn_count"`
-	InputTokens  int    `json:"input_tokens"`
-	OutputTokens int    `json:"output_tokens"`
-	Timestamp    int64  `json:"timestamp_ms"`
+	SchemaVersion   string `json:"schema_version"`
+	RedactionStatus string `json:"redaction_status"`
+	Type            string `json:"type"`
+	Status          string `json:"status"`
+	TurnCount       int    `json:"turn_count"`
+	InputTokens     int    `json:"input_tokens"`
+	OutputTokens    int    `json:"output_tokens"`
+	Timestamp       int64  `json:"timestamp_ms"`
+}
+
+type traceRuntimeLine struct {
+	SchemaVersion   string `json:"schema_version"`
+	RedactionStatus string `json:"redaction_status"`
+	Type            string `json:"type"`
+	RequestID       string `json:"request_id,omitempty"`
+	Event           string `json:"event"`
+	Summary         string `json:"summary,omitempty"`
+	Timestamp       int64  `json:"timestamp_ms"`
 }
 
 type traceExtensionLine map[string]interface{}
 
 const redactedMarker = "[REDACTED]"
+const traceSchemaVersion = "trace.v1"
 
 var (
 	bearerSecretPattern = regexp.MustCompile(`(?i)bearer\s+[A-Za-z0-9._~+/=-]+`)
 	apiKeyPattern       = regexp.MustCompile(`sk-[A-Za-z0-9][A-Za-z0-9._-]{8,}`)
+	tokenLikePattern    = regexp.MustCompile(`(?i)\b(api[_-]?key|authorization|password|secret|token)[_:=.-][A-Za-z0-9._~+/=-]+`)
 )
 
 // AppendTraceRequest appends a request trace line to the session file.
 func AppendTraceRequest(filepath, model string, messagesCount int) error {
 	return appendTraceLine(filepath, traceRequestLine{
-		Type:          "request",
-		Model:         model,
-		MessagesCount: messagesCount,
-		Timestamp:     time.Now().UnixMilli(),
+		SchemaVersion:   traceSchemaVersion,
+		RedactionStatus: "applied",
+		Type:            "request",
+		Model:           model,
+		MessagesCount:   messagesCount,
+		Timestamp:       time.Now().UnixMilli(),
 	})
 }
 
 // AppendTraceResponse appends a response trace line to the session file.
 func AppendTraceResponse(filepath, stopReason string, inputTokens, outputTokens int) error {
 	return appendTraceLine(filepath, traceResponseLine{
-		Type:         "response",
-		StopReason:   stopReason,
-		InputTokens:  inputTokens,
-		OutputTokens: outputTokens,
-		Timestamp:    time.Now().UnixMilli(),
+		SchemaVersion:   traceSchemaVersion,
+		RedactionStatus: "applied",
+		Type:            "response",
+		StopReason:      stopReason,
+		InputTokens:     inputTokens,
+		OutputTokens:    outputTokens,
+		Timestamp:       time.Now().UnixMilli(),
 	})
 }
 
 // AppendTraceTool appends a tool execution trace line to the session file.
 func AppendTraceTool(filepath, name string, input interface{}, output string, durationMs int64) error {
 	return appendTraceLine(filepath, traceToolLine{
-		Type:       "tool",
-		Name:       name,
-		Input:      input,
-		Output:     output,
-		DurationMs: durationMs,
-		Timestamp:  time.Now().UnixMilli(),
+		SchemaVersion:   traceSchemaVersion,
+		RedactionStatus: "applied",
+		Type:            "tool",
+		Name:            name,
+		Input:           input,
+		Output:          output,
+		DurationMs:      durationMs,
+		Timestamp:       time.Now().UnixMilli(),
 	})
 }
 
 // AppendTraceError appends an error trace line to the session file.
 func AppendTraceError(filepath, message string) error {
 	return appendTraceLine(filepath, traceErrorLine{
-		Type:      "error",
-		Message:   message,
-		Timestamp: time.Now().UnixMilli(),
+		SchemaVersion:   traceSchemaVersion,
+		RedactionStatus: "applied",
+		Type:            "error",
+		Message:         message,
+		Timestamp:       time.Now().UnixMilli(),
 	})
 }
 
 // AppendTracePermission appends a permission decision trace line to the session file.
 func AppendTracePermission(filepath, toolName, decision, summary string) error {
+	return AppendTracePermissionWithReason(filepath, toolName, decision, summary, "")
+}
+
+func AppendTracePermissionWithReason(filepath, toolName, decision, summary, reason string) error {
 	return appendTraceLine(filepath, tracePermissionLine{
-		Type:      "permission",
-		Tool:      toolName,
-		Decision:  decision,
-		Summary:   summary,
-		Timestamp: time.Now().UnixMilli(),
+		SchemaVersion:   traceSchemaVersion,
+		RedactionStatus: "applied",
+		Type:            "permission",
+		Tool:            toolName,
+		Decision:        decision,
+		Summary:         summary,
+		Reason:          reason,
+		Timestamp:       time.Now().UnixMilli(),
 	})
 }
 
 func AppendTraceStatus(filepath, status string, turnCount, inputTokens, outputTokens int) error {
 	return appendTraceLine(filepath, traceStatusLine{
-		Type:         "status",
-		Status:       status,
-		TurnCount:    turnCount,
-		InputTokens:  inputTokens,
-		OutputTokens: outputTokens,
-		Timestamp:    time.Now().UnixMilli(),
+		SchemaVersion:   traceSchemaVersion,
+		RedactionStatus: "applied",
+		Type:            "status",
+		Status:          status,
+		TurnCount:       turnCount,
+		InputTokens:     inputTokens,
+		OutputTokens:    outputTokens,
+		Timestamp:       time.Now().UnixMilli(),
+	})
+}
+
+func AppendTraceRuntime(filepath, requestID, event, summary string) error {
+	return appendTraceLine(filepath, traceRuntimeLine{
+		SchemaVersion:   traceSchemaVersion,
+		RedactionStatus: "applied",
+		Type:            "runtime",
+		RequestID:       requestID,
+		Event:           event,
+		Summary:         summary,
+		Timestamp:       time.Now().UnixMilli(),
 	})
 }
 
 func AppendTraceExtension(filepath, name, event, status string, fields map[string]interface{}) error {
 	line := traceExtensionLine{
-		"type":         "extension",
-		"name":         name,
-		"event":        event,
-		"status":       status,
-		"timestamp_ms": time.Now().UnixMilli(),
+		"schema_version":   traceSchemaVersion,
+		"redaction_status": "applied",
+		"type":             "extension",
+		"name":             name,
+		"event":            event,
+		"status":           status,
+		"timestamp_ms":     time.Now().UnixMilli(),
 	}
 	for key, value := range fields {
 		line[key] = value
@@ -289,6 +345,7 @@ func redactTraceString(value string) string {
 		return redactedMarker
 	})
 	value = apiKeyPattern.ReplaceAllString(value, redactedMarker)
+	value = tokenLikePattern.ReplaceAllString(value, redactedMarker)
 	return value
 }
 
@@ -450,7 +507,7 @@ func LoadSession(filepath string) (*Session, []SessionMessage, error) {
 				session.EndTime = time.UnixMilli(status.Timestamp)
 			}
 
-		case "request", "response", "tool", "permission", "extension", "error":
+		case "request", "response", "tool", "permission", "extension", "runtime", "error":
 			continue
 
 		default:

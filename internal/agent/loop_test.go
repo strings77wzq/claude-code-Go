@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/strings77wzq/claude-code-Go/internal/api"
 	"github.com/strings77wzq/claude-code-Go/internal/permission"
@@ -105,6 +106,7 @@ type mockTool struct {
 	result      tool.Result
 	requires    bool
 	calls       int
+	panicMsg    string
 }
 
 func (m *mockTool) Name() string                { return m.name }
@@ -116,6 +118,9 @@ func (m *mockTool) RequiredPermissionLevel() permission.PermissionLevel {
 }
 func (m *mockTool) Execute(ctx context.Context, input map[string]any) tool.Result {
 	m.calls++
+	if m.panicMsg != "" {
+		panic(m.panicMsg)
+	}
 	return m.result
 }
 
@@ -362,6 +367,136 @@ func TestAgent_DeniedToolReturnsStructuredResultWithoutExecuting(t *testing.T) {
 	}
 	if !strings.Contains(results[0].Text, "Permission denied") {
 		t.Fatalf("expected permission denial text, got %q", results[0].Text)
+	}
+}
+
+func TestAgent_PermissionTraceIncludesReasonCode(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	mockTool := &mockTool{
+		name:        "Write",
+		description: "A test write tool",
+		inputSchema: map[string]any{"type": "object"},
+		result:      tool.Success("should not execute"),
+		requires:    true,
+	}
+	toolRegistry := newMockToolRegistry()
+	toolRegistry.registerTool(mockTool)
+
+	policy := permission.NewPolicy(permission.ReadOnly)
+	policy.SetToolRequirement("Write", permission.WorkspaceWrite)
+
+	agent := NewAgent(&mockApiClient{}, toolRegistry, policy, "You are helpful.", "test-model")
+	agent.sessionID = "sess_permission_reason"
+	agent.startTime = time.Now()
+	agent.initTraceFile()
+	results := agent.executeTools(context.Background(), []api.ContentBlock{
+		{Type: "tool_use", ID: "toolu_denied", Name: "Write", Input: map[string]any{"file_path": "x.txt"}},
+	})
+	if len(results) != 1 || !results[0].IsError {
+		t.Fatalf("expected denied tool result, got %#v", results)
+	}
+
+	trace, err := os.ReadFile(agent.TraceFilePath())
+	if err != nil {
+		t.Fatalf("failed to read trace file: %v", err)
+	}
+	if !strings.Contains(string(trace), `"reason":"insufficient_mode"`) {
+		t.Fatalf("expected permission reason in trace:\n%s", trace)
+	}
+}
+
+func TestAgent_RunCancelledContextSavesCancelledStatus(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	apiClient := &mockApiClient{
+		sendFunc: func(ctx context.Context, req *api.ApiRequest, onTextDelta func(text string)) (*api.ApiResponse, error) {
+			<-ctx.Done()
+			return nil, ctx.Err()
+		},
+	}
+	agent := NewAgent(apiClient, newMockToolRegistry(), newMockPermissionPolicy(), "You are helpful.", "test-model")
+
+	_, err := agent.Run(ctx, "cancel this", nil)
+	if err == nil {
+		t.Fatal("expected cancelled run to return an error")
+	}
+
+	trace, readErr := os.ReadFile(agent.TraceFilePath())
+	if readErr != nil {
+		t.Fatalf("failed to read trace file: %v", readErr)
+	}
+	if !strings.Contains(string(trace), `"status":"cancelled"`) {
+		t.Fatalf("expected cancelled terminal status in trace:\n%s", trace)
+	}
+	if !strings.Contains(string(trace), `"type":"runtime"`) || !strings.Contains(string(trace), `"event":"request_cancelled"`) {
+		t.Fatalf("expected cancelled runtime event in trace:\n%s", trace)
+	}
+}
+
+func TestAgent_TraceIncludesRecoveredToolPanic(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	panicTool := &mockTool{
+		name:        "panic_tool",
+		description: "A panic tool",
+		inputSchema: map[string]any{"type": "object"},
+		requires:    false,
+		panicMsg:    "secret-token should be redacted",
+	}
+	registry := tool.NewRegistry()
+	if err := registry.Register(panicTool); err != nil {
+		t.Fatalf("Register failed: %v", err)
+	}
+
+	firstCall := true
+	apiClient := &mockApiClient{
+		sendFunc: func(ctx context.Context, req *api.ApiRequest, onTextDelta func(text string)) (*api.ApiResponse, error) {
+			defer func() { firstCall = false }()
+			if firstCall {
+				return &api.ApiResponse{
+					ID:   "test-id",
+					Type: "message",
+					Role: "assistant",
+					Content: []api.ContentBlock{
+						{Type: "tool_use", ID: "toolu_panic", Name: "panic_tool", Input: map[string]any{"token": "secret-token"}},
+					},
+					Model:      "test-model",
+					StopReason: "tool_use",
+				}, nil
+			}
+			return &api.ApiResponse{
+				ID:         "test-id-2",
+				Type:       "message",
+				Role:       "assistant",
+				Content:    []api.ContentBlock{{Type: "text", Text: "recovered"}},
+				Model:      "test-model",
+				StopReason: "end_turn",
+			}, nil
+		},
+	}
+
+	agent := NewAgent(apiClient, registry, newMockPermissionPolicy(), "You are helpful.", "test-model")
+	if _, err := agent.Run(context.Background(), "use panic tool", nil); err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+
+	trace, err := os.ReadFile(agent.TraceFilePath())
+	if err != nil {
+		t.Fatalf("failed to read trace file: %v", err)
+	}
+	traceText := string(trace)
+	if !strings.Contains(traceText, "panic recovered") || !strings.Contains(traceText, `"name":"panic_tool"`) {
+		t.Fatalf("expected recovered panic tool trace:\n%s", traceText)
+	}
+	if !strings.Contains(traceText, `"type":"runtime"`) || !strings.Contains(traceText, `"event":"tool_panic_recovered"`) {
+		t.Fatalf("expected recovered panic runtime event:\n%s", traceText)
+	}
+	if strings.Contains(traceText, "secret-token") {
+		t.Fatalf("trace leaked panic/input secret:\n%s", traceText)
 	}
 }
 

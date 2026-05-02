@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -320,5 +322,112 @@ func TestModel_RunAgentCommandReturnsAgentMessage(t *testing.T) {
 	case streamMsg, doneMsg:
 	default:
 		t.Fatalf("expected stream or done message, got %#v", msg)
+	}
+}
+
+func TestModel_RunAgentContextLivesUntilAgentCompletes(t *testing.T) {
+	agent := &mockAgent{
+		runFunc: func(ctx context.Context, userInput string, onTextDelta func(text string)) (string, error) {
+			if err := ctx.Err(); err != nil {
+				return "", err
+			}
+			return "done", nil
+		},
+	}
+	m := NewModel(agent, "v0.2.0", "test-provider", "test-model", false)
+
+	cmd := m.runAgent("hello")
+	batch, ok := cmd().(tea.BatchMsg)
+	if !ok || len(batch) != 2 {
+		t.Fatalf("expected batch with spinner and agent command, got %#v", batch)
+	}
+
+	msg := batch[1]()
+	if _, ok := msg.(doneMsg); !ok {
+		t.Fatalf("expected context to remain live until agent completion, got %#v", msg)
+	}
+}
+
+func TestModel_StreamMessageKeepsDrainingUntilDone(t *testing.T) {
+	agent := &mockAgent{
+		runFunc: func(ctx context.Context, userInput string, onTextDelta func(text string)) (string, error) {
+			onTextDelta("partial")
+			return "done", nil
+		},
+	}
+	m := NewModel(agent, "v0.2.0", "test-provider", "test-model", false)
+	m.input.SetValue("hello")
+
+	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	got := updated.(model)
+	batch := cmd().(tea.BatchMsg)
+
+	first := batch[1]()
+	stream, ok := first.(streamMsg)
+	if !ok {
+		t.Fatalf("first agent message = %#v, want streamMsg", first)
+	}
+
+	updated, nextCmd := got.Update(stream)
+	got = updated.(model)
+	if nextCmd == nil {
+		t.Fatal("expected stream handling to keep draining the agent command")
+	}
+
+	second := nextCmd()
+	done, ok := second.(doneMsg)
+	if !ok {
+		t.Fatalf("second agent message = %#v, want doneMsg", second)
+	}
+
+	updated, _ = got.Update(done)
+	got = updated.(model)
+	if got.isLoading {
+		t.Fatal("expected done message to stop loading")
+	}
+	if len(got.messages) != 2 || got.messages[1].content != "partial" {
+		t.Fatalf("expected streamed assistant message to be committed, got %#v", got.messages)
+	}
+}
+
+func TestModel_QuitCancelsActiveRequestAndIgnoresLateOutput(t *testing.T) {
+	var cancelled atomic.Bool
+	agent := &mockAgent{
+		runFunc: func(ctx context.Context, userInput string, onTextDelta func(text string)) (string, error) {
+			<-ctx.Done()
+			cancelled.Store(true)
+			return "", ctx.Err()
+		},
+	}
+	m := NewModel(agent, "v0.2.0", "test-provider", "test-model", false)
+	m.input.SetValue("hello")
+
+	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	got := updated.(model)
+	if cmd == nil || got.activeCancel == nil || got.activeRequestID == "" {
+		t.Fatalf("expected active request state after enter: %#v", got)
+	}
+	requestID := got.activeRequestID
+	batch := cmd().(tea.BatchMsg)
+	done := make(chan tea.Msg, 1)
+	go func() {
+		done <- batch[1]()
+	}()
+
+	updated, _ = got.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
+	got = updated.(model)
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("agent command did not observe cancellation")
+	}
+	if !cancelled.Load() {
+		t.Fatal("expected ctrl-c to cancel active request")
+	}
+
+	updated, _ = got.Update(streamMsg{requestID: requestID, text: "late"})
+	got = updated.(model)
+	if got.streamBuffer != "" {
+		t.Fatalf("expected late output after cancellation to be ignored, got %q", got.streamBuffer)
 	}
 }

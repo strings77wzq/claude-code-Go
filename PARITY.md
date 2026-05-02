@@ -29,9 +29,9 @@ This matrix tracks Claude Code-style workflow parity for `claude-code-Go`. Statu
 | IDE extension | unsupported | Roadmap mentions future IDE integration. | Not part of current implementation scope. |
 | Cloud/team collaboration | unsupported | Future concept only. | Not part of current implementation scope. |
 
-## v0.2 Mandatory Workflows — All Verified
+## v0.3 Mandatory Workflows — All Verified
 
-The following workflows are verified for the v0.2 release:
+The following workflows are verified for the v0.3 release:
 
 1. `go-code doctor` reports actionable local readiness. — **verified** (`go-code doctor --offline` passes binary, tools, session, docs checks; 2026-04-30)
 2. `go-code -p "..."` returns visible text and JSON output in deterministic harness tests. — **verified** (harness/test_scenarios.py; 2026-04-30)

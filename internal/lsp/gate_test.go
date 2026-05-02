@@ -30,6 +30,17 @@ func TestLSPGateUnavailable(t *testing.T) {
 	}
 }
 
+func TestLSPGateDiagnosticUnavailable(t *testing.T) {
+	diag := NewLSPGate("").Diagnostic()
+
+	if diag.Component != "lsp" || diag.Code != "lsp.unavailable" {
+		t.Fatalf("unexpected diagnostic: %#v", diag)
+	}
+	if diag.Severity != "WARN" {
+		t.Fatalf("severity = %s, want WARN", diag.Severity)
+	}
+}
+
 func TestLSPGateConfigured(t *testing.T) {
 	// Configured gate reports available (health depends on server reachability)
 	gate := NewLSPGate("http://localhost:8080/lsp")

@@ -102,7 +102,7 @@ func (p *TerminalPrompter) printPrompt(toolName string, detail string) {
 type DefaultPrompter struct{}
 
 func (p *DefaultPrompter) Decide(toolName string, input map[string]any, reason string) Decision {
-	return Ask
+	return Deny
 }
 
 func NewDefaultPrompter() *DefaultPrompter {

@@ -14,15 +14,18 @@ import (
 )
 
 type streamMsg struct {
-	text string
+	requestID string
+	text      string
 }
 
 type doneMsg struct {
-	result string
+	requestID string
+	result    string
 }
 
 type errorMsg struct {
-	err error
+	requestID string
+	err       error
 }
 
 type message struct {
@@ -31,26 +34,40 @@ type message struct {
 }
 
 type connectionStatusMsg struct {
+	requestID  string
 	text       string
 	elapsedStr string
 }
 
+type agentRunEvents struct {
+	requestID string
+	stream    <-chan streamMsg
+	done      <-chan doneMsg
+	errs      <-chan errorMsg
+	startTime time.Time
+	ticker    *time.Ticker
+}
+
 type model struct {
-	messages      []message
-	input         textinput.Model
-	spinner       spinner.Model
-	isLoading     bool
-	streamBuffer  string
-	connectionMsg string
-	elapsedTime   string
-	provider      string
-	modelName     string
-	version       string
-	quitting      bool
-	agent         AgentInterface
-	debug         bool
-	latency       time.Duration
-	tokenUsage    TokenUsage
+	messages        []message
+	input           textinput.Model
+	spinner         spinner.Model
+	isLoading       bool
+	streamBuffer    string
+	connectionMsg   string
+	elapsedTime     string
+	provider        string
+	modelName       string
+	version         string
+	quitting        bool
+	agent           AgentInterface
+	debug           bool
+	latency         time.Duration
+	tokenUsage      TokenUsage
+	activeCancel    context.CancelFunc
+	activeRequestID string
+	activeEvents    *agentRunEvents
+	nextRequestSeq  int
 }
 
 type TokenUsage struct {
@@ -107,6 +124,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyCtrlD:
+			if m.activeCancel != nil {
+				m.activeCancel()
+				m.activeCancel = nil
+				m.activeEvents = nil
+				m.activeRequestID = ""
+				m.isLoading = false
+				m.streamBuffer = ""
+			}
 			m.quitting = true
 			return m, tea.Quit
 		case tea.KeyEnter:
@@ -117,16 +142,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case streamMsg:
+		if msg.requestID != "" && msg.requestID != m.activeRequestID {
+			return m, nil
+		}
 		m.streamBuffer += msg.text
 		m.connectionMsg = ""
-		return m, nil
+		return m, m.waitAgent()
 
 	case connectionStatusMsg:
+		if msg.requestID != "" && msg.requestID != m.activeRequestID {
+			return m, nil
+		}
 		m.connectionMsg = msg.text
 		m.elapsedTime = msg.elapsedStr
-		return m, nil
+		return m, m.waitAgent()
 
 	case doneMsg:
+		if msg.requestID != "" && msg.requestID != m.activeRequestID {
+			return m, nil
+		}
 		if m.streamBuffer != "" {
 			m.messages = append(m.messages, message{role: "assistant", content: m.streamBuffer})
 		} else if msg.result != "" {
@@ -135,9 +169,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.streamBuffer = ""
 		m.isLoading = false
 		m.elapsedTime = ""
+		m.finishActiveRequest()
 		return m, nil
 
 	case errorMsg:
+		if msg.requestID != "" && msg.requestID != m.activeRequestID {
+			return m, nil
+		}
 		errStr := msg.err.Error()
 		if msg.err == context.DeadlineExceeded {
 			errStr = "Request timed out after 5 minutes. Check your network connection and API key."
@@ -145,6 +183,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.messages = append(m.messages, message{role: "error", content: errStr})
 		m.streamBuffer = ""
 		m.isLoading = false
+		m.finishActiveRequest()
 		return m, nil
 
 	default:
@@ -168,60 +207,98 @@ func (m model) handleEnter() (tea.Model, tea.Cmd) {
 
 	m.messages = append(m.messages, message{role: "user", content: input})
 	m.isLoading = true
+	m.nextRequestSeq++
+	requestID := fmt.Sprintf("req-%d", m.nextRequestSeq)
+	m.activeRequestID = requestID
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	m.activeCancel = cancel
 
-	return m, m.runAgent(input)
+	events := m.startAgentRun(input, requestID, ctx, cancel)
+	m.activeEvents = events
+	return m, tea.Batch(m.spinner.Tick, m.waitAgent())
 }
 
 func (m model) runAgent(input string) tea.Cmd {
+	requestID := "req-direct"
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	events := m.startAgentRun(input, requestID, ctx, cancel)
+	m.activeEvents = events
+	return tea.Batch(m.spinner.Tick, m.waitAgent())
+}
+
+func (m model) startAgentRun(input string, requestID string, ctx context.Context, cancel context.CancelFunc) *agentRunEvents {
 	streamChan := make(chan streamMsg, 64)
 	doneChan := make(chan doneMsg, 1)
 	errChan := make(chan errorMsg, 1)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
 	go func() {
+		defer cancel()
 		result, err := m.agent.Run(ctx, input, func(text string) {
-			streamChan <- streamMsg{text: text}
+			select {
+			case streamChan <- streamMsg{requestID: requestID, text: text}:
+			case <-ctx.Done():
+			}
 		})
 		if err != nil {
-			errChan <- errorMsg{err: err}
+			errChan <- errorMsg{requestID: requestID, err: err}
 		} else {
-			doneChan <- doneMsg{result: result}
+			doneChan <- doneMsg{requestID: requestID, result: result}
 		}
 	}()
 
-	startTime := time.Now()
-	ticker := time.NewTicker(500 * time.Millisecond)
+	return &agentRunEvents{
+		requestID: requestID,
+		stream:    streamChan,
+		done:      doneChan,
+		errs:      errChan,
+		startTime: time.Now(),
+		ticker:    time.NewTicker(500 * time.Millisecond),
+	}
+}
 
-	return tea.Batch(
-		m.spinner.Tick,
-		func() tea.Msg {
-			defer ticker.Stop()
-			for {
-				select {
-				case msg := <-streamChan:
-					return msg
-				case msg := <-doneChan:
-					return msg
-				case msg := <-errChan:
-					return msg
-				case <-ticker.C:
-					elapsed := time.Since(startTime)
-					elapsedStr := elapsed.Round(time.Second).String()
-					if elapsed > 5*time.Minute {
-						return errorMsg{err: context.DeadlineExceeded}
-					} else if elapsed > 30*time.Second {
-						return connectionStatusMsg{text: "Still connecting... check your network or API key", elapsedStr: elapsedStr}
-					} else if elapsed > 3*time.Second {
-						return connectionStatusMsg{text: "Connecting to API...", elapsedStr: elapsedStr}
-					} else if elapsed > 500*time.Millisecond {
-						return connectionStatusMsg{text: "", elapsedStr: elapsedStr}
-					}
+func (m model) waitAgent() tea.Cmd {
+	events := m.activeEvents
+	if events == nil {
+		return nil
+	}
+	return func() tea.Msg {
+		for {
+			select {
+			case msg := <-events.stream:
+				return msg
+			case msg := <-events.done:
+				events.ticker.Stop()
+				return msg
+			case msg := <-events.errs:
+				events.ticker.Stop()
+				return msg
+			case <-events.ticker.C:
+				elapsed := time.Since(events.startTime)
+				elapsedStr := elapsed.Round(time.Second).String()
+				if elapsed > 5*time.Minute {
+					events.ticker.Stop()
+					return errorMsg{requestID: events.requestID, err: context.DeadlineExceeded}
+				} else if elapsed > 30*time.Second {
+					return connectionStatusMsg{requestID: events.requestID, text: "Still connecting... check your network or API key", elapsedStr: elapsedStr}
+				} else if elapsed > 3*time.Second {
+					return connectionStatusMsg{requestID: events.requestID, text: "Connecting to API...", elapsedStr: elapsedStr}
+				} else if elapsed > 500*time.Millisecond {
+					return connectionStatusMsg{requestID: events.requestID, text: "", elapsedStr: elapsedStr}
 				}
 			}
-		},
-	)
+		}
+	}
+}
+
+func (m *model) finishActiveRequest() {
+	if m.activeEvents != nil && m.activeEvents.ticker != nil {
+		m.activeEvents.ticker.Stop()
+	}
+	m.activeCancel = nil
+	m.activeEvents = nil
+	m.activeRequestID = ""
+	m.elapsedTime = ""
+	m.connectionMsg = ""
 }
 
 func (m model) handleCommand(input string) (tea.Model, tea.Cmd) {

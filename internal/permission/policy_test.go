@@ -82,16 +82,63 @@ func TestDangerFullAccessMode(t *testing.T) {
 	}
 }
 
-func TestToolRequirementOverridesMode(t *testing.T) {
+func TestToolRequirementUsesModeHierarchy(t *testing.T) {
 	policy := NewPolicy(DangerFullAccess)
 
-	policy.SetToolRequirement("Bash", ReadOnly)
+	policy.SetToolRequirement("Write", WorkspaceWrite)
 
-	inputBash := map[string]any{"command": "ls"}
-	decision := policy.Evaluate("Bash", inputBash, true)
+	input := map[string]any{"file_path": "notes.md"}
+	decision := policy.Evaluate("Write", input, true)
+
+	if decision != Allow {
+		t.Errorf("Expected Allow when active mode exceeds tool requirement, got %v", decision)
+	}
+}
+
+func TestToolRequirementDeniesInsufficientMode(t *testing.T) {
+	policy := NewPolicy(ReadOnly)
+
+	policy.SetToolRequirement("Write", WorkspaceWrite)
+
+	input := map[string]any{"file_path": "notes.md"}
+	decision := policy.Evaluate("Write", input, true)
 
 	if decision != Deny {
-		t.Errorf("Expected Deny when tool requirement is ReadOnly but active mode is DangerFullAccess, got %v", decision)
+		t.Errorf("Expected Deny when active mode is below tool requirement, got %v", decision)
+	}
+}
+
+func TestExplicitDenyOverridesDangerFullAccess(t *testing.T) {
+	policy := NewPolicy(DangerFullAccess)
+	denyRule, _ := ParseRule("bash(rm -rf:*)")
+	policy.AddDenyRule(denyRule)
+
+	decision := policy.Evaluate("Bash", map[string]any{"command": "rm -rf /tmp/project"}, true)
+
+	if decision != Deny {
+		t.Errorf("Expected Deny from explicit deny rule, got %v", decision)
+	}
+}
+
+func TestPolicyEvaluateDetailedReturnsStableReason(t *testing.T) {
+	policy := NewPolicy(ReadOnly)
+	policy.SetToolRequirement("Write", WorkspaceWrite)
+
+	result := policy.EvaluateDetailed("Write", map[string]any{"file_path": "notes.md"}, true)
+
+	if result.Decision != Deny {
+		t.Fatalf("Decision = %s, want %s", result.Decision, Deny)
+	}
+	if result.Reason != ReasonInsufficientMode {
+		t.Fatalf("Reason = %s, want %s", result.Reason, ReasonInsufficientMode)
+	}
+}
+
+func TestDefaultPrompterFailsClosedWhenApprovalUnavailable(t *testing.T) {
+	decision := NewDefaultPrompter().Decide("Write", map[string]any{"file_path": "notes.md"}, "tool requires approval")
+
+	if decision != Deny {
+		t.Fatalf("Decision = %s, want %s", decision, Deny)
 	}
 }
 

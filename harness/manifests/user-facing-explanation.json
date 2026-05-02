@@ -1,0 +1,17 @@
+{
+  "schema_version": "agent-quality.v1",
+  "name": "user-facing-explanation",
+  "prompt": "Explain what changed in concise user-facing language.",
+  "allowed_tools": ["Read"],
+  "assertions": {
+    "stdout_contains": ["changed"]
+  },
+  "trace": {
+    "required_events": ["request", "status"],
+    "require_redaction_status": true
+  },
+  "budgets": {
+    "latency_ms": 5000,
+    "max_tools": 2
+  }
+}

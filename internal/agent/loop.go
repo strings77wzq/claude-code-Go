@@ -4,6 +4,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -43,6 +44,10 @@ type PermissionPolicyInterface interface {
 
 type permissionMemoryInterface interface {
 	RememberDecision(toolName string, input map[string]any, decision permission.Decision)
+}
+
+type permissionDetailedPolicyInterface interface {
+	EvaluateDetailed(toolName string, input map[string]any, requiresPermission bool) permission.Evaluation
 }
 
 // Agent is the core agent that drives the think → act → observe → think again loop.
@@ -133,7 +138,12 @@ func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(s
 
 		if err != nil {
 			a.traceError(fmt.Sprintf("API call failed after recovery: %v", err))
-			a.saveSession(turns, totalInputTokens, totalOutputTokens, "failed")
+			status := "failed"
+			if errors.Is(err, context.Canceled) {
+				status = "cancelled"
+				a.traceRuntime("request_cancelled", "request context cancelled")
+			}
+			a.saveSession(turns, totalInputTokens, totalOutputTokens, status)
 			return "", fmt.Errorf("API call failed: %w", err)
 		}
 
@@ -217,8 +227,8 @@ func (a *Agent) executeTools(ctx context.Context, content []api.ContentBlock) []
 
 		startTime := time.Now()
 
-		if allowed, decision := a.checkPermission(toolName, toolInput); !allowed {
-			a.tracePermission(toolName, decision, summarizePermissionInput(toolName, toolInput))
+		if allowed, decision, reason := a.checkPermissionDetailed(toolName, toolInput); !allowed {
+			a.tracePermission(toolName, decision, reason, summarizePermissionInput(toolName, toolInput))
 			a.traceTool(toolName, toolInput, "permission denied", time.Since(startTime).Milliseconds())
 			toolResults = append(toolResults, api.ContentBlock{
 				Type:      "tool_result",
@@ -228,7 +238,7 @@ func (a *Agent) executeTools(ctx context.Context, content []api.ContentBlock) []
 			})
 			continue
 		} else {
-			a.tracePermission(toolName, decision, summarizePermissionInput(toolName, toolInput))
+			a.tracePermission(toolName, decision, reason, summarizePermissionInput(toolName, toolInput))
 		}
 
 		if a.hooksRegistry != nil {
@@ -245,6 +255,9 @@ func (a *Agent) executeTools(ctx context.Context, content []api.ContentBlock) []
 		}
 
 		result := a.toolRegistry.Execute(ctx, toolName, toolInput)
+		if result.IsError && strings.Contains(result.Content, "panic recovered") {
+			a.traceRuntime("tool_panic_recovered", result.Content)
+		}
 
 		if a.hooksRegistry != nil {
 			a.hooksRegistry.RunPostHooks(toolName, toolInput, result.Content, result.IsError)
@@ -265,33 +278,45 @@ func (a *Agent) executeTools(ctx context.Context, content []api.ContentBlock) []
 
 // checkPermission delegates to the permission policy and prompter to determine if a tool can be executed.
 func (a *Agent) checkPermission(toolName string, input map[string]any) (bool, permission.Decision) {
+	allowed, decision, _ := a.checkPermissionDetailed(toolName, input)
+	return allowed, decision
+}
+
+func (a *Agent) checkPermissionDetailed(toolName string, input map[string]any) (bool, permission.Decision, permission.Reason) {
 	t := a.toolRegistry.GetTool(toolName)
 	requiresPermission := t != nil && t.RequiresPermission()
 
-	decision := a.permissionPolicy.Evaluate(toolName, input, requiresPermission)
+	evaluation := permission.Evaluation{
+		Decision: a.permissionPolicy.Evaluate(toolName, input, requiresPermission),
+		Reason:   permission.ReasonRequiresApproval,
+	}
+	if detailed, ok := a.permissionPolicy.(permissionDetailedPolicyInterface); ok {
+		evaluation = detailed.EvaluateDetailed(toolName, input, requiresPermission)
+	}
+	decision := evaluation.Decision
 	switch decision {
 	case permission.Allow, permission.AllowOnce, permission.AllowForSession:
-		return true, decision
+		return true, decision, evaluation.Reason
 	case permission.Deny:
-		return false, decision
+		return false, decision, evaluation.Reason
 	case permission.Ask:
 		if a.permissionPrompter == nil {
-			return false, permission.Deny
+			return false, permission.Deny, permission.ReasonRequiresApproval
 		}
 		promptDecision := a.permissionPrompter.Decide(toolName, input, "tool requires approval")
 		switch promptDecision {
 		case permission.Allow, permission.AllowOnce:
-			return true, promptDecision
+			return true, promptDecision, evaluation.Reason
 		case permission.AllowForSession:
 			if memory, ok := a.permissionPolicy.(permissionMemoryInterface); ok {
 				memory.RememberDecision(toolName, input, permission.AllowForSession)
 			}
-			return true, promptDecision
+			return true, promptDecision, evaluation.Reason
 		default:
-			return false, permission.Deny
+			return false, permission.Deny, evaluation.Reason
 		}
 	default:
-		return false, permission.Deny
+		return false, permission.Deny, evaluation.Reason
 	}
 }
 
@@ -430,11 +455,18 @@ func (a *Agent) traceError(message string) {
 }
 
 // tracePermission logs permission decisions to the trace file.
-func (a *Agent) tracePermission(toolName string, decision permission.Decision, summary string) {
+func (a *Agent) tracePermission(toolName string, decision permission.Decision, reason permission.Reason, summary string) {
 	if a.traceFilePath == "" {
 		return
 	}
-	session.AppendTracePermission(a.traceFilePath, toolName, string(decision), summary)
+	session.AppendTracePermissionWithReason(a.traceFilePath, toolName, string(decision), summary, string(reason))
+}
+
+func (a *Agent) traceRuntime(event, summary string) {
+	if a.traceFilePath == "" {
+		return
+	}
+	session.AppendTraceRuntime(a.traceFilePath, a.sessionID, event, summary)
 }
 
 func summarizePermissionInput(toolName string, input map[string]any) string {

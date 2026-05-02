@@ -1,0 +1,23 @@
+{
+  "schema_version": "agent-quality.v1",
+  "name": "safe-edit-and-test",
+  "prompt": "Make a small safe edit and run the relevant test.",
+  "workspace": {
+    "files": {
+      "go.mod": "module fixture\n",
+      "main.go": "package main\n"
+    }
+  },
+  "allowed_tools": ["Read", "Edit", "Bash"],
+  "assertions": {
+    "stdout_contains": ["test"]
+  },
+  "trace": {
+    "required_events": ["tool", "permission"],
+    "require_redaction_status": true
+  },
+  "budgets": {
+    "latency_ms": 10000,
+    "max_tools": 12
+  }
+}

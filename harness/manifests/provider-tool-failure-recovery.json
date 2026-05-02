@@ -1,0 +1,17 @@
+{
+  "schema_version": "agent-quality.v1",
+  "name": "provider-tool-failure-recovery",
+  "prompt": "Handle a provider or tool failure and explain the next step.",
+  "allowed_tools": ["Read", "Bash"],
+  "assertions": {
+    "stdout_contains": ["error"]
+  },
+  "trace": {
+    "required_events": ["error", "status"],
+    "require_redaction_status": true
+  },
+  "budgets": {
+    "latency_ms": 8000,
+    "max_tools": 5
+  }
+}

@@ -3,6 +3,8 @@ package hooks
 
 import (
 	"sync"
+
+	"github.com/strings77wzq/claude-code-Go/internal/diagnostic"
 )
 
 // Hook defines the interface for tool execution hooks.
@@ -151,6 +153,23 @@ func (e *PreHookError) Error() string {
 
 func (e *PreHookError) Unwrap() error {
 	return e.Err
+}
+
+func HookErrorDiagnostic(err *PreHookError) diagnostic.Diagnostic {
+	if err == nil {
+		return diagnostic.Diagnostic{}
+	}
+	return diagnostic.Diagnostic{
+		Component: "hooks",
+		Severity:  diagnostic.SeverityError,
+		Code:      "hooks.pre_failed",
+		Summary:   "Pre-tool hook failed",
+		Detail:    err.Err.Error(),
+		Metadata: map[string]any{
+			"hook": err.HookName,
+			"tool": err.ToolName,
+		},
+	}
 }
 
 func (r *Registry) policyFor(name string) HookPolicy {

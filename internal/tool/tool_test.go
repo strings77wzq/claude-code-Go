@@ -2,6 +2,7 @@ package tool
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/strings77wzq/claude-code-Go/internal/permission"
@@ -19,6 +20,19 @@ func (s *stubTool) RequiredPermissionLevel() permission.PermissionLevel {
 }
 func (s *stubTool) Execute(_ context.Context, _ map[string]any) Result {
 	return Success("stub executed")
+}
+
+type panicTool struct{}
+
+func (p *panicTool) Name() string                { return "panic_tool" }
+func (p *panicTool) Description() string         { return "a tool that panics for registry recovery tests" }
+func (p *panicTool) InputSchema() map[string]any { return map[string]any{"type": "object"} }
+func (p *panicTool) RequiresPermission() bool    { return false }
+func (p *panicTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelReadOnly
+}
+func (p *panicTool) Execute(_ context.Context, _ map[string]any) Result {
+	panic("boom")
 }
 
 func TestSuccessAndErrorConstructors(t *testing.T) {
@@ -85,6 +99,22 @@ func TestRegistryExecuteRegisteredTool(t *testing.T) {
 	}
 	if result.Content != "stub executed" {
 		t.Errorf("expected 'stub executed', got %q", result.Content)
+	}
+}
+
+func TestRegistryExecuteRecoversPanickingTool(t *testing.T) {
+	reg := NewRegistry()
+	if err := reg.Register(&panicTool{}); err != nil {
+		t.Fatalf("Register failed: %v", err)
+	}
+
+	result := reg.Execute(context.Background(), "panic_tool", nil)
+
+	if !result.IsError {
+		t.Fatalf("expected recovered panic to return an error result, got %#v", result)
+	}
+	if result.Content == "" || !strings.Contains(result.Content, "panic_tool") || !strings.Contains(result.Content, "panic recovered") {
+		t.Fatalf("expected structured panic recovery message with tool name, got %q", result.Content)
 	}
 }
 

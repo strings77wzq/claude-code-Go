@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/strings77wzq/claude-code-Go/internal/diagnostic"
 	"github.com/strings77wzq/claude-code-Go/internal/provider"
 	"github.com/strings77wzq/claude-code-Go/internal/provider/anthropic"
 	"github.com/strings77wzq/claude-code-Go/internal/provider/openai"
@@ -24,6 +25,15 @@ type ResolvedConfig struct {
 	BaseURL      string
 	Model        string
 	APIKeySource string
+}
+
+type ProviderProfile struct {
+	Provider     string
+	Model        string
+	Known        bool
+	Deprecated   bool
+	Capabilities []string
+	Transport    string
 }
 
 var modelRegistry = []ModelInfo{
@@ -180,4 +190,53 @@ func GetSupportedModels() []ModelInfo {
 	result := make([]ModelInfo, len(modelRegistry))
 	copy(result, modelRegistry)
 	return result
+}
+
+func ProfileForModel(modelName string) ProviderProfile {
+	info, known := LookupModel(modelName)
+	providerName := DetectProvider(modelName)
+	deprecated := false
+	if known {
+		providerName = info.Provider
+		deprecated = info.Deprecated
+	}
+	return ProviderProfile{
+		Provider:     providerName,
+		Model:        modelName,
+		Known:        known,
+		Deprecated:   deprecated,
+		Capabilities: defaultCapabilities(providerName),
+	}
+}
+
+func (p ProviderProfile) Diagnostic() diagnostic.Diagnostic {
+	severity := diagnostic.SeverityInfo
+	code := "provider.profile"
+	summary := "Provider profile resolved"
+	if !p.Known {
+		severity = diagnostic.SeverityWarn
+		summary = "Provider profile inferred for unknown model"
+	}
+	return diagnostic.Diagnostic{
+		Component: "provider",
+		Severity:  severity,
+		Code:      code,
+		Summary:   summary,
+		Metadata: map[string]any{
+			"provider":     p.Provider,
+			"model":        p.Model,
+			"known":        p.Known,
+			"deprecated":   p.Deprecated,
+			"capabilities": p.Capabilities,
+		},
+	}
+}
+
+func defaultCapabilities(providerName string) []string {
+	switch providerName {
+	case "openai":
+		return []string{"chat", "streaming", "tools"}
+	default:
+		return []string{"messages", "streaming", "tools"}
+	}
 }

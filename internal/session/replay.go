@@ -82,6 +82,8 @@ func summarizeReplayLine(lineType string, line map[string]any) string {
 			summary += " operations=" + truncateReplay(operations)
 		}
 		return summary
+	case "runtime":
+		return fmt.Sprintf("runtime %s request_id=%s summary=%s", asString(line["event"]), asString(line["request_id"]), truncateReplay(asString(line["summary"])))
 	case "error":
 		return fmt.Sprintf("error: %s", truncateReplay(asString(line["message"])))
 	case "status":
@@ -95,7 +97,7 @@ func FormatReplayEvidence(events []ReplayEvent) string {
 	var b strings.Builder
 	for _, event := range events {
 		switch event.Type {
-		case "message", "tool", "permission", "extension", "error", "status":
+		case "message", "tool", "permission", "extension", "runtime", "error", "status":
 			if event.Summary == "" {
 				continue
 			}

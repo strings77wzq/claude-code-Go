@@ -263,6 +263,34 @@ func TestLookupModel(t *testing.T) {
 	}
 }
 
+func TestProviderProfileIsTransportIndependent(t *testing.T) {
+	profile := ProfileForModel("gpt-4o")
+
+	if profile.Provider != "openai" || profile.Model != "gpt-4o" {
+		t.Fatalf("unexpected profile: %#v", profile)
+	}
+	if profile.Transport != "" {
+		t.Fatalf("provider profile should not embed transport implementation, got %q", profile.Transport)
+	}
+	if len(profile.Capabilities) == 0 {
+		t.Fatalf("expected capabilities in profile: %#v", profile)
+	}
+}
+
+func TestProviderProfileDiagnostic(t *testing.T) {
+	profile := ProfileForModel("vendor-custom-model")
+	diag := profile.Diagnostic()
+
+	if diag.Component != "provider" || diag.Code != "provider.profile" {
+		t.Fatalf("unexpected diagnostic: %#v", diag)
+	}
+	fields := diag.TraceFields()
+	metadata := fields["metadata"].(map[string]any)
+	if metadata["model"] != "vendor-custom-model" {
+		t.Fatalf("expected model metadata, got %#v", metadata)
+	}
+}
+
 func TestGetSupportedModelsFiltered(t *testing.T) {
 	models := GetSupportedModels()
 	foundDeprecated := false

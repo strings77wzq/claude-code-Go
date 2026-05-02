@@ -27,6 +27,8 @@ func TestRootHelpListsTaskEntrypoints(t *testing.T) {
 		"JSON output",
 		"quiet mode",
 		"debug mode",
+		"permission mode",
+		"non-interactive prompts fail closed",
 		"version",
 	} {
 		if !strings.Contains(output, want) {

@@ -44,7 +44,7 @@ func (a *McpToolAdapter) RequiredPermissionLevel() permission.PermissionLevel {
 
 // Execute delegates to McpClient.CallTool and returns a tool.Result.
 func (a *McpToolAdapter) Execute(ctx context.Context, input map[string]any) tool.Result {
-	result, err := a.client.CallTool(a.toolName, input)
+	result, err := a.client.CallToolContext(ctx, a.toolName, input)
 	if err != nil {
 		return tool.Error(err.Error())
 	}

@@ -227,6 +227,23 @@ func TestRunPreHooksWithBlockPolicyBlocks(t *testing.T) {
 	}
 }
 
+func TestPreHookErrorDiagnostic(t *testing.T) {
+	err := &PreHookError{
+		HookName: "policy",
+		ToolName: "Write",
+		Err:      errors.New("token=secret-token"),
+	}
+
+	diag := HookErrorDiagnostic(err)
+
+	if diag.Component != "hooks" || diag.Code != "hooks.pre_failed" {
+		t.Fatalf("unexpected diagnostic: %#v", diag)
+	}
+	if strings.Contains(diag.Format(), "secret-token") {
+		t.Fatalf("diagnostic leaked secret: %s", diag.Format())
+	}
+}
+
 // TestRunPostHooks verifies the RunPostHooks method.
 func TestRunPostHooks(t *testing.T) {
 	registry := NewRegistry()

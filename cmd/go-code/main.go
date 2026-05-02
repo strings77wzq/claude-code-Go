@@ -28,7 +28,7 @@ import (
 	"github.com/strings77wzq/claude-code-Go/pkg/tui"
 )
 
-const version = "0.2.0"
+const version = "0.3.0"
 
 const systemPrompt = "You are an interactive agent that helps users with software engineering tasks. You have access to tools for reading files, editing files, executing shell commands, searching code, and more. Use your tools to complete tasks efficiently and accurately."
 
@@ -258,6 +258,7 @@ func newRootFlagSet(name string, errorHandling flag.ErrorHandling, output io.Wri
 		fmt.Fprintln(flags.Output(), "  JSON output         use -f json with prompt mode")
 		fmt.Fprintln(flags.Output(), "  quiet mode          suppress streaming text with -q")
 		fmt.Fprintln(flags.Output(), "  debug mode          emit debug logs with -debug")
+		fmt.Fprintln(flags.Output(), "  permission mode     default WorkspaceWrite; non-interactive prompts fail closed")
 		fmt.Fprintln(flags.Output(), "  version             print go-code version")
 		fmt.Fprintln(flags.Output(), "\nOptions:")
 		flags.PrintDefaults()

@@ -79,6 +79,7 @@ func RunDoctor(w io.Writer, opts DoctorOptions) int {
 	cfg, cfgSource, cfgCheck := checkConfig(opts.HomeDir, opts.WorkingDir)
 	checks = append(checks, cfgCheck)
 	checks = append(checks, checkProvider(cfg, cfgSource, opts.Offline))
+	checks = append(checks, checkProviderProfile(cfg))
 	checks = append(checks, checkSessionDir(opts.HomeDir))
 	checks = append(checks, checkTools(opts.WorkingDir))
 	checks = append(checks, checkMCPConfig(opts.HomeDir))
@@ -262,6 +263,27 @@ func checkProvider(cfg *config.Config, source string, offline bool) doctorCheck 
 		Name:   "provider",
 		Status: doctorPass,
 		Detail: fmt.Sprintf("provider=%s model=%s base_url=%s configuration is syntactically valid", resolved.Provider, resolved.Model, resolved.BaseURL),
+	}
+}
+
+func checkProviderProfile(cfg *config.Config) doctorCheck {
+	if cfg == nil || cfg.Model == "" {
+		return doctorCheck{
+			Name:   "provider profile",
+			Status: doctorSkip,
+			Detail: "model unavailable; profile not checked",
+		}
+	}
+	profile := registry.ProfileForModel(cfg.Model)
+	diag := profile.Diagnostic()
+	status := doctorPass
+	if diag.Severity == "WARN" {
+		status = doctorSkip
+	}
+	return doctorCheck{
+		Name:   "provider profile",
+		Status: status,
+		Detail: diag.Format(),
 	}
 }
 

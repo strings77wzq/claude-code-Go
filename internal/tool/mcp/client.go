@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 )
@@ -29,6 +30,10 @@ func NewMcpClient(transport *StdioTransport) *McpClient {
 // Initialize sends the initialize JSON-RPC request, receives server info,
 // and sends the notifications/initialized message.
 func (c *McpClient) Initialize() error {
+	return c.InitializeContext(context.Background())
+}
+
+func (c *McpClient) InitializeContext(ctx context.Context) error {
 	// Send initialize request
 	params := map[string]any{
 		"protocolVersion": "2024-11-05",
@@ -47,7 +52,7 @@ func (c *McpClient) Initialize() error {
 	}
 
 	// Read response
-	resp, err := c.transport.ReadResponse()
+	resp, err := c.transport.ReadResponseContext(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to read initialize response: %w", err)
 	}
@@ -73,6 +78,10 @@ func (c *McpClient) Initialize() error {
 
 // ListTools sends the tools/list request and returns tool definitions.
 func (c *McpClient) ListTools() ([]McpToolInfo, error) {
+	return c.ListToolsContext(context.Background())
+}
+
+func (c *McpClient) ListToolsContext(ctx context.Context) ([]McpToolInfo, error) {
 	params := map[string]any{}
 
 	id := c.nextID
@@ -83,7 +92,7 @@ func (c *McpClient) ListTools() ([]McpToolInfo, error) {
 	}
 
 	// Read response
-	resp, err := c.transport.ReadResponse()
+	resp, err := c.transport.ReadResponseContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read tools/list response: %w", err)
 	}
@@ -139,6 +148,10 @@ func (c *McpClient) ListTools() ([]McpToolInfo, error) {
 
 // CallTool sends a tools/call request and returns the result text.
 func (c *McpClient) CallTool(name string, args map[string]any) (string, error) {
+	return c.CallToolContext(context.Background(), name, args)
+}
+
+func (c *McpClient) CallToolContext(ctx context.Context, name string, args map[string]any) (string, error) {
 	params := map[string]any{
 		"name":      name,
 		"arguments": args,
@@ -152,7 +165,7 @@ func (c *McpClient) CallTool(name string, args map[string]any) (string, error) {
 	}
 
 	// Read response
-	resp, err := c.transport.ReadResponse()
+	resp, err := c.transport.ReadResponseContext(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to read tools/call response: %w", err)
 	}

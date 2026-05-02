@@ -1,0 +1,23 @@
+{
+  "schema_version": "agent-quality.v1",
+  "name": "repository-inspection",
+  "prompt": "Inspect the repository and summarize the main runtime packages.",
+  "workspace": {
+    "files": {
+      "README.md": "# fixture repository\n",
+      "internal/agent/loop.go": "package agent\n"
+    }
+  },
+  "allowed_tools": ["Read", "Glob", "Grep", "Tree"],
+  "assertions": {
+    "stdout_contains": ["agent"]
+  },
+  "trace": {
+    "required_events": ["request"],
+    "require_redaction_status": true
+  },
+  "budgets": {
+    "latency_ms": 5000,
+    "max_tools": 8
+  }
+}

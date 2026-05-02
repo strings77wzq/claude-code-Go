@@ -74,10 +74,27 @@ GitHub Actions 会自动运行 Harness 测试：
 
 ## 添加新 Scenario
 
-1. 在 `harness/mock_server/scenarios.py` 添加一个 `Scenario`。
-2. 如果需要自动路由，在 `harness/mock_server/app.py` 的 `select_scenario_name` 中加入触发条件。
-3. 在 `harness/test_scenarios.py` 增加断言，优先使用 `go-code -p ... -q -f json` 的非交互入口。
-4. 本地运行 `./scripts/run-harness.sh`，确认不依赖真实 API key。
+1. 优先在 `harness/manifests/*.json` 添加一个 `agent-quality.v1` manifest，写清 `prompt`、`allowed_tools`、`assertions`、`trace.required_events` 和 `budgets`。
+2. 如需 mock provider 行为，在 `harness/mock_server/scenarios.py` 添加一个 `Scenario`。
+3. 如果需要自动路由，在 `harness/mock_server/app.py` 的 `select_scenario_name` 中加入触发条件。
+4. 在 `harness/test_scenarios.py` 或 `harness/test_quality_gates.py` 增加断言，优先使用 `go-code -p ... -q -f json` 的非交互入口。
+5. 本地运行 `./scripts/run-harness.sh`，确认不依赖真实 API key。
+
+## Manifest Quality Gates
+
+`harness/quality` 提供 manifest-driven release evidence：
+
+- `manifest.py` 负责解析和校验 `agent-quality.v1` 场景。
+- `runner.py` 将 stdout/stderr、return code、latency、trace events 汇总成脱敏 evidence。
+- `comparison.py` 生成规范化对比报告，明确区分 `source=measured` 和 `source=manual`。
+
+当前内置 manifest 覆盖：
+
+- `repository-inspection`
+- `safe-edit-and-test`
+- `permission-denial-recovery`
+- `provider-tool-failure-recovery`
+- `user-facing-explanation`
 
 ---
 

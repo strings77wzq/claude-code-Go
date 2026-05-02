@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/strings77wzq/claude-code-Go/internal/diagnostic"
 	"github.com/strings77wzq/claude-code-Go/internal/session"
 )
 
@@ -32,6 +33,33 @@ func NewLSPGate(serverURL string) *LSPGate {
 // IsAvailable returns true if an LSP server is configured.
 func (g *LSPGate) IsAvailable() bool {
 	return g.configured
+}
+
+func (g *LSPGate) Diagnostic() diagnostic.Diagnostic {
+	if !g.configured {
+		return diagnostic.Diagnostic{
+			Component: "lsp",
+			Severity:  diagnostic.SeverityWarn,
+			Code:      "lsp.unavailable",
+			Summary:   "LSP server is not configured",
+			Retryable: true,
+		}
+	}
+	if !g.healthy {
+		return diagnostic.Diagnostic{
+			Component: "lsp",
+			Severity:  diagnostic.SeverityWarn,
+			Code:      "lsp.unhealthy",
+			Summary:   "LSP server is configured but not healthy",
+			Retryable: true,
+		}
+	}
+	return diagnostic.Diagnostic{
+		Component: "lsp",
+		Severity:  diagnostic.SeverityInfo,
+		Code:      "lsp.available",
+		Summary:   "LSP server is available",
+	}
 }
 
 // HealthCheck verifies the LSP server is reachable by sending an initialize request.

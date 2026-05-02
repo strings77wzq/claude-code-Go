@@ -28,6 +28,24 @@ const (
 	Ask Decision = "Ask"
 )
 
+type Reason string
+
+const (
+	ReasonDenyRule            Reason = "deny_rule"
+	ReasonAllowRule           Reason = "allow_rule"
+	ReasonSessionMemory       Reason = "session_memory"
+	ReasonToolRequirement     Reason = "tool_requirement"
+	ReasonInsufficientMode    Reason = "insufficient_mode"
+	ReasonPermissionNotNeeded Reason = "permission_not_needed"
+	ReasonDangerFullAccess    Reason = "danger_full_access"
+	ReasonRequiresApproval    Reason = "requires_approval"
+)
+
+type Evaluation struct {
+	Decision Decision
+	Reason   Reason
+}
+
 // Policy defines the permission policy with rules and mode settings
 type Policy struct {
 	activeMode       Mode
@@ -87,47 +105,51 @@ func (p *Policy) GetActiveMode() Mode {
 // Evaluate determines the permission decision for a tool execution
 // Evaluation priority: deny rules > allow rules > session memory > tool attribute > default Ask
 func (p *Policy) Evaluate(toolName string, input map[string]any, requiresPermission bool) Decision {
+	return p.EvaluateDetailed(toolName, input, requiresPermission).Decision
+}
+
+func (p *Policy) EvaluateDetailed(toolName string, input map[string]any, requiresPermission bool) Evaluation {
 	memKey := p.generateMemoryKey(toolName, input)
 
 	// 1. Check deny rules (highest priority)
 	for _, rule := range p.denyRules {
 		if MatchRule(rule, toolName, input) {
-			return Deny
+			return Evaluation{Decision: Deny, Reason: ReasonDenyRule}
 		}
 	}
 
 	// 2. Check allow rules
 	for _, rule := range p.allowRules {
 		if MatchRule(rule, toolName, input) {
-			return Allow
+			return Evaluation{Decision: Allow, Reason: ReasonAllowRule}
 		}
 	}
 
 	// 3. Check session memory (user's "always" choices)
 	if decision, exists := p.GetSessionMemory(memKey); exists {
-		return decision
+		return Evaluation{Decision: decision, Reason: ReasonSessionMemory}
 	}
 
 	// 4. Check tool requirement - overrides mode, must be explicitly allowed or denied
 	if requiredMode, hasReq := p.toolRequirements[toolName]; hasReq {
-		if p.activeMode == requiredMode {
-			return Allow
+		if p.meetsModeRequirement(requiredMode) {
+			return Evaluation{Decision: Allow, Reason: ReasonToolRequirement}
 		}
-		return Deny
+		return Evaluation{Decision: Deny, Reason: ReasonInsufficientMode}
 	}
 
 	// 5. Check requiresPermission flag
 	if !requiresPermission {
-		return Allow
+		return Evaluation{Decision: Allow, Reason: ReasonPermissionNotNeeded}
 	}
 
 	// 6. Mode-based permissions
 	if p.activeMode == DangerFullAccess {
-		return Allow
+		return Evaluation{Decision: Allow, Reason: ReasonDangerFullAccess}
 	}
 
 	// Default: ask user
-	return Ask
+	return Evaluation{Decision: Ask, Reason: ReasonRequiresApproval}
 }
 
 // meetsModeRequirement checks if the current mode meets the required mode

@@ -127,3 +127,39 @@ func TestGetDefaultMcpConfigPath(t *testing.T) {
 		t.Errorf("unexpected config path suffix: %s", path)
 	}
 }
+
+func TestMcpLaunchPolicyBlocksCommandOutsideAllowlist(t *testing.T) {
+	diagnostics := ValidateLaunchPolicy("blocked", McpServerConfig{
+		Command: "/tmp/untrusted-server",
+	})
+
+	if len(diagnostics) != 1 {
+		t.Fatalf("expected one launch diagnostic, got %#v", diagnostics)
+	}
+	if diagnostics[0].Code != "mcp.launch.command_not_allowed" {
+		t.Fatalf("unexpected diagnostic: %#v", diagnostics[0])
+	}
+}
+
+func TestMcpLaunchPolicyAllowsDefaultCommandAndScrubsEnv(t *testing.T) {
+	cfg := McpServerConfig{
+		Command: "/usr/bin/python3",
+		Env: map[string]string{
+			"API_TOKEN": "secret-token",
+			"MODE":      "test",
+		},
+	}
+
+	if diagnostics := ValidateLaunchPolicy("python", cfg); len(diagnostics) != 0 {
+		t.Fatalf("expected default allowlist to allow python3, got %#v", diagnostics)
+	}
+
+	metadata := SanitizedConfigMetadata("python", cfg)
+	env := metadata["env"].(map[string]any)
+	if env["API_TOKEN"] != "[REDACTED]" {
+		t.Fatalf("expected API_TOKEN to be redacted, got %#v", env["API_TOKEN"])
+	}
+	if env["MODE"] != "test" {
+		t.Fatalf("expected MODE to remain visible, got %#v", env["MODE"])
+	}
+}

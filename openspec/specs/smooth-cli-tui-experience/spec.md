@@ -1,8 +1,6 @@
 ## Purpose
 Define the CLI and TUI experience required for task-oriented entrypoints, consistent slash-command behavior, and concise user-facing errors.
-
 ## Requirements
-
 ### Requirement: CLI supports task-oriented entrypoints
 The system SHALL provide consistent command-line entrypoints for setup, doctor, interactive TUI, single prompt execution, JSON output, quiet mode, version, and help.
 
@@ -35,3 +33,19 @@ The system SHALL convert common failures into concise messages that name the fai
 #### Scenario: Long connection delay
 - **WHEN** a provider request takes longer than the configured threshold
 - **THEN** the UI shows elapsed time and a clear connection status without freezing input rendering
+
+### Requirement: TUI loading state terminates deterministically
+The TUI MUST leave loading state when an agent request completes, fails, is denied by permission policy, or is cancelled.
+
+#### Scenario: Provider returns an error
+- **WHEN** the active provider returns an error during a TUI request
+- **THEN** the TUI displays the failure state
+- **AND** the loading indicator stops
+
+### Requirement: TUI cancellation does not leak request work
+The TUI MUST cancel in-flight request work when the user cancels or exits the request flow.
+
+#### Scenario: User cancels generation
+- **WHEN** the user cancels an in-flight generation from the TUI
+- **THEN** the request context is cancelled
+- **AND** no further assistant output is appended for that cancelled request

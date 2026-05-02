@@ -1,8 +1,11 @@
 package mcp
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
 )
@@ -33,18 +36,23 @@ func (m *McpManager) InitializeAndRegister(configs map[string]McpServerConfig, r
 
 // initializeServer initializes a single MCP server.
 func (m *McpManager) initializeServer(name string, config McpServerConfig, registry *tool.Registry) error {
+	if diagnostics := ValidateLaunchPolicy(name, config); len(diagnostics) > 0 {
+		return errors.New(diagnostics[0].Format())
+	}
 	transport := NewStdioTransport(config.Command, config.Args, config.Env)
 	if err := transport.Start(); err != nil {
 		return fmt.Errorf("failed to start transport: %w", err)
 	}
 
 	client := NewMcpClient(transport)
-	if err := client.Initialize(); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := client.InitializeContext(ctx); err != nil {
 		transport.Close()
 		return fmt.Errorf("failed to initialize: %w", err)
 	}
 
-	tools, err := client.ListTools()
+	tools, err := client.ListToolsContext(ctx)
 	if err != nil {
 		transport.Close()
 		return fmt.Errorf("failed to list tools: %w", err)

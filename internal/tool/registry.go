@@ -50,7 +50,7 @@ func (r *Registry) GetTool(name string) Tool {
 	return r.tools[name]
 }
 
-func (r *Registry) Execute(ctx context.Context, name string, input map[string]any) Result {
+func (r *Registry) Execute(ctx context.Context, name string, input map[string]any) (result Result) {
 	tool := r.GetTool(name)
 	if tool == nil {
 		return Error(fmt.Sprintf("tool not found: %s", name))
@@ -58,7 +58,7 @@ func (r *Registry) Execute(ctx context.Context, name string, input map[string]an
 
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			Error(fmt.Sprintf("panic recovered: %v", recovered))
+			result = Error(fmt.Sprintf("tool %s panic recovered", name))
 		}
 	}()
 
@@ -78,9 +78,4 @@ func (r *Registry) GetAllDefinitions() []ToolDefinition {
 		})
 	}
 	return definitions
-}
-
-func RegisterBuiltinTools(r *Registry, workingDir string) error {
-	// TODO: Implement builtin tools
-	return nil
 }

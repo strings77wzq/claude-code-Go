@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/strings77wzq/claude-code-Go/internal/diagnostic"
 )
 
 var ErrInvalidSkill = errors.New("invalid skill: missing required field")
@@ -85,4 +87,21 @@ func LoadSkillsWithWarnings(dir string) (*LoadResult, error) {
 	}
 
 	return result, nil
+}
+
+func SkillWarningsDiagnostics(warnings []SkillWarning) []diagnostic.Diagnostic {
+	diagnostics := make([]diagnostic.Diagnostic, 0, len(warnings))
+	for _, warning := range warnings {
+		diagnostics = append(diagnostics, diagnostic.Diagnostic{
+			Component: "skills",
+			Severity:  diagnostic.SeverityWarn,
+			Code:      "skills.invalid",
+			Summary:   "Invalid skill file",
+			Detail:    warning.Reason,
+			Metadata: map[string]any{
+				"file": warning.File,
+			},
+		})
+	}
+	return diagnostics
 }

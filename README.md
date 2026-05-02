@@ -8,7 +8,7 @@
 
 A Go-native AI coding agent with full agent loop, tool execution, permission management, SSE streaming, and auto-recovery — in a single binary.
 
-> **Status: v0.2 stable, v0.3 extension productization in progress** — Core agent runtime, permission system, session persistence, multi-provider support, doctor checks, and parity harness are implemented and tested. MCP, LSP, hooks, skills, and replay evidence are being productized behind conservative v0.3 gates. See [PARITY.md](PARITY.md) for detailed feature status.
+> **Status: v0.3 verified release** — Core agent runtime, permission system, session persistence, multi-provider support, doctor checks, replay evidence, MCP/LSP extension diagnostics, and manifest-driven harness quality gates are implemented and tested. Real external MCP/LSP server smoke checks and competitor-agent comparisons remain manual. See [PARITY.md](PARITY.md) for detailed feature status.
 
 > **Disclaimer:** This is an independent open-source project. It is not affiliated with, endorsed by, or connected to Anthropic PBC. "Claude" and "Claude Code" are trademarks of Anthropic PBC.
 
@@ -106,7 +106,7 @@ go-code replay latest
 go-code replay --evidence latest
 ```
 
-## Verified Features (v0.2)
+## Verified Features (v0.3)
 
 These features are tested and covered by the parity harness. See [PARITY.md](PARITY.md) for evidence links.
 

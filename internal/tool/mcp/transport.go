@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -96,6 +97,28 @@ func (t *StdioTransport) SendRequest(method string, params map[string]any, id in
 
 // ReadResponse reads a JSON-RPC response from stdout (line-based).
 func (t *StdioTransport) ReadResponse() (map[string]any, error) {
+	return t.ReadResponseContext(context.Background())
+}
+
+func (t *StdioTransport) ReadResponseContext(ctx context.Context) (map[string]any, error) {
+	type response struct {
+		value map[string]any
+		err   error
+	}
+	ch := make(chan response, 1)
+	go func() {
+		value, err := t.readResponse()
+		ch <- response{value: value, err: err}
+	}()
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case resp := <-ch:
+		return resp.value, resp.err
+	}
+}
+
+func (t *StdioTransport) readResponse() (map[string]any, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 

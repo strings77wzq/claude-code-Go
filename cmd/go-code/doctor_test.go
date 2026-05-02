@@ -13,9 +13,10 @@ import (
 )
 
 func TestRunDoctorHealthyOffline(t *testing.T) {
+	isolateDoctorProviderEnv(t)
 	homeDir := t.TempDir()
 	workspace := t.TempDir()
-	writeDoctorConfig(t, homeDir, `{"apiKey":"sk-ant-test","model":"claude-test"}`)
+	writeDoctorConfig(t, homeDir, `{"apiKey":"sk-ant-test","model":"claude-sonnet-4-6-20251001"}`)
 	writeDoctorDocs(t, workspace)
 
 	var out bytes.Buffer
@@ -33,6 +34,7 @@ func TestRunDoctorHealthyOffline(t *testing.T) {
 		"[PASS] binary",
 		"[PASS] configuration",
 		"[SKIP] provider",
+		"[PASS] provider profile",
 		"[PASS] session directory",
 		"[PASS] tools",
 		"[SKIP] mcp",
@@ -48,6 +50,14 @@ func TestRunDoctorHealthyOffline(t *testing.T) {
 	if strings.Contains(output, "sk-ant-test") {
 		t.Fatalf("doctor output leaked API key:\n%s", output)
 	}
+}
+
+func isolateDoctorProviderEnv(t *testing.T) {
+	t.Helper()
+	t.Setenv("ANTHROPIC_API_KEY", "")
+	t.Setenv("ANTHROPIC_BASE_URL", "")
+	t.Setenv("ANTHROPIC_MODEL", "")
+	t.Setenv("LLM_PROVIDER", "")
 }
 
 func TestRunDoctorMissingAPIKey(t *testing.T) {
