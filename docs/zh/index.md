@@ -155,21 +155,21 @@ hero:
 ## 选择你的路径
 
 <div class="role-cards">
-  <a href="/zh/guide/quick-start" class="role-card">
+  <a href="/claude-code-Go/zh/guide/quick-start" class="role-card">
     <div class="role-icon">&#x1F468;&#x200D;&#x1F4BB;</div>
     <div class="role-title">全栈开发者</div>
     <div class="role-desc">通过动手实践构建真实应用。从第一个工具调用到生产就绪代码，边做边学。</div>
     <div class="role-link">快速开始指南 &rarr;</div>
   </a>
 
-  <a href="/zh/architecture/overview" class="role-card">
+  <a href="/claude-code-Go/zh/architecture/overview" class="role-card">
     <div class="role-icon">&#x1F3D7;</div>
     <div class="role-title">架构师</div>
     <div class="role-desc">深入 Agent Loop、工具注册表、权限系统。设计可扩展、安全的 AI 系统。</div>
     <div class="role-link">架构深度探索 &rarr;</div>
   </a>
 
-  <a href="/zh/guide/introduction" class="role-card">
+  <a href="/claude-code-Go/zh/guide/introduction" class="role-card">
     <div class="role-icon">&#x1F393;</div>
     <div class="role-title">学习者</div>
     <div class="role-desc">从零开始理解核心原理：AI Agent 如何推理、规划、安全执行工具。</div>

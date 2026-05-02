@@ -155,21 +155,21 @@ hero:
 ## Choose Your Path
 
 <div class="role-cards">
-  <a href="/guide/quick-start" class="role-card">
+  <a href="/claude-code-Go/guide/quick-start" class="role-card">
     <div class="role-icon">&#x1F468;&#x200D;&#x1F4BB;</div>
     <div class="role-title">Full-stack Developer</div>
     <div class="role-desc">Build real applications with hands-on guides. From your first tool call to production-ready code, learn by doing.</div>
     <div class="role-link">Quick start guide &rarr;</div>
   </a>
 
-  <a href="/architecture/overview" class="role-card">
+  <a href="/claude-code-Go/architecture/overview" class="role-card">
     <div class="role-icon">&#x1F3D7;</div>
     <div class="role-title">Architect</div>
     <div class="role-desc">Deep dive into the agent loop, tool registry, and permission system. Design extensible, safe AI systems.</div>
     <div class="role-link">Architecture deep dive &rarr;</div>
   </a>
 
-  <a href="/guide/introduction" class="role-card">
+  <a href="/claude-code-Go/guide/introduction" class="role-card">
     <div class="role-icon">&#x1F393;</div>
     <div class="role-title">Learner</div>
     <div class="role-desc">Understand the core principles: how AI agents reason, plan, and execute tools safely. Start from zero.</div>
