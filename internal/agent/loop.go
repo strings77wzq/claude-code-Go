@@ -67,6 +67,7 @@ type Agent struct {
 	startTime          time.Time
 	traceFilePath      string
 	recoveryManager    *RecoveryManager
+	keepSession        bool
 }
 
 // NewAgent creates a new Agent with the given dependencies.
@@ -97,6 +98,12 @@ func (a *Agent) SetHooksRegistry(reg *hooks.Registry) {
 	a.hooksRegistry = reg
 }
 
+// PersistSession prevents Run from generating a new session ID, keeping
+// traces and replays coherent across multi-turn interactive sessions.
+func (a *Agent) PersistSession() {
+	a.keepSession = true
+}
+
 // LoadExternalHooks loads hook definitions from a directory and registers them.
 // Invalid hook files are skipped with warnings.
 func (a *Agent) LoadExternalHooks(dir string) {
@@ -119,7 +126,9 @@ func (a *Agent) SetPermissionPrompter(prompter permission.Prompter) {
 
 // Run is the main entry point for the agent. It takes user input and returns the final text response.
 func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(string)) (string, error) {
-	a.sessionID = generateSessionID()
+	if !a.keepSession || a.sessionID == "" {
+		a.sessionID = generateSessionID()
+	}
 	a.startTime = time.Now()
 	a.initTraceFile()
 

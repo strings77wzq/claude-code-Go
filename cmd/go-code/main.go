@@ -253,6 +253,9 @@ func main() {
 		}
 	}
 
+	// Enable session persistence for coherent multi-turn traces
+	agentInstance.PersistSession()
+
 	// Use legacy REPL or new bubbletea TUI
 	if opts.legacyRepl {
 		logger.Info("Starting legacy REPL")
