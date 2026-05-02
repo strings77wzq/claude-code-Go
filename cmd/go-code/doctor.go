@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/strings77wzq/claude-code-Go/internal/config"
@@ -85,7 +86,7 @@ func RunDoctor(w io.Writer, opts DoctorOptions) int {
 	checks = append(checks, checkMCPConfig(opts.HomeDir))
 	checks = append(checks, checkLSP(opts.Offline))
 	checks = append(checks, checkHooks(opts.HomeDir))
-	checks = append(checks, checkSkills(opts.HomeDir))
+	checks = append(checks, checkSkills(opts.HomeDir, opts.WorkingDir))
 	checks = append(checks, checkDocs(opts.WorkingDir))
 
 	fmt.Fprintln(w, "go-code doctor")
@@ -172,18 +173,40 @@ func checkConfig(homeDir, workingDir string) (*config.Config, string, doctorChec
 		source = projectPath
 	}
 
-	if apiKey := os.Getenv("ANTHROPIC_API_KEY"); apiKey != "" {
+	if apiKey := os.Getenv("GO_CODE_API_KEY"); apiKey != "" {
+		cfg.APIKey = apiKey
+		source = "GO_CODE_API_KEY"
+	}
+	if baseURL := os.Getenv("GO_CODE_BASE_URL"); baseURL != "" {
+		cfg.BaseURL = baseURL
+	}
+	if model := os.Getenv("GO_CODE_MODEL"); model != "" {
+		cfg.Model = model
+	}
+	if provider := os.Getenv("GO_CODE_PROVIDER"); provider != "" {
+		cfg.Provider = provider
+	}
+	if apiKey := os.Getenv("DEEPSEEK_API_KEY"); apiKey != "" && cfg.APIKey == "" {
+		cfg.APIKey = apiKey
+		source = "DEEPSEEK_API_KEY"
+	}
+
+	legacyProvider := os.Getenv("LLM_PROVIDER")
+	if legacyProvider != "" {
+		cfg.Provider = legacyProvider
+	}
+	applyLegacyAnthropic := doctorShouldApplyLegacyAnthropicEnv(cfg, legacyProvider)
+	if apiKey := os.Getenv("ANTHROPIC_API_KEY"); apiKey != "" && (cfg.APIKey == "" || applyLegacyAnthropic) {
 		cfg.APIKey = apiKey
 		source = "ANTHROPIC_API_KEY"
 	}
-	if baseURL := os.Getenv("ANTHROPIC_BASE_URL"); baseURL != "" {
-		cfg.BaseURL = baseURL
-	}
-	if model := os.Getenv("ANTHROPIC_MODEL"); model != "" {
-		cfg.Model = model
-	}
-	if provider := os.Getenv("LLM_PROVIDER"); provider != "" {
-		cfg.Provider = provider
+	if applyLegacyAnthropic {
+		if baseURL := os.Getenv("ANTHROPIC_BASE_URL"); baseURL != "" {
+			cfg.BaseURL = baseURL
+		}
+		if model := os.Getenv("ANTHROPIC_MODEL"); model != "" {
+			cfg.Model = model
+		}
 	}
 
 	if cfg.APIKey == "" {
@@ -205,6 +228,14 @@ func checkConfig(homeDir, workingDir string) (*config.Config, string, doctorChec
 		Status: doctorPass,
 		Detail: fmt.Sprintf("source=%s provider=%s model=%s base_url=%s", source, cfg.Provider, cfg.Model, cfg.BaseURL),
 	}
+}
+
+func doctorShouldApplyLegacyAnthropicEnv(cfg *config.Config, legacyProvider string) bool {
+	if legacyProvider != "" {
+		return true
+	}
+	provider := strings.ToLower(strings.TrimSpace(cfg.Provider))
+	return provider == "" || provider == "anthropic"
 }
 
 func loadDoctorSettings(path string, cfg *config.Config) (bool, error) {
@@ -444,7 +475,7 @@ func checkHooks(homeDir string) doctorCheck {
 	}
 }
 
-func checkSkills(homeDir string) doctorCheck {
+func checkSkills(homeDir string, workingDir string) doctorCheck {
 	if homeDir == "" {
 		return doctorCheck{
 			Name:   "skills",
@@ -452,36 +483,67 @@ func checkSkills(homeDir string) doctorCheck {
 			Detail: "home directory unavailable; skills directory not checked",
 		}
 	}
-	skillsDir := filepath.Join(homeDir, ".go-code", "skills")
-	if _, err := os.Stat(skillsDir); err != nil {
-		if os.IsNotExist(err) {
+	dirs := runtimeSkillDirs(homeDir, workingDir)
+	found := make([]string, 0, len(dirs))
+	totalSkills := 0
+	totalWarnings := 0
+	for _, skillsDir := range dirs {
+		if _, err := os.Stat(skillsDir); err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
 			return doctorCheck{
-				Name:   "skills",
-				Status: doctorSkip,
-				Detail: fmt.Sprintf("no skills directory found at %s", skillsDir),
+				Name:        "skills",
+				Status:      doctorFail,
+				Detail:      fmt.Sprintf("%s is not accessible: %v", skillsDir, err),
+				Remediation: "check skills directory permissions",
 			}
 		}
-		return doctorCheck{
-			Name:        "skills",
-			Status:      doctorFail,
-			Detail:      fmt.Sprintf("%s is not accessible: %v", skillsDir, err),
-			Remediation: "check skills directory permissions",
+		result, err := skills.LoadSkillsWithWarnings(skillsDir)
+		if err != nil {
+			return doctorCheck{
+				Name:        "skills",
+				Status:      doctorFail,
+				Detail:      fmt.Sprintf("%s could not be read: %v", skillsDir, err),
+				Remediation: "fix skills directory permissions",
+			}
 		}
+		found = append(found, skillsDir)
+		totalSkills += len(result.Skills)
+		totalWarnings += len(result.Warnings)
 	}
-	result, err := skills.LoadSkillsWithWarnings(skillsDir)
-	if err != nil {
+	if len(found) == 0 {
 		return doctorCheck{
-			Name:        "skills",
-			Status:      doctorFail,
-			Detail:      fmt.Sprintf("%s could not be read: %v", skillsDir, err),
-			Remediation: "fix skills directory permissions",
+			Name:   "skills",
+			Status: doctorSkip,
+			Detail: fmt.Sprintf("no skills directory found at %s", filepath.Join(homeDir, ".go-code", "skills")),
 		}
 	}
 	return doctorCheck{
 		Name:   "skills",
 		Status: doctorPass,
-		Detail: fmt.Sprintf("%d skill(s) loaded, %d warning(s) from %s", len(result.Skills), len(result.Warnings), skillsDir),
+		Detail: fmt.Sprintf("%d skill(s) loaded, %d warning(s) from %d directorie(s)", totalSkills, totalWarnings, len(found)),
 	}
+}
+
+func runtimeSkillDirs(homeDir string, workingDir string) []string {
+	dirs := []string{
+		filepath.Join(homeDir, ".go-code", "skills"),
+		filepath.Join(homeDir, ".codex", "skills"),
+	}
+	if workingDir != "" {
+		dirs = append(dirs,
+			filepath.Join(workingDir, ".go-code", "skills"),
+			filepath.Join(workingDir, ".codex", "skills"),
+		)
+	}
+	if matches, err := filepath.Glob(filepath.Join(homeDir, ".codex", "plugins", "cache", "*", "*", "skills")); err == nil {
+		dirs = append(dirs, matches...)
+	}
+	if matches, err := filepath.Glob(filepath.Join(homeDir, ".codex", ".tmp", "plugins", "plugins", "*", "skills")); err == nil {
+		dirs = append(dirs, matches...)
+	}
+	return dirs
 }
 
 func checkDocs(workingDir string) doctorCheck {

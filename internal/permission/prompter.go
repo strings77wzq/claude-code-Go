@@ -147,6 +147,16 @@ func (p *StdinPrompter) Decide(toolName string, input map[string]any, reason str
 	}
 }
 
+type NonInteractivePrompter struct{}
+
+func NewNonInteractivePrompter() *NonInteractivePrompter {
+	return &NonInteractivePrompter{}
+}
+
+func (p *NonInteractivePrompter) Decide(toolName string, input map[string]any, reason string) Decision {
+	return Deny
+}
+
 func (p *StdinPrompter) formatDetail(toolName string, input map[string]any) string {
 	switch toolName {
 	case "Bash":

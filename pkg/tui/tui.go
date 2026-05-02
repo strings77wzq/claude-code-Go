@@ -11,6 +11,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/strings77wzq/claude-code-Go/internal/command"
+	"github.com/strings77wzq/claude-code-Go/internal/skills"
 )
 
 type streamMsg struct {
@@ -68,6 +69,7 @@ type model struct {
 	activeRequestID string
 	activeEvents    *agentRunEvents
 	nextRequestSeq  int
+	skillsRegistry  *skills.Registry
 }
 
 type TokenUsage struct {
@@ -92,6 +94,10 @@ var (
 )
 
 func NewModel(agent AgentInterface, version, provider, modelName string, debug bool) model {
+	return NewModelWithSkills(agent, version, provider, modelName, debug, nil)
+}
+
+func NewModelWithSkills(agent AgentInterface, version, provider, modelName string, debug bool, skillsRegistry *skills.Registry) model {
 	ti := textinput.New()
 	ti.Placeholder = "Type a message or /help for commands..."
 	ti.Prompt = promptStyle.Render("go-code> ")
@@ -104,14 +110,15 @@ func NewModel(agent AgentInterface, version, provider, modelName string, debug b
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#00ADD8"))
 
 	return model{
-		messages:  make([]message, 0),
-		input:     ti,
-		spinner:   s,
-		agent:     agent,
-		provider:  provider,
-		modelName: modelName,
-		version:   version,
-		debug:     debug,
+		messages:       make([]message, 0),
+		input:          ti,
+		spinner:        s,
+		agent:          agent,
+		provider:       provider,
+		modelName:      modelName,
+		version:        version,
+		debug:          debug,
+		skillsRegistry: skillsRegistry,
 	}
 }
 
@@ -307,6 +314,7 @@ func (m model) handleCommand(input string) (tea.Model, tea.Cmd) {
 		Version:     m.version,
 		Model:       m.modelName,
 		SessionsDir: "~/.claude-code-go/sessions/",
+		Skills:      m.skillsRegistry,
 	}.Handle(input)
 
 	if !result.Handled {
@@ -316,9 +324,25 @@ func (m model) handleCommand(input string) (tea.Model, tea.Cmd) {
 	if result.Model != "" {
 		m.modelName = result.Model
 	}
+	if result.Provider != "" {
+		m.provider = result.Provider
+	}
 	if result.Quit {
 		m.quitting = true
 		return m, tea.Quit
+	}
+	if result.SkillPrompt != "" {
+		m.messages = append(m.messages, message{role: "system", content: result.Message})
+		m.messages = append(m.messages, message{role: "user", content: input})
+		m.isLoading = true
+		m.nextRequestSeq++
+		requestID := fmt.Sprintf("req-%d", m.nextRequestSeq)
+		m.activeRequestID = requestID
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		m.activeCancel = cancel
+		events := m.startAgentRun(result.SkillPrompt, requestID, ctx, cancel)
+		m.activeEvents = events
+		return m, tea.Batch(m.spinner.Tick, m.waitAgent())
 	}
 	if input == "/clear" {
 		m.messages = nil

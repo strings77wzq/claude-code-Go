@@ -27,13 +27,36 @@ func TestRootHelpListsTaskEntrypoints(t *testing.T) {
 		"JSON output",
 		"quiet mode",
 		"debug mode",
-		"permission mode",
-		"non-interactive prompts fail closed",
+		"permission-mode",
 		"version",
 	} {
 		if !strings.Contains(output, want) {
 			t.Fatalf("expected %q in help output:\n%s", want, output)
 		}
+	}
+}
+
+func TestPermissionModeFlagValid(t *testing.T) {
+	var out bytes.Buffer
+	for _, mode := range []string{"read-only", "workspace-write", "danger-full-access"} {
+		flags, opts := newRootFlagSet("go-code", flag.ContinueOnError, &out)
+		if err := flags.Parse([]string{"--permission-mode", mode}); err != nil {
+			t.Fatalf("Parse(--permission-mode %s) error = %v", mode, err)
+		}
+		if opts.permissionMode != mode {
+			t.Errorf("expected permissionMode %q, got %q", mode, opts.permissionMode)
+		}
+	}
+}
+
+func TestPermissionModeFlagDefault(t *testing.T) {
+	var out bytes.Buffer
+	flags, opts := newRootFlagSet("go-code", flag.ContinueOnError, &out)
+	if err := flags.Parse([]string{}); err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	if opts.permissionMode != "" {
+		t.Errorf("expected default permissionMode '', got %q", opts.permissionMode)
 	}
 }
 

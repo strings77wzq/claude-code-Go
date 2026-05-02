@@ -233,7 +233,7 @@ func (a *Agent) executeTools(ctx context.Context, content []api.ContentBlock) []
 			toolResults = append(toolResults, api.ContentBlock{
 				Type:      "tool_result",
 				ToolUseID: toolUseID,
-				Text:      "Permission denied for tool: " + toolName,
+				Text:      "Permission denied for tool: " + toolName + "\nReason: " + string(reason) + "\nRe-run with --permission-mode danger-full-access to grant all permissions",
 				IsError:   true,
 			})
 			continue

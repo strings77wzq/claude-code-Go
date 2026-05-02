@@ -136,10 +136,18 @@ func (r *REPL) handleSpecialCommand(input string) bool {
 		if result.Model != "" {
 			r.model = result.Model
 		}
+		if result.SkillPrompt != "" {
+			fmt.Println(result.Message)
+			r.processInput(result.SkillPrompt)
+			return true
+		}
 		if result.Message != "" {
 			fmt.Println(result.Message)
 		}
-		return !result.Quit
+		if result.Quit {
+			r.cancel()
+		}
+		return true
 	}
 
 	return false

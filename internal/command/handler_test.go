@@ -3,6 +3,8 @@ package command
 import (
 	"strings"
 	"testing"
+
+	"github.com/strings77wzq/claude-code-Go/internal/skills"
 )
 
 type testAgent struct {
@@ -50,6 +52,65 @@ func TestHandleModelSwitch(t *testing.T) {
 	}
 	if result.Model != "gpt-4o" {
 		t.Fatalf("expected result model to be updated, got %s", result.Model)
+	}
+}
+
+func TestHandleModelSwitchAllowsRecognizedProviderPrefixes(t *testing.T) {
+	agent := &testAgent{model: "deepseek-v4-pro"}
+	handler := Handler{Agent: agent, Model: agent.model}
+
+	result := handler.Handle("/model gpt-5.2")
+	if !result.Handled {
+		t.Fatal("expected command to be handled")
+	}
+	if agent.model != "gpt-5.2" {
+		t.Fatalf("expected model to switch, got %s", agent.model)
+	}
+	if result.Provider != "openai" {
+		t.Fatalf("expected provider openai, got %q", result.Provider)
+	}
+}
+
+func TestHandleCommandPrefixesAndAliases(t *testing.T) {
+	tests := []struct {
+		input  string
+		want   string
+		isQuit bool
+	}{
+		{"/h", "Commands:", false},
+		{"/ex", "", true},
+		{"/mod deepseek-v4-flash", "Model switched", false},
+	}
+
+	for _, tt := range tests {
+		agent := &testAgent{model: "deepseek-v4-pro"}
+		result := Handler{Agent: agent, Model: agent.model}.Handle(tt.input)
+		if !result.Handled {
+			t.Fatalf("%s was not handled", tt.input)
+		}
+		if result.Quit != tt.isQuit {
+			t.Fatalf("%s quit = %v, want %v", tt.input, result.Quit, tt.isQuit)
+		}
+		if tt.want != "" && !strings.Contains(result.Message, tt.want) {
+			t.Fatalf("%s message = %q, want substring %q", tt.input, result.Message, tt.want)
+		}
+	}
+}
+
+func TestHandleSkillsAndSkillInvocation(t *testing.T) {
+	registry := skills.NewRegistry()
+	if err := registry.Register(skills.Skill{Name: "test-driven-development", Description: "TDD", Prompt: "Use TDD"}); err != nil {
+		t.Fatal(err)
+	}
+
+	result := Handler{Skills: registry}.Handle("/skills")
+	if !strings.Contains(result.Message, "/test-driven-development - TDD") {
+		t.Fatalf("unexpected skills output: %s", result.Message)
+	}
+
+	result = Handler{Skills: registry}.Handle("/test-driven-development")
+	if result.SkillPrompt != "Use TDD" {
+		t.Fatalf("skill prompt = %q, want Use TDD", result.SkillPrompt)
 	}
 }
 

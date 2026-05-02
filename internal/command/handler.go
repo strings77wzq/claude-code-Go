@@ -11,6 +11,7 @@ import (
 	"github.com/strings77wzq/claude-code-Go/internal/api"
 	"github.com/strings77wzq/claude-code-Go/internal/provider/registry"
 	"github.com/strings77wzq/claude-code-Go/internal/session"
+	"github.com/strings77wzq/claude-code-Go/internal/skills"
 	"github.com/strings77wzq/claude-code-Go/internal/update"
 )
 
@@ -19,14 +20,17 @@ type Handler struct {
 	Version     string
 	Model       string
 	SessionsDir string
+	Skills      *skills.Registry
 	CheckUpdate func(currentVersion string) (latestVersion string, downloadURL string, needsUpdate bool, err error)
 }
 
 type Result struct {
-	Handled bool
-	Quit    bool
-	Message string
-	Model   string
+	Handled     bool
+	Quit        bool
+	Message     string
+	Model       string
+	Provider    string
+	SkillPrompt string
 }
 
 func (h Handler) Handle(input string) Result {
@@ -34,10 +38,17 @@ func (h Handler) Handle(input string) Result {
 	if !strings.HasPrefix(input, "/") {
 		return Result{}
 	}
+	normalized, ambiguous := normalizeCommand(input)
+	if ambiguous != "" {
+		return h.message("Ambiguous command: " + input + "\nMatches: " + ambiguous)
+	}
+	input = normalized
 
 	switch {
 	case input == "/help":
 		return h.message(helpText())
+	case input == "/skills":
+		return h.listSkills()
 	case input == "/clear":
 		if clearer, ok := h.Agent.(interface{ ClearHistory() }); ok {
 			clearer.ClearHistory()
@@ -78,6 +89,9 @@ func (h Handler) Handle(input string) Result {
 	case input == "/permissions":
 		return h.message("Permission mode details are not exposed yet. Safe-default approval flow is tracked in PARITY.md.")
 	default:
+		if result := h.invokeSkill(input); result.Handled {
+			return result
+		}
 		return h.message("Unknown command: " + input + "\nType /help for available commands.")
 	}
 }
@@ -96,15 +110,17 @@ func (h Handler) switchModel(model string) Result {
 		return h.message("Model switching is not supported for the current agent")
 	}
 
-	if !isKnownModel(model) {
+	if !isUsableModel(model) {
 		return h.message(fmt.Sprintf("Unsupported model: %s\nUse /models to list supported models. Keeping current model: %s", model, h.currentModel()))
 	}
 
 	setter.SetModel(model)
+	providerName := registry.DetectProvider(model)
 	return Result{
-		Handled: true,
-		Message: "Model switched to: " + model,
-		Model:   model,
+		Handled:  true,
+		Message:  "Model switched to: " + model,
+		Model:    model,
+		Provider: providerName,
 	}
 }
 
@@ -121,6 +137,102 @@ func (h Handler) currentModel() string {
 
 func isKnownModel(model string) bool {
 	return registry.IsKnownModel(model)
+}
+
+func isUsableModel(model string) bool {
+	if registry.IsKnownModel(model) {
+		return true
+	}
+	return registry.DetectProvider(model) != "anthropic" || strings.HasPrefix(model, "claude-")
+}
+
+func normalizeCommand(input string) (string, string) {
+	cmd, rest, hasRest := strings.Cut(input, " ")
+	aliases := map[string]string{
+		"/h": "/help",
+		"/q": "/quit",
+		"/c": "/clear",
+		"/m": "/model",
+	}
+	if alias, ok := aliases[cmd]; ok {
+		cmd = alias
+	}
+
+	commands := []string{"/help", "/clear", "/exit", "/quit", "/model", "/models", "/sessions", "/resume", "/compact", "/permissions", "/update", "/skills"}
+	argCommands := map[string]bool{"/model": true, "/resume": true}
+	for _, known := range commands {
+		if cmd == known {
+			if hasRest {
+				return known + " " + rest, ""
+			}
+			return known, ""
+		}
+	}
+
+	var matches []string
+	for _, known := range commands {
+		if hasRest && !argCommands[known] {
+			continue
+		}
+		if strings.HasPrefix(known, cmd) {
+			matches = append(matches, known)
+		}
+	}
+	if len(matches) == 1 {
+		if hasRest {
+			return matches[0] + " " + rest, ""
+		}
+		return matches[0], ""
+	}
+	if len(matches) > 1 {
+		return input, strings.Join(matches, ", ")
+	}
+	return input, ""
+}
+
+func (h Handler) listSkills() Result {
+	if h.Skills == nil {
+		return h.message("Skills registry is not configured")
+	}
+	skillList := h.Skills.List()
+	if len(skillList) == 0 {
+		return h.message("No skills available")
+	}
+	sort.Slice(skillList, func(i, j int) bool {
+		return skillList[i].Name < skillList[j].Name
+	})
+	var b strings.Builder
+	b.WriteString("Available skills:\n")
+	for _, s := range skillList {
+		b.WriteString("  /")
+		b.WriteString(s.Name)
+		if s.Description != "" {
+			b.WriteString(" - ")
+			b.WriteString(s.Description)
+		}
+		b.WriteString("\n")
+	}
+	return h.message(strings.TrimRight(b.String(), "\n"))
+}
+
+func (h Handler) invokeSkill(input string) Result {
+	if h.Skills == nil {
+		return Result{}
+	}
+	skillName := strings.TrimPrefix(input, "/")
+	if skillName == "" || strings.Contains(skillName, " ") {
+		return Result{}
+	}
+	prompt, err := h.Skills.Execute(skillName)
+	if err != nil {
+		return Result{}
+	}
+	return Result{
+		Handled:     true,
+		Message:     "Executing skill /" + skillName,
+		Model:       h.Model,
+		SkillPrompt: prompt,
+	}
 }
 
 func formatModels() string {

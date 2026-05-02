@@ -54,6 +54,40 @@ func TestLoadSkillsMultipleFiles(t *testing.T) {
 	}
 }
 
+func TestLoadSkillsWithWarningsLoadsSkillMarkdown(t *testing.T) {
+	tmpDir := t.TempDir()
+	skillDir := filepath.Join(tmpDir, "test-driven-development")
+	if err := os.MkdirAll(skillDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	body := `---
+name: test-driven-development
+description: Use TDD
+---
+
+# Test Driven Development
+
+Write a failing test first.
+`
+	if err := os.WriteFile(filepath.Join(skillDir, "SKILL.md"), []byte(body), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := LoadSkillsWithWarnings(tmpDir)
+	if err != nil {
+		t.Fatalf("LoadSkillsWithWarnings failed: %v", err)
+	}
+	if len(result.Skills) != 1 {
+		t.Fatalf("loaded %d skills, want 1; warnings=%v", len(result.Skills), result.Warnings)
+	}
+	if result.Skills[0].Name != "test-driven-development" {
+		t.Fatalf("name = %q", result.Skills[0].Name)
+	}
+	if !strings.Contains(result.Skills[0].Prompt, "failing test") {
+		t.Fatalf("prompt did not include markdown body: %q", result.Skills[0].Prompt)
+	}
+}
+
 func TestLoadSkillsInvalidJSON(t *testing.T) {
 	tmpDir := t.TempDir()
 

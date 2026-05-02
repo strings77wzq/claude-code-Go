@@ -38,13 +38,20 @@ type ProviderProfile struct {
 
 var modelRegistry = []ModelInfo{
 	// Anthropic
+	{Name: "claude-opus-4-6", Provider: "anthropic", Description: "Latest Opus 4.6 alias for complex reasoning"},
+	{Name: "claude-sonnet-4-6", Provider: "anthropic", Description: "Latest Sonnet 4.6 alias for coding and agent tasks"},
 	{Name: "claude-opus-4-6-20251001", Provider: "anthropic", Description: "Most powerful model for complex reasoning"},
 	{Name: "claude-sonnet-4-6-20251001", Provider: "anthropic", Description: "Balanced model for everyday tasks"},
 	{Name: "claude-haiku-4-20250514", Provider: "anthropic", Description: "Fast and efficient model"},
 
 	// OpenAI
-	{Name: "gpt-4o", Provider: "openai", Description: "OpenAI's most capable model"},
-	{Name: "gpt-4o-mini", Provider: "openai", Description: "Fast and affordable model"},
+	{Name: "gpt-5.2", Provider: "openai", Description: "OpenAI's current frontier model for coding and agentic tasks"},
+	{Name: "gpt-5.2-mini", Provider: "openai", Description: "Fast, cost-efficient GPT-5.2-class model"},
+	{Name: "gpt-5.2-codex", Provider: "openai", Description: "Coding-optimized GPT-5.2 model"},
+	{Name: "gpt-5.1", Provider: "openai", Description: "Previous GPT-5 reasoning model"},
+	{Name: "gpt-5", Provider: "openai", Description: "GPT-5 reasoning model"},
+	{Name: "gpt-4o", Provider: "openai", Description: "Legacy GPT-4o model"},
+	{Name: "gpt-4o-mini", Provider: "openai", Description: "Legacy fast GPT-4o model"},
 	{Name: "o1", Provider: "openai", Description: "Reasoning model for complex problems"},
 	{Name: "o3", Provider: "openai", Description: "Advanced reasoning model"},
 
@@ -93,7 +100,7 @@ func DetectProvider(modelName string) string {
 		return "anthropic"
 	}
 
-	openAIPrefixes := []string{"gpt-", "o1", "o3", "deepseek-", "qwen-", "glm-", "mimo-"}
+	openAIPrefixes := []string{"gpt-", "o1", "o3", "o4", "deepseek-", "qwen-", "glm-", "mimo-"}
 	for _, prefix := range openAIPrefixes {
 		if strings.HasPrefix(modelName, prefix) {
 			return "openai"

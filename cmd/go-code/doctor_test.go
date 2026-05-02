@@ -58,9 +58,15 @@ func isolateDoctorProviderEnv(t *testing.T) {
 	t.Setenv("ANTHROPIC_BASE_URL", "")
 	t.Setenv("ANTHROPIC_MODEL", "")
 	t.Setenv("LLM_PROVIDER", "")
+	t.Setenv("GO_CODE_API_KEY", "")
+	t.Setenv("GO_CODE_BASE_URL", "")
+	t.Setenv("GO_CODE_MODEL", "")
+	t.Setenv("GO_CODE_PROVIDER", "")
+	t.Setenv("DEEPSEEK_API_KEY", "")
 }
 
 func TestRunDoctorMissingAPIKey(t *testing.T) {
+	isolateDoctorProviderEnv(t)
 	homeDir := t.TempDir()
 	workspace := t.TempDir()
 	writeDoctorDocs(t, workspace)

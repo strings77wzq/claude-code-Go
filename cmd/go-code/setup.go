@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+var currentSetupUser = user.Current
+
 // SetupWizard runs an interactive configuration wizard.
 func SetupWizard() error {
 	reader := bufio.NewReader(os.Stdin)
@@ -63,8 +65,9 @@ func selectProvider(reader *bufio.Reader) (string, error) {
 	fmt.Println("1. Select your LLM provider:")
 	fmt.Println("   [1] Anthropic (Claude)")
 	fmt.Println("   [2] OpenAI (GPT)")
-	fmt.Println("   [3] Custom (OpenAI-compatible)")
-	fmt.Print("\nChoose [1-3]: ")
+	fmt.Println("   [3] DeepSeek")
+	fmt.Println("   [4] Custom (OpenAI-compatible)")
+	fmt.Print("\nChoose [1-4]: ")
 
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSpace(input)
@@ -75,7 +78,9 @@ func selectProvider(reader *bufio.Reader) (string, error) {
 	case "2":
 		return "openai", nil
 	case "3":
-		return "custom", nil
+		return "deepseek", nil
+	case "4":
+		return "custom-openai", nil
 	default:
 		fmt.Println("Invalid choice, defaulting to Anthropic")
 		return "anthropic", nil
@@ -87,7 +92,7 @@ func enterAPIKey(reader *bufio.Reader, provider string) (string, bool, error) {
 	fmt.Println("2. Enter your API key:")
 
 	prompt := "API key: "
-	if provider == "custom" {
+	if provider == "custom-openai" {
 		fmt.Print(prompt)
 	} else {
 		fmt.Print(prompt)
@@ -123,7 +128,7 @@ func validateAPIKey(apiKey, provider string) error {
 		if !strings.HasPrefix(apiKey, "sk-") {
 			return fmt.Errorf("OpenAI API keys should start with 'sk-'")
 		}
-	case "custom":
+	case "custom-openai", "deepseek":
 		if apiKey == "" {
 			return fmt.Errorf("API key cannot be empty")
 		}
@@ -137,23 +142,32 @@ func selectModel(provider string) string {
 
 	switch provider {
 	case "anthropic":
-		fmt.Println("   [1] claude-sonnet-4-20250514 (default)")
-		fmt.Println("   [2] claude-opus-4-20250514")
+		fmt.Println("   [1] claude-sonnet-4-6 (default)")
+		fmt.Println("   [2] claude-opus-4-6")
 		fmt.Print("\nChoose [1-2]: ")
 		input, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 		if strings.TrimSpace(input) == "2" {
-			return "claude-opus-4-20250514"
+			return "claude-opus-4-6"
 		}
-		return "claude-sonnet-4-20250514"
+		return "claude-sonnet-4-6"
 	case "openai":
-		fmt.Println("   [1] gpt-4o (default)")
-		fmt.Println("   [2] gpt-4o-mini")
+		fmt.Println("   [1] gpt-5.2 (default)")
+		fmt.Println("   [2] gpt-5.2-mini")
 		fmt.Print("\nChoose [1-2]: ")
 		input, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 		if strings.TrimSpace(input) == "2" {
-			return "gpt-4o-mini"
+			return "gpt-5.2-mini"
 		}
-		return "gpt-4o"
+		return "gpt-5.2"
+	case "deepseek":
+		fmt.Println("   [1] deepseek-v4-pro (default)")
+		fmt.Println("   [2] deepseek-v4-flash")
+		fmt.Print("\nChoose [1-2]: ")
+		input, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+		if strings.TrimSpace(input) == "2" {
+			return "deepseek-v4-flash"
+		}
+		return "deepseek-v4-pro"
 	default:
 		fmt.Print("Model name: ")
 		input, _ := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -161,12 +175,12 @@ func selectModel(provider string) string {
 		if model != "" {
 			return model
 		}
-		return "gpt-4o"
+		return defaultModelForProvider(provider)
 	}
 }
 
 func writeConfig(provider, apiKey, model string) error {
-	usr, err := user.Current()
+	usr, err := currentSetupUser()
 	if err != nil {
 		return fmt.Errorf("failed to get current user: %w", err)
 	}
@@ -176,13 +190,22 @@ func writeConfig(provider, apiKey, model string) error {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
+	settingsProvider := provider
+	if provider == "deepseek" || provider == "custom-openai" {
+		settingsProvider = "openai"
+	}
+
 	settings := map[string]string{
 		"apiKey":   apiKey,
-		"provider": provider,
+		"provider": settingsProvider,
 		"model":    model,
 	}
 
-	if provider == "custom" {
+	if provider == "deepseek" {
+		settings["baseUrl"] = "https://api.deepseek.com"
+	}
+
+	if provider == "custom-openai" {
 		fmt.Print("Base URL (e.g., https://api.example.com): ")
 		baseURL, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 		baseURL = strings.TrimSpace(baseURL)
@@ -202,4 +225,15 @@ func writeConfig(provider, apiKey, model string) error {
 	}
 
 	return nil
+}
+
+func defaultModelForProvider(provider string) string {
+	switch provider {
+	case "anthropic":
+		return "claude-sonnet-4-6"
+	case "deepseek":
+		return "deepseek-v4-pro"
+	default:
+		return "gpt-5.2"
+	}
 }

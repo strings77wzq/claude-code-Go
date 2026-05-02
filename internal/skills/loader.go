@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/strings77wzq/claude-code-Go/internal/diagnostic"
 )
@@ -44,9 +45,12 @@ func LoadSkillsWithWarnings(dir string) (*LoadResult, error) {
 	result := &LoadResult{}
 	for _, entry := range entries {
 		if entry.IsDir() {
+			skillPath := filepath.Join(dir, entry.Name(), "SKILL.md")
+			if _, err := os.Stat(skillPath); err == nil {
+				loadMarkdownSkill(result, skillPath)
+			}
 			continue
 		}
-
 		ext := filepath.Ext(entry.Name())
 		if ext != ".json" {
 			result.Warnings = append(result.Warnings, SkillWarning{
@@ -87,6 +91,59 @@ func LoadSkillsWithWarnings(dir string) (*LoadResult, error) {
 	}
 
 	return result, nil
+}
+
+func loadMarkdownSkill(result *LoadResult, path string) {
+	data, err := os.ReadFile(path)
+	name := filepath.Base(filepath.Dir(path))
+	if err != nil {
+		result.Warnings = append(result.Warnings, SkillWarning{
+			File:   path,
+			Reason: fmt.Sprintf("failed to read file: %v", err),
+		})
+		return
+	}
+	skill := parseMarkdownSkill(name, string(data))
+	if skill.Name == "" {
+		result.Warnings = append(result.Warnings, SkillWarning{
+			File:   path,
+			Reason: "missing required field \"name\"",
+		})
+		return
+	}
+	result.Skills = append(result.Skills, skill)
+}
+
+func parseMarkdownSkill(fallbackName string, body string) Skill {
+	skill := Skill{Name: fallbackName, Prompt: strings.TrimSpace(body)}
+	trimmed := strings.TrimSpace(body)
+	if !strings.HasPrefix(trimmed, "---") {
+		return skill
+	}
+	parts := strings.SplitN(trimmed, "---", 3)
+	if len(parts) < 3 {
+		return skill
+	}
+	frontmatter := parts[1]
+	content := strings.TrimSpace(parts[2])
+	for _, line := range strings.Split(frontmatter, "\n") {
+		key, value, ok := strings.Cut(line, ":")
+		if !ok {
+			continue
+		}
+		key = strings.TrimSpace(key)
+		value = strings.Trim(strings.TrimSpace(value), `"'`)
+		switch key {
+		case "name":
+			skill.Name = value
+		case "description":
+			skill.Description = value
+		}
+	}
+	if content != "" {
+		skill.Prompt = content
+	}
+	return skill
 }
 
 func SkillWarningsDiagnostics(warnings []SkillWarning) []diagnostic.Diagnostic {

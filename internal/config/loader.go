@@ -6,9 +6,17 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strings"
 )
 
 const (
+	envGoCodeAPIKey         = "GO_CODE_API_KEY"
+	envGoCodeBaseURL        = "GO_CODE_BASE_URL"
+	envGoCodeModel          = "GO_CODE_MODEL"
+	envGoCodeProvider       = "GO_CODE_PROVIDER"
+	envGoCodePermissionMode = "GO_CODE_PERMISSION_MODE"
+	envDeepSeekAPIKey       = "DEEPSEEK_API_KEY"
+
 	envAPIKey      = "ANTHROPIC_API_KEY"
 	envBaseURL     = "ANTHROPIC_BASE_URL"
 	envModel       = "ANTHROPIC_MODEL"
@@ -115,8 +123,35 @@ func loadConfigFile(path string, cfg *Config) error {
 }
 
 func loadEnvConfig(cfg *Config) {
-	if apiKey := os.Getenv(envAPIKey); apiKey != "" {
+	if apiKey := os.Getenv(envGoCodeAPIKey); apiKey != "" {
 		cfg.APIKey = apiKey
+	}
+	if baseURL := os.Getenv(envGoCodeBaseURL); baseURL != "" {
+		cfg.BaseURL = baseURL
+	}
+	if model := os.Getenv(envGoCodeModel); model != "" {
+		cfg.Model = model
+	}
+	if provider := os.Getenv(envGoCodeProvider); provider != "" {
+		cfg.Provider = provider
+	}
+	if permissionMode := os.Getenv(envGoCodePermissionMode); permissionMode != "" {
+		cfg.PermissionMode = permissionMode
+	}
+	if apiKey := os.Getenv(envDeepSeekAPIKey); apiKey != "" && cfg.APIKey == "" {
+		cfg.APIKey = apiKey
+	}
+
+	legacyProvider := os.Getenv(envLLMProvider)
+	if legacyProvider != "" {
+		cfg.Provider = legacyProvider
+	}
+	applyLegacyAnthropic := shouldApplyLegacyAnthropicEnv(cfg, legacyProvider)
+	if apiKey := os.Getenv(envAPIKey); apiKey != "" && (cfg.APIKey == "" || applyLegacyAnthropic) {
+		cfg.APIKey = apiKey
+	}
+	if !applyLegacyAnthropic {
+		return
 	}
 	if baseURL := os.Getenv(envBaseURL); baseURL != "" {
 		cfg.BaseURL = baseURL
@@ -124,7 +159,12 @@ func loadEnvConfig(cfg *Config) {
 	if model := os.Getenv(envModel); model != "" {
 		cfg.Model = model
 	}
-	if provider := os.Getenv(envLLMProvider); provider != "" {
-		cfg.Provider = provider
+}
+
+func shouldApplyLegacyAnthropicEnv(cfg *Config, legacyProvider string) bool {
+	if legacyProvider != "" {
+		return true
 	}
+	provider := strings.ToLower(strings.TrimSpace(cfg.Provider))
+	return provider == "" || provider == "anthropic"
 }

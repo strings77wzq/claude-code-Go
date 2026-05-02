@@ -10,11 +10,11 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/term"
 	"github.com/strings77wzq/claude-code-Go/internal/agent"
 	"github.com/strings77wzq/claude-code-Go/internal/config"
 	"github.com/strings77wzq/claude-code-Go/internal/permission"
@@ -33,13 +33,15 @@ const version = "0.3.0"
 const systemPrompt = "You are an interactive agent that helps users with software engineering tasks. You have access to tools for reading files, editing files, executing shell commands, searching code, and more. Use your tools to complete tasks efficiently and accurately."
 
 type cliOptions struct {
-	legacyRepl   bool
-	setupMode    bool
-	prompt       string
-	outputFormat string
-	quiet        bool
-	debug        bool
-	version      bool
+	legacyRepl     bool
+	setupMode      bool
+	prompt         string
+	outputFormat   string
+	quiet          bool
+	debug          bool
+	version        bool
+	permissionMode string
+	nonInteractive bool
 }
 
 func main() {
@@ -163,15 +165,36 @@ func main() {
 	defer mcpManager.Close()
 	logger.Info("MCP initialization complete", "tools", len(toolRegistry.GetAllDefinitions()))
 
+	// Determine permission mode: CLI flag > env var > default
+	permModeStr := opts.permissionMode
+	if permModeStr == "" && cfg.PermissionMode != "" {
+		permModeStr = cfg.PermissionMode
+	}
+	permMode := parsePermissionMode(permModeStr)
+	if permModeStr != "" && permMode == "" {
+		fmt.Fprintf(os.Stderr, "Invalid permission mode: %s. Valid values: read-only, workspace-write, danger-full-access\n", permModeStr)
+		os.Exit(2)
+	}
+	if permMode == "" {
+		permMode = permission.WorkspaceWrite
+	}
+
+	// Detect non-interactive stdin
+	opts.nonInteractive = !term.IsTerminal(os.Stdin.Fd())
+
 	// Create permission policy
-	logger.Info("Creating permission policy")
-	policy := permission.NewPolicy(permission.WorkspaceWrite)
+	logger.Info("Creating permission policy", "mode", permMode)
+	policy := permission.NewPolicy(permMode)
 	logger.Info("Permission policy created")
 
 	// Create agent
 	logger.Info("Creating agent")
 	agentInstance := agent.NewAgent(client, toolRegistry, policy, systemPrompt, cfg.Model)
-	agentInstance.SetPermissionPrompter(permission.NewStdinPrompter(bufio.NewReader(os.Stdin), os.Stdout))
+	if opts.nonInteractive {
+		agentInstance.SetPermissionPrompter(permission.NewNonInteractivePrompter())
+	} else {
+		agentInstance.SetPermissionPrompter(permission.NewStdinPrompter(bufio.NewReader(os.Stdin), os.Stdout))
+	}
 	logger.Info("Agent started", "model", cfg.Model)
 
 	// Non-interactive mode: run single prompt and exit
@@ -201,8 +224,7 @@ func main() {
 
 	// Load skills with validation warnings
 	skillsRegistry := skills.NewRegistry()
-	if homeDir, err := os.UserHomeDir(); err == nil {
-		skillsDir := filepath.Join(homeDir, ".go-code", "skills")
+	loadSkillDir := func(skillsDir string) {
 		if result, err := skills.LoadSkillsWithWarnings(skillsDir); err == nil {
 			for _, w := range result.Warnings {
 				logger.Warn("Invalid skill file", "file", w.File, "reason", w.Reason)
@@ -214,6 +236,15 @@ func main() {
 			}
 		}
 	}
+	if homeDir, err := os.UserHomeDir(); err == nil {
+		wd := ""
+		if currentWD, err := os.Getwd(); err == nil {
+			wd = currentWD
+		}
+		for _, skillsDir := range runtimeSkillDirs(homeDir, wd) {
+			loadSkillDir(skillsDir)
+		}
+	}
 
 	// Use legacy REPL or new bubbletea TUI
 	if opts.legacyRepl {
@@ -223,7 +254,7 @@ func main() {
 		repl.Run()
 	} else {
 		logger.Info("Starting bubbletea TUI")
-		tuiModel := tui.NewModel(agentInstance, version, cfg.Provider, cfg.Model, opts.debug)
+		tuiModel := tui.NewModelWithSkills(agentInstance, version, cfg.Provider, cfg.Model, opts.debug, skillsRegistry)
 		p := tea.NewProgram(tuiModel, tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			logger.Error("TUI error", "error", err)
@@ -245,6 +276,7 @@ func newRootFlagSet(name string, errorHandling flag.ErrorHandling, output io.Wri
 	flags.BoolVar(&opts.quiet, "q", false, "Hide spinner in non-interactive mode")
 	flags.BoolVar(&opts.debug, "debug", false, "Enable debug logging to stderr")
 	flags.BoolVar(&opts.version, "version", false, "Print version and exit")
+	flags.StringVar(&opts.permissionMode, "permission-mode", "", "Permission mode: read-only, workspace-write, danger-full-access")
 	flags.Usage = func() {
 		fmt.Fprintf(flags.Output(), "Usage: %s [options]\n", name)
 		fmt.Fprintf(flags.Output(), "       %s doctor [--offline]\n", name)
@@ -258,12 +290,26 @@ func newRootFlagSet(name string, errorHandling flag.ErrorHandling, output io.Wri
 		fmt.Fprintln(flags.Output(), "  JSON output         use -f json with prompt mode")
 		fmt.Fprintln(flags.Output(), "  quiet mode          suppress streaming text with -q")
 		fmt.Fprintln(flags.Output(), "  debug mode          emit debug logs with -debug")
-		fmt.Fprintln(flags.Output(), "  permission mode     default WorkspaceWrite; non-interactive prompts fail closed")
 		fmt.Fprintln(flags.Output(), "  version             print go-code version")
 		fmt.Fprintln(flags.Output(), "\nOptions:")
 		flags.PrintDefaults()
 	}
 	return flags, opts
+}
+
+// parsePermissionMode maps a CLI/env string to a permission.Mode.
+// Returns empty string for invalid input.
+func parsePermissionMode(s string) permission.Mode {
+	switch s {
+	case "read-only":
+		return permission.ReadOnly
+	case "workspace-write":
+		return permission.WorkspaceWrite
+	case "danger-full-access":
+		return permission.DangerFullAccess
+	default:
+		return ""
+	}
 }
 
 func printVersion(w io.Writer) {

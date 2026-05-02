@@ -9,6 +9,8 @@ import (
 )
 
 func TestLoadFromEnvVars(t *testing.T) {
+	clearConfigEnv(t)
+	isolateEmptyConfig(t)
 	os.Setenv("ANTHROPIC_API_KEY", "env-api-key")
 	os.Setenv("ANTHROPIC_BASE_URL", "https://custom.api.anthropic.com")
 	defer os.Unsetenv("ANTHROPIC_API_KEY")
@@ -27,7 +29,90 @@ func TestLoadFromEnvVars(t *testing.T) {
 	}
 }
 
+func TestPermissionModeEnvVar(t *testing.T) {
+	clearConfigEnv(t)
+	isolateEmptyConfig(t)
+	os.Setenv("ANTHROPIC_API_KEY", "test-key")
+	os.Setenv("GO_CODE_PERMISSION_MODE", "danger-full-access")
+	defer os.Unsetenv("ANTHROPIC_API_KEY")
+	defer os.Unsetenv("GO_CODE_PERMISSION_MODE")
+
+	cfg, err := Load(nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if cfg.PermissionMode != "danger-full-access" {
+		t.Errorf("expected PermissionMode 'danger-full-access', got '%s'", cfg.PermissionMode)
+	}
+}
+
+func TestPermissionModeEnvVarDefault(t *testing.T) {
+	clearConfigEnv(t)
+	isolateEmptyConfig(t)
+	os.Setenv("ANTHROPIC_API_KEY", "test-key")
+	defer os.Unsetenv("ANTHROPIC_API_KEY")
+
+	cfg, err := Load(nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if cfg.PermissionMode != "" {
+		t.Errorf("expected default PermissionMode '', got '%s'", cfg.PermissionMode)
+	}
+}
+
+func TestLoadDeepSeekSettingsIgnoresClaudeCodeAnthropicEnv(t *testing.T) {
+	clearConfigEnv(t)
+	tmpDir := t.TempDir()
+
+	userDir := filepath.Join(tmpDir, "user")
+	os.MkdirAll(filepath.Join(userDir, ".go-code"), 0755)
+	settings := Settings{
+		APIKey:   "deepseek-key",
+		BaseURL:  "https://api.deepseek.com",
+		Model:    "deepseek-v4-pro",
+		Provider: "openai",
+	}
+	data, _ := json.Marshal(settings)
+	os.WriteFile(filepath.Join(userDir, ".go-code", "settings.json"), data, 0644)
+
+	projectDir := filepath.Join(tmpDir, "project")
+	os.MkdirAll(filepath.Join(projectDir, ".go-code"), 0755)
+
+	origWorkingDir := mustGetwd()
+	origUser := currentUser
+	defer func() {
+		currentUser = origUser
+		os.Chdir(origWorkingDir)
+	}()
+
+	os.Chdir(projectDir)
+	currentUser = func() (*user.User, error) {
+		return &user.User{HomeDir: userDir}, nil
+	}
+
+	t.Setenv("ANTHROPIC_BASE_URL", "https://api.deepseek.com/anthropic")
+	t.Setenv("ANTHROPIC_MODEL", "deepseek-v4-pro[1m]")
+
+	cfg, err := Load(nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Provider != "openai" {
+		t.Fatalf("provider = %q, want openai", cfg.Provider)
+	}
+	if cfg.Model != "deepseek-v4-pro" {
+		t.Fatalf("model = %q, want deepseek-v4-pro", cfg.Model)
+	}
+	if cfg.BaseURL != "https://api.deepseek.com" {
+		t.Fatalf("baseURL = %q, want DeepSeek OpenAI-compatible base URL", cfg.BaseURL)
+	}
+}
+
 func TestCLIOverridesEnvVars(t *testing.T) {
+	clearConfigEnv(t)
 	os.Setenv("ANTHROPIC_API_KEY", "env-api-key")
 	os.Setenv("ANTHROPIC_BASE_URL", "https://env.api.anthropic.com")
 	defer os.Unsetenv("ANTHROPIC_API_KEY")
@@ -110,6 +195,7 @@ func TestConfigFileLoading(t *testing.T) {
 }
 
 func TestPriorityChain(t *testing.T) {
+	clearConfigEnv(t)
 	tmpDir := t.TempDir()
 
 	userDir := filepath.Join(tmpDir, "user")
@@ -175,6 +261,7 @@ func TestPriorityChain(t *testing.T) {
 
 func TestAPIKeyValidation(t *testing.T) {
 	clearConfigEnv(t)
+	isolateEmptyConfig(t)
 
 	cfg, err := Load(nil)
 	if err == nil {
@@ -240,4 +327,33 @@ func clearConfigEnv(t *testing.T) {
 	t.Setenv("ANTHROPIC_BASE_URL", "")
 	t.Setenv("ANTHROPIC_MODEL", "")
 	t.Setenv("LLM_PROVIDER", "")
+	t.Setenv("GO_CODE_API_KEY", "")
+	t.Setenv("GO_CODE_BASE_URL", "")
+	t.Setenv("GO_CODE_MODEL", "")
+	t.Setenv("GO_CODE_PROVIDER", "")
+	t.Setenv("DEEPSEEK_API_KEY", "")
+	t.Setenv("GO_CODE_PERMISSION_MODE", "")
+}
+
+func isolateEmptyConfig(t *testing.T) {
+	t.Helper()
+	tmpDir := t.TempDir()
+	projectDir := filepath.Join(tmpDir, "project")
+	userDir := filepath.Join(tmpDir, "user")
+	if err := os.MkdirAll(projectDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(userDir, ".go-code"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	origWorkingDir := mustGetwd()
+	origUser := currentUser
+	t.Cleanup(func() {
+		currentUser = origUser
+		os.Chdir(origWorkingDir)
+	})
+	os.Chdir(projectDir)
+	currentUser = func() (*user.User, error) {
+		return &user.User{HomeDir: userDir}, nil
+	}
 }

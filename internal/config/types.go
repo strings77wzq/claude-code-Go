@@ -3,12 +3,13 @@ package config
 
 // Config holds the runtime configuration for go-code.
 type Config struct {
-	APIKey     string
-	BaseURL    string
-	Model      string
-	MaxTokens  int
-	WorkingDir string
-	Provider   string
+	APIKey         string
+	BaseURL        string
+	Model          string
+	MaxTokens      int
+	WorkingDir     string
+	Provider       string
+	PermissionMode string
 }
 
 // DefaultConfig returns a Config with default values.
