@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- 11 new test files for builtin tools (glob, grep, tree, webfetch, diff, todo, notebook, validate): coverage 20.5% → 70.2%
+- OpenSpec change `builtin-tests-and-security-fix` with full proposal, design, specs, and task list
+
+### Fixed
+- **bash_semantic.go**: `WriteIndicators` no longer classifies pipe (`|`), command chain (`;`), and logical operators (`&&`, `||`) as write indicators — piped read-only commands are now correctly classified
+- **bash_semantic.go**: removed dead code in `hasWriteArguments` (unreachable space-prefix and meaningless -wc prefix branches)
+- **bash_semantic.go**: `DetectDestructive` now uses deterministic ordered slice instead of non-deterministic map iteration
+- **bash_semantic.go**: FD 2 (stderr) redirects are now validated against workspace boundaries
+- **bash_semantic.go**: `AnalyzeSemantics` no longer overwrites previously discovered invalid-path errors when `VerifyReadOnly` returns true
+- **bash_semantic.go**: `getHomeDir` now correctly reads the `HOME` environment variable, fixing `~/` path expansion
+
+### Verification Commands
+- `go test ./...` — 26/26 packages pass
+- `go vet ./...` — clean
+- `gofmt -l .` — clean
+- `go build -o bin/go-code ./cmd/go-code` — compiles
+- `python -m pytest harness/ -q` — 48/48 pass
+- `./scripts/run-harness.sh` — all pass
+
 ## [v0.3.0] - 2026-05-02
 
 ### Added
