@@ -35,7 +35,7 @@ This means you can set defaults in the user config and override them per-project
 |----------|----------|---------|-------------|
 | `ANTHROPIC_API_KEY` | Yes | - | API key for authentication |
 | `ANTHROPIC_BASE_URL` | No | `https://api.anthropic.com` | Override the default API endpoint |
-| `ANTHROPIC_MODEL` | No | `claude-sonnet-4-20250514` | Default model to use |
+| `ANTHROPIC_MODEL` | No | `claude-sonnet-4-6-20251001` | Default model to use |
 
 ### MCP Configuration
 
@@ -87,7 +87,7 @@ The configuration file uses JSON format. Below is the complete schema:
     "model": {
       "type": "string",
       "description": "Default model to use",
-      "default": "claude-sonnet-4-20250514"
+      "default": "claude-sonnet-4-6-20251001"
     },
     "maxTokens": {
       "type": "integer",
@@ -129,7 +129,7 @@ The configuration file uses JSON format. Below is the complete schema:
 {
   "apiKey": "sk-ant-your-api-key-here",
   "baseUrl": "https://api.anthropic.com",
-  "model": "claude-sonnet-4-20250514",
+  "model": "claude-sonnet-4-6-20251001",
   "maxTokens": 8192,
   "temperature": 0.7,
   "timeout": 180,

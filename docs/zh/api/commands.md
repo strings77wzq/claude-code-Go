@@ -117,7 +117,7 @@ Conversation history cleared
 **显示当前模型：**
 ```
 go-code> /model
-Current model: claude-sonnet-4-20250514
+Current model: claude-sonnet-4-6-20251001
 ```
 
 **切换到不同模型：**
@@ -179,9 +179,9 @@ Model switched to: claude-opus-4-20250514
 
 ```
 可用会话：
-  abc123  model=claude-sonnet-4-20250514 turns=5 started=2026-04-05 10:30:00
+  abc123  model=claude-sonnet-4-6-20251001 turns=5 started=2026-04-05 10:30:00
   def456  model=claude-opus-4-20250514 turns=12 started=2026-04-04 15:45:30
-  ghi789  model=claude-sonnet-4-20250514 turns=3 started=2026-04-03 09:20:15
+  ghi789  model=claude-sonnet-4-6-20251001 turns=3 started=2026-04-03 09:20:15
 ```
 
 ### 参见
@@ -216,7 +216,7 @@ Model switched to: claude-opus-4-20250514
 ```
 go-code> /resume abc123
 Resumed session abc123 with 10 messages
-Session model: claude-sonnet-4-20250514
+Session model: claude-sonnet-4-6-20251001
 ```
 
 **无效会话：**
@@ -304,13 +304,13 @@ Permission mode details are not exposed yet. Safe-default approval flow is track
 **没有可用更新：**
 ```
 go-code> /update
-Already up to date (v0.1.0)
+Already up to date (v0.3.1)
 ```
 
 **有可用更新：**
 ```
 go-code> /update
-Update available: v0.1.0 -> v0.1.1
+Update available: v0.3.1 -> v0.3.2
 Download: https://github.com/strings77wzq/claude-code-Go/releases/...
 ```
 

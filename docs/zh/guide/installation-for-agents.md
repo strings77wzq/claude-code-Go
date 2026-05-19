@@ -64,7 +64,7 @@ cat > ~/.go-code/settings.json << 'EOF'
 {
   "apiKey": "sk-ant-your-key-here",
   "provider": "anthropic",
-  "model": "claude-sonnet-4-20250514"
+  "model": "claude-sonnet-4-6-20251001"
 }
 EOF
 ```

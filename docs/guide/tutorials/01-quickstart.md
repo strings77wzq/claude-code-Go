@@ -47,7 +47,7 @@ Create `~/.go-code/settings.json`:
 ```json
 {
   "apiKey": "sk-ant-api03-your-key-here",
-  "model": "claude-sonnet-4-20250514"
+  "model": "claude-sonnet-4-6-20251001"
 }
 ```
 
@@ -62,8 +62,8 @@ go-code
 You'll see a welcome message and prompt:
 
 ```
-🤖 claude-code-Go v0.1.0
-Model: claude-sonnet-4-20250514
+🤖 v0.3.1
+Model: claude-sonnet-4-6-20251001
 
 Type /help for available commands
 

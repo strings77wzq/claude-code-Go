@@ -34,7 +34,7 @@ hero:
       <div class="metric-label">权限层级</div>
     </div>
     <div class="metric-item">
-      <div class="metric-value">100%</div>
+      <div class="metric-value">70%+</div>
       <div class="metric-label">测试覆盖</div>
     </div>
   </div>
@@ -118,7 +118,7 @@ hero:
 | 功能 | 说明 |
 |------|------|
 | &#x1F504; Agent Loop | 由 `stop_reason` 驱动的「思考 &rarr; 行动 &rarr; 观察」自主循环 |
-| &#x1F6E0; 11 大内置工具 | Read、Write、Edit、Glob、Grep、Bash、Diff、Tree、WebFetch、WebSearch、TodoWrite |
+| &#x1F6E0; 11 大内置工具 | Read、Write、Edit、Glob、Grep、Bash、Diff、Tree、WebFetch、TodoWrite、NotebookEdit |
 | &#x1F512; 权限系统 | 三级权限模型，支持 glob 规则匹配与会话记忆 |
 | &#x1F50C; MCP 集成 | Model Context Protocol，stdio 传输、JSON-RPC、权限门控 |
 | &#x1F30A; SSE 流式 | 逐 token 实时流式输出，自研解析器，零外部依赖 |
@@ -214,7 +214,7 @@ chmod +x go-code
 
 设置 API Key 后即可使用：
 ```bash
-export GO_CODE_API_KEY=sk-ant-...
+export ANTHROPIC_API_KEY=sk-ant-...
 ./go-code
 ```
 

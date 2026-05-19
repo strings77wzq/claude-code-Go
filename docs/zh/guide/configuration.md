@@ -137,7 +137,7 @@ MCP 配置支持 `${VAR}` 语法来插值环境变量：
 {
   "apiKey": "sk-ant-your-api-key-here",
   "baseUrl": "https://api.anthropic.com",
-  "model": "claude-sonnet-4-20250514"
+  "model": "claude-sonnet-4-6-20251001"
 }
 ```
 
@@ -177,7 +177,7 @@ MCP 配置支持 `${VAR}` 语法来插值环境变量：
 
 ```
 go-code> /model
-Current model: claude-sonnet-4-20250514
+Current model: claude-sonnet-4-6-20251001
 
 go-code> /model hunyuan-2.0-instruct
 Model switched to: hunyuan-2.0-instruct

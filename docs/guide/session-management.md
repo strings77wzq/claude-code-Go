@@ -89,7 +89,7 @@ Each session stores the following metadata:
 | Field | Description |
 |-------|-------------|
 | `session_id` | Unique identifier for the session |
-| `model` | Claude model used (e.g., claude-sonnet-4-20250514) |
+| `model` | Claude model used (e.g., claude-sonnet-4-6-20251001) |
 | `start_time_ms` | Session start time (Unix milliseconds) |
 | `end_time_ms` | Session end time (Unix milliseconds) |
 | `turn_count` | Number of conversation turns |

@@ -119,7 +119,7 @@ The supported model list is defined by the provider registry. Use `/models` for 
 **Show current model:**
 ```
 go-code> /model
-Current model: claude-sonnet-4-20250514
+Current model: claude-sonnet-4-6-20251001
 ```
 
 **Switch to a different model:**
@@ -181,9 +181,9 @@ Displays all saved sessions from the sessions directory. Each session shows its 
 
 ```
 Available sessions:
-  abc123  model=claude-sonnet-4-20250514 turns=5 started=2026-04-05 10:30:00
+  abc123  model=claude-sonnet-4-6-20251001 turns=5 started=2026-04-05 10:30:00
   def456  model=claude-opus-4-20250514 turns=12 started=2026-04-04 15:45:30
-  ghi789  model=claude-sonnet-4-20250514 turns=3 started=2026-04-03 09:20:15
+  ghi789  model=claude-sonnet-4-6-20251001 turns=3 started=2026-04-03 09:20:15
 ```
 
 ### See Also
@@ -218,7 +218,7 @@ Loads a previous session's conversation history and continues from where it left
 ```
 go-code> /resume abc123
 Resumed session abc123 with 10 messages
-Session model: claude-sonnet-4-20250514
+Session model: claude-sonnet-4-6-20251001
 ```
 
 **Invalid session:**
@@ -306,13 +306,13 @@ Connects to the release server to check if a newer version is available. The sha
 **No update available:**
 ```
 go-code> /update
-Already up to date (v0.1.0)
+Already up to date (v0.3.1)
 ```
 
 **Update available:**
 ```
 go-code> /update
-Update available: v0.1.0 -> v0.1.1
+Update available: v0.3.1 -> v0.3.2
 Download: https://github.com/strings77wzq/claude-code-Go/releases/...
 ```
 

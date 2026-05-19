@@ -34,7 +34,7 @@ hero:
       <div class="metric-label">Permission Tiers</div>
     </div>
     <div class="metric-item">
-      <div class="metric-value">100%</div>
+      <div class="metric-value">70%+</div>
       <div class="metric-label">Test Coverage</div>
     </div>
   </div>
@@ -118,7 +118,7 @@ hero:
 | Feature | Description |
 |---------|-------------|
 | &#x1F504; Agent Loop | Autonomous "think &rarr; act &rarr; observe" cycle driven by `stop_reason` dispatch |
-| &#x1F6E0; 11 Built-in Tools | Read, Write, Edit, Glob, Grep, Bash, Diff, Tree, WebFetch, WebSearch, TodoWrite |
+| &#x1F6E0; 11 Built-in Tools | Read, Write, Edit, Glob, Grep, Bash, Diff, Tree, WebFetch, TodoWrite, NotebookEdit |
 | &#x1F512; Permission System | Three-tier model with rule-based matching, glob patterns, and session memory |
 | &#x1F50C; MCP Integration | Model Context Protocol with stdio transport, JSON-RPC, and permission gates |
 | &#x1F30A; SSE Streaming | Real-time token-by-token output with custom parser, zero external dependencies |
@@ -214,6 +214,6 @@ chmod +x go-code
 
 Set your API key and start coding:
 ```bash
-export GO_CODE_API_KEY=sk-ant-...
+export ANTHROPIC_API_KEY=sk-ant-...
 ./go-code
 ```

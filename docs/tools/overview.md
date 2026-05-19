@@ -106,7 +106,7 @@ This ensures thread-safe access during agent execution.
 
 ## Built-in Tools Table
 
-go-code provides nine built-in tools that cover essential software development operations:
+go-code provides 11 built-in tools that cover essential software development operations:
 
 | # | Tool Name | Purpose | Permission Required | Source File |
 |---|-----------|---------|---------------------|--------------|
@@ -119,6 +119,8 @@ go-code provides nine built-in tools that cover essential software development o
 | 7 | **Diff** | Compare two content strings and return unified diff output | No | `internal/tool/builtin/diff.go` |
 | 8 | **Tree** | Display directory tree structure as text | No | `internal/tool/builtin/tree.go` |
 | 9 | **WebFetch** | Fetch URL and return readable text (HTML stripped) | Yes | `internal/tool/builtin/webfetch.go` |
+| 10 | **TodoWrite** | Create and manage structured task lists | No | `internal/tool/builtin/todo.go` |
+| 11 | **NotebookEdit** | Read, edit, add, and delete cells in Jupyter notebooks | Yes | `internal/tool/builtin/notebook.go` |
 
 ### Tool Details
 

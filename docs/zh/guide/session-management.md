@@ -89,7 +89,7 @@ Replay 会打印请求、工具调用、权限决策、消息、错误和最终�
 | 字段 | 描述 |
 |-----|------|
 | `session_id` | 会话的唯一标识符 |
-| `model` | 使用的 Claude 模型（例如 claude-sonnet-4-20250514）|
+| `model` | 使用的 Claude 模型（例如 claude-sonnet-4-6-20251001）|
 | `start_time_ms` | 会话开始时间（Unix 毫秒）|
 | `end_time_ms` | 会话结束时间（Unix 毫秒）|
 | `turn_count` | 对话轮次数量 |

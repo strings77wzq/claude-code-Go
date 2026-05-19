@@ -106,7 +106,7 @@ func (r *Registry) GetAllDefinitions() []ToolDefinition
 
 ## 内置工具表
 
-go-code 提供六个内置工具，涵盖基本的软件开发操作：
+go-code 提供 11 个内置工具，涵盖基本的软件开发操作：
 
 | # | 工具名称 | 用途 | 需要权限 | 源文件 |
 |---|----------|------|----------|--------|
@@ -116,6 +116,11 @@ go-code 提供六个内置工具，涵盖基本的软件开发操作：
 | 4 | **Glob** | 按 glob 模式查找文件（`*`, `**`） | 否 | `internal/tool/builtin/glob.go` |
 | 5 | **Grep** | 使用正则表达式搜索文件内容 | 否 | `internal/tool/builtin/grep.go` |
 | 6 | **Bash** | 执行 Shell 命令 | 是 | `internal/tool/builtin/bash.go` |
+| 7 | **Diff** | 比较两个内容字符串，返回统一 diff 输出 | 否 | `internal/tool/builtin/diff.go` |
+| 8 | **Tree** | 以文本形式显示目录树结构 | 否 | `internal/tool/builtin/tree.go` |
+| 9 | **WebFetch** | 获取 URL 并返回可读文本（剥离 HTML） | 是 | `internal/tool/builtin/webfetch.go` |
+| 10 | **TodoWrite** | 创建和管理结构化任务列表 | 否 | `internal/tool/builtin/todo.go` |
+| 11 | **NotebookEdit** | 读取、编辑、添加和删除 Jupyter notebook 单元格 | 是 | `internal/tool/builtin/notebook.go` |
 
 ### 工具详情
 

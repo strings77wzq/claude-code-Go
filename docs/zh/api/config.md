@@ -35,7 +35,7 @@ go-code 从多个来源加载配置，优先级顺序如下（从高到低）：
 |----------|----------|---------|-------------|
 | `ANTHROPIC_API_KEY` | 是 | - | 用于认证的 API 密钥 |
 | `ANTHROPIC_BASE_URL` | 否 | `https://api.anthropic.com` | 覆盖默认 API 端点 |
-| `ANTHROPIC_MODEL` | 否 | `claude-sonnet-4-20250514` | 使用的默认模型 |
+| `ANTHROPIC_MODEL` | 否 | `claude-sonnet-4-6-20251001` | 使用的默认模型 |
 
 ### MCP 配置
 
@@ -87,7 +87,7 @@ go-code 从多个来源加载配置，优先级顺序如下（从高到低）：
     "model": {
       "type": "string",
       "description": "Default model to use",
-      "default": "claude-sonnet-4-20250514"
+      "default": "claude-sonnet-4-6-20251001"
     },
     "maxTokens": {
       "type": "integer",
@@ -129,7 +129,7 @@ go-code 从多个来源加载配置，优先级顺序如下（从高到低）：
 {
   "apiKey": "sk-ant-your-api-key-here",
   "baseUrl": "https://api.anthropic.com",
-  "model": "claude-sonnet-4-20250514",
+  "model": "claude-sonnet-4-6-20251001",
   "maxTokens": 8192,
   "temperature": 0.7,
   "timeout": 180,

@@ -76,7 +76,7 @@ Doctor 会检查二进制版本、配置来源、Provider/模型配置、会话�
  |  __/ ___ \ ___) | | 
  |_| /_/   \_\____/___|
 
-Welcome to go-code 0.1.0
+go-code v0.3.1
 Type /help for available commands
 
 go-code> 
@@ -139,7 +139,7 @@ go-code -p "prompt"
 ```json
 {
   "apiKey": "sk-ant-your-api-key-here",
-  "model": "claude-sonnet-4-20250514",
+  "model": "claude-sonnet-4-6-20251001",
   "baseUrl": "https://api.anthropic.com"
 }
 ```
@@ -154,7 +154,7 @@ $ ./bin/go-code
  |  __/ ___ \ ___) | | 
  |_| /_/   \_\____/___|
 
-Welcome to go-code 0.1.0
+go-code v0.3.1
 Type /help for available commands
 
 go-code> 列出当前目录的文件

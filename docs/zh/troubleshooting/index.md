@@ -146,7 +146,7 @@ go-code 默认以 `WorkspaceWrite` 启动：读取工作区文件通常直接允
 
 2. **使用其他模型：**
    ```
-   /model claude-sonnet-4-20250514
+   /model claude-sonnet-4-6-20251001
    ```
 
 3. **检查模型名称拼写**

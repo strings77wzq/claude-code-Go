@@ -82,7 +82,7 @@ You should see the welcome screen:
  |  __/ ___ \ ___) | | 
  | |_| /_/   \_\____/___|
 
-Welcome to go-code 0.1.0
+go-code v0.3.1
 Type /help for available commands
 
 go-code> 
@@ -155,7 +155,7 @@ go-code -p "prompt"
 |----------|-------------|----------|
 | `ANTHROPIC_API_KEY` | Your API key | Yes |
 | `ANTHROPIC_BASE_URL` | Override default API endpoint (optional) | No |
-| `ANTHROPIC_MODEL` | Specify model (default: claude-sonnet-4-20250514) | No |
+| `ANTHROPIC_MODEL` | Specify model (default: claude-sonnet-4-6-20251001) | No |
 
 ### Startup Parameters
 
@@ -175,7 +175,7 @@ Create `~/.go-code/settings.json` for persistent settings:
 ```json
 {
   "apiKey": "sk-ant-your-api-key-here",
-  "model": "claude-sonnet-4-20250514",
+  "model": "claude-sonnet-4-6-20251001",
   "baseUrl": "https://api.anthropic.com"
 }
 ```

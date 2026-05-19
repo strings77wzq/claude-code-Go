@@ -123,7 +123,7 @@ This guide covers common issues you might encounter when using go-code and provi
 
 2. **Use a different model:**
    ```
-   /model claude-sonnet-4-20250514
+   /model claude-sonnet-4-6-20251001
    ```
 
 3. **Check model name spelling**

@@ -232,7 +232,7 @@ When an MCP server starts, go-code discovers its available tools:
     "capabilities": {},
     "clientInfo": {
       "name": "go-code",
-      "version": "0.1.0"
+      "version": "0.3.1"
     }
   }
 }

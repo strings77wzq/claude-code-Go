@@ -100,7 +100,7 @@ Create a `~/.go-code/settings.json` file:
 {
   "apiKey": "your-api-key",
   "provider": "anthropic",
-  "model": "claude-sonnet-4-20250514",
+  "model": "claude-sonnet-4-6-20251001",
   "baseUrl": "https://api.anthropic.com"
 }
 ```
