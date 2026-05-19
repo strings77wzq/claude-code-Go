@@ -17,6 +17,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tools overview: "9 tools" / "6 tools" corrected to "11 tools" with TodoWrite + NotebookEdit
   - English and Chinese docs fully synced
 
+## [v0.4.0] - 2026-05-19
+
+### Added
+- **Intelligent Context Management**: Tool tier system (Core/Extension/MCP) with progressive disclosure — turn 1 sends all tools, subsequent turns send only core + previously disclosed extension tools (40-60% token savings)
+- **Anthropic Prompt Caching**: Cache breakpoints on system prompt and tool definitions via `CachedSystemPrompt` and `CacheControl` types — up to 90% cost reduction on cached tokens
+- **Extended Thinking**: Configurable thinking budget (`SetThinkingBudget`), `thinking` stop_reason handling, thinking block tracing in session logs
+- **Sub-Agent Delegation Design**: OpenSpec proposal and architecture for Explore/Review/TestGen sub-agents with Task tool integration
+- **Structured Reasoning Design**: OpenSpec proposal for ReAct-style structured reasoning engine
+
+### Changed
+- `ToolRegistryInterface` now includes `GetDefinitionsByTier` for filtered tool retrieval
+- `ApiRequest.System` now supports both plain strings and `CachedSystemPrompt` for prompt caching
+- `Agent.buildRequest()` implements progressive tool disclosure and cache breakpoint injection
+
 ## [Unreleased]
 
 ### Added
