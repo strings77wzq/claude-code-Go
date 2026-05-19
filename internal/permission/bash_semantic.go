@@ -1,6 +1,7 @@
 package permission
 
 import (
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -70,15 +71,14 @@ var SemanticReadOnlyCommands = map[string]bool{
 	"set":       true,
 }
 
-// WriteIndicators are patterns that indicate write operations
+// WriteIndicators are patterns that indicate write operations.
+// Note: pipe (|), command chain (;), and logical operators (&&, ||) are NOT
+// write indicators — they compose commands but do not themselves write.
+// Destructive commands in any pipeline stage are still caught by DetectDestructive.
 var WriteIndicators = []string{
 	">",   // Output redirect
 	">>",  // Append redirect
-	"|",   // Pipe (can lead to write)
-	";",   // Command chain
-	"&&",  // AND chain
-	"||",  // OR chain
-	"$()", // Command substitution
+	"$(",  // Command substitution
 	"`",   // Backtick command substitution
 	"tee", // tee command
 }
@@ -161,6 +161,12 @@ var AwkWritePatterns = []*regexp.Regexp{
 
 // ForkBombPattern detects fork bomb attempts
 var ForkBombPattern = regexp.MustCompile(`:\s*\(\s*\)\s*\{[^}]*\|[^}]*&[^}]*\};?:`)
+
+// RemoteScriptPattern detects downloads piped directly into a shell.
+var RemoteScriptPattern = regexp.MustCompile(`(?i)\b(curl|wget)\b.*\|\s*(bash|sh|zsh|fish)\b`)
+
+// RedirectPattern detects common file redirection operators and targets.
+var RedirectPattern = regexp.MustCompile(`(&>|\d*>>|\d*>|\d*<)\s*(\S+)`)
 
 // VerifyReadOnly checks if a command is read-only (doesn't modify filesystem)
 func (sv *SemanticValidator) VerifyReadOnly(command string) bool {
@@ -254,13 +260,15 @@ func (sv *SemanticValidator) containsAwkWrite(command string) bool {
 
 // hasWriteArguments checks for write operations in command arguments
 func (sv *SemanticValidator) hasWriteArguments(command string) bool {
-	// Check for file modification commands as arguments
+	// Check for file modification commands as arguments.
+	// Only exact-match: fields are whitespace-split so no field contains a space,
+	// and prefix checks like "-cp" are not meaningful write-command indicators.
 	writeCommands := []string{"cp", "mv", "rm", "mkdir", "touch", "chmod", "chown", "tee"}
 
 	fields := strings.Fields(command)
 	for _, field := range fields {
 		for _, wc := range writeCommands {
-			if field == wc || strings.HasPrefix(field, wc+" ") || strings.HasPrefix(field, "-"+wc) {
+			if field == wc {
 				return true
 			}
 		}
@@ -282,53 +290,61 @@ func (sv *SemanticValidator) DetectDestructive(command string) (bool, string) {
 		return true, "fork bomb detected: recursive function that spawns processes indefinitely"
 	}
 
-	// Check each destructive pattern
-	destructiveReasons := map[string]string{
-		"rm -rf":            "recursive force delete - may delete entire directory tree",
-		"rm -r":             "recursive delete - may delete multiple files",
-		"rm *":              "wildcard delete - may delete all files in directory",
-		"mv *":              "wildcard move - may move all files unexpectedly",
-		"cp -rf":            "recursive force copy - may overwrite files",
-		"cp -r":             "recursive copy - may copy unintended files",
-		"dd if=":            "direct disk access - may overwrite disk data",
-		"mkfs":              "filesystem creation - will destroy data",
-		"fdisk":             "partition manipulation - may destroy disk data",
-		"chmod 777 /":       "world-writable system directory - security vulnerability",
-		"chmod 777 /etc":    "world-writable /etc - security vulnerability",
-		"chmod -R 777":      "recursive chmod 777 - security vulnerability",
-		"chown root":        "ownership change to root - privilege escalation",
-		"chown -R":          "recursive ownership change - may change ownership of system files",
-		"sudo":              "privilege escalation - executes with elevated permissions",
-		"curl | bash":       "remote code execution - executes downloaded script",
-		"wget | bash":       "remote code execution - executes downloaded script",
-		"sh -c":             "shell execution - may execute arbitrary commands",
-		"bash -c":           "shell execution - may execute arbitrary commands",
-		"> /dev/sda":        "direct device write - may destroy disk data",
-		"> /dev/hda":        "direct device write - may destroy disk data",
-		"> /dev/nvme":       "direct device write - may destroy disk data",
-		"eval ":             "eval execution - may execute arbitrary commands",
-		"exec ":             "exec replacement - may replace current process",
-		"chroot":            "chroot operation - may escape to different filesystem",
-		"iptables":          "firewall manipulation - may block network access",
-		"ufw":               "firewall manipulation - may block network access",
-		"firewall-cmd":      "firewall manipulation - may block network access",
-		"systemctl stop":    "system service stop - may stop critical services",
-		"systemctl disable": "system service disable - may prevent service startup",
-		"service stop":      "service stop - may stop critical services",
-		"kill -9 -1":        "kill all processes - will terminate all processes",
-		"killall":           "kill all processes - will terminate named processes",
-		"pkill -9":          "kill processes - will terminate processes",
-		"reboot":            "system reboot - will restart the system",
-		"shutdown":          "system shutdown - will power off the system",
-		"init 0":            "system halt - will halt the system",
-		"init 6":            "system reboot - will reboot the system",
-		"halt":              "system halt - will halt the system",
-		"poweroff":          "system poweroff - will power off the system",
+	if RemoteScriptPattern.MatchString(command) {
+		return true, "remote code execution - executes downloaded script"
 	}
 
-	for pattern, reason := range destructiveReasons {
-		if strings.Contains(lowerCmd, strings.ToLower(pattern)) {
-			return true, reason
+	// Check each destructive pattern in priority order so more specific
+	// patterns such as "rm -rf" are not shadowed by broader ones.
+	destructiveReasons := []struct {
+		pattern string
+		reason  string
+	}{
+		{"rm -rf", "recursive force delete - may delete entire directory tree"},
+		{"rm -r", "recursive delete - may delete multiple files"},
+		{"rm *", "wildcard delete - may delete all files in directory"},
+		{"mv *", "wildcard move - may move all files unexpectedly"},
+		{"cp -rf", "recursive force copy - may overwrite files"},
+		{"cp -r", "recursive copy - may copy unintended files"},
+		{"dd if=", "direct disk access - may overwrite disk data"},
+		{"mkfs", "filesystem creation - will destroy data"},
+		{"fdisk", "partition manipulation - may destroy disk data"},
+		{"chmod 777 /", "world-writable system directory - security vulnerability"},
+		{"chmod 777 /etc", "world-writable /etc - security vulnerability"},
+		{"chmod -R 777", "recursive chmod 777 - security vulnerability"},
+		{"chown root", "ownership change to root - privilege escalation"},
+		{"chown -R", "recursive ownership change - may change ownership of system files"},
+		{"sudo", "privilege escalation - executes with elevated permissions"},
+		{"curl | bash", "remote code execution - executes downloaded script"},
+		{"wget | bash", "remote code execution - executes downloaded script"},
+		{"sh -c", "shell execution - may execute arbitrary commands"},
+		{"bash -c", "shell execution - may execute arbitrary commands"},
+		{"> /dev/sda", "direct device write - may destroy disk data"},
+		{"> /dev/hda", "direct device write - may destroy disk data"},
+		{"> /dev/nvme", "direct device write - may destroy disk data"},
+		{"eval ", "eval execution - may execute arbitrary commands"},
+		{"exec ", "exec replacement - may replace current process"},
+		{"chroot", "chroot operation - may escape to different filesystem"},
+		{"iptables", "firewall manipulation - may block network access"},
+		{"ufw", "firewall manipulation - may block network access"},
+		{"firewall-cmd", "firewall manipulation - may block network access"},
+		{"systemctl stop", "system service stop - may stop critical services"},
+		{"systemctl disable", "system service disable - may prevent service startup"},
+		{"service stop", "service stop - may stop critical services"},
+		{"kill -9 -1", "kill all processes - will terminate all processes"},
+		{"killall", "kill all processes - will terminate named processes"},
+		{"pkill -9", "kill processes - will terminate processes"},
+		{"reboot", "system reboot - will restart the system"},
+		{"shutdown", "system shutdown - will power off the system"},
+		{"init 0", "system halt - will halt the system"},
+		{"init 6", "system reboot - will reboot the system"},
+		{"halt", "system halt - will halt the system"},
+		{"poweroff", "system poweroff - will power off the system"},
+	}
+
+	for _, item := range destructiveReasons {
+		if strings.Contains(lowerCmd, strings.ToLower(item.pattern)) {
+			return true, item.reason
 		}
 	}
 
@@ -371,7 +387,13 @@ func (sv *SemanticValidator) ExtractSedWritePaths(command string) []string {
 		for _, match := range matches {
 			if len(match) >= 2 {
 				// The last match group is the file path
-				path := match[len(match)-1]
+				path := strings.TrimSpace(match[len(match)-1])
+				parts := strings.FieldsFunc(path, func(r rune) bool {
+					return r == ';' || r == '&' || r == '|'
+				})
+				if len(parts) > 0 {
+					path = strings.TrimSpace(parts[0])
+				}
 				if path != "" && !strings.HasPrefix(path, "-") {
 					paths = append(paths, path)
 				}
@@ -381,16 +403,14 @@ func (sv *SemanticValidator) ExtractSedWritePaths(command string) []string {
 
 	// Also check for simple sed redirection patterns
 	if strings.Contains(command, "sed ") && (strings.Contains(command, " > ") || strings.Contains(command, " >> ")) {
-		re := regexp.MustCompile(`sed\s+[^>]+[>>]?\s+(\S+)`)
-		matches := re.FindAllStringSubmatch(command, -1)
-		for _, match := range matches {
-			if len(match) >= 2 {
-				paths = append(paths, match[1])
+		for _, redirect := range sv.ParseRedirects(command) {
+			if redirect.FD == 1 || redirect.FD == 3 {
+				paths = append(paths, redirect.Target)
 			}
 		}
 	}
 
-	return paths
+	return uniqueNonFlagPaths(paths)
 }
 
 // ExtractAwkWritePaths extracts file paths from awk write commands
@@ -413,7 +433,27 @@ func (sv *SemanticValidator) ExtractAwkWritePaths(command string) []string {
 		}
 	}
 
-	return paths
+	for _, redirect := range sv.ParseRedirects(command) {
+		if redirect.FD == 1 || redirect.FD == 3 {
+			paths = append(paths, redirect.Target)
+		}
+	}
+
+	return uniqueNonFlagPaths(paths)
+}
+
+func uniqueNonFlagPaths(paths []string) []string {
+	seen := make(map[string]bool, len(paths))
+	unique := make([]string, 0, len(paths))
+	for _, path := range paths {
+		path = strings.TrimSpace(path)
+		if path == "" || strings.HasPrefix(path, "-") || seen[path] {
+			continue
+		}
+		seen[path] = true
+		unique = append(unique, path)
+	}
+	return unique
 }
 
 // ValidateSedAwkPaths validates that sed/awk write targets are within workspace
@@ -495,6 +535,8 @@ func (sv *SemanticValidator) ValidatePath(path string) (bool, string) {
 		return false, "empty path"
 	}
 
+	originalPath := path
+
 	// Expand home directory
 	if strings.HasPrefix(path, "~/") {
 		home := getHomeDir()
@@ -529,7 +571,7 @@ func (sv *SemanticValidator) ValidatePath(path string) (bool, string) {
 	}
 
 	// Check for path traversal attempts
-	if strings.Contains(path, "..") {
+	if strings.Contains(originalPath, "..") {
 		// Check if the resolved path escapes working directory
 		if sv.workingDir != "" {
 			absWorkingDir := filepath.Clean(sv.workingDir)
@@ -564,15 +606,7 @@ func getHomeDir() string {
 
 // getEnv returns an environment variable value
 func getEnv(key string) string {
-	// Use a simple approach - check common environment variables
-	switch key {
-	case "HOME":
-		// Try to get from os.Getenv in real implementation
-		// For now, return empty string to trigger fallback
-		return ""
-	default:
-		return ""
-	}
+	return os.Getenv(key)
 }
 
 // ParsePipes parses a command and returns each stage of the pipeline
@@ -602,30 +636,20 @@ func (sv *SemanticValidator) ParsePipes(command string) []string {
 func (sv *SemanticValidator) ParseRedirects(command string) []RedirectInfo {
 	var redirects []RedirectInfo
 
-	// Patterns for various redirects
-	redirectPatterns := []*regexp.Regexp{
-		regexp.MustCompile(`(\d?>)\s*(\S+)`),  // > or >file
-		regexp.MustCompile(`(\d?>>)\s*(\S+)`), // >> or >>file
-		regexp.MustCompile(`(\d*>&?\d+)`),     // 2>&1 style redirects
-		regexp.MustCompile(`(\d*<)\s*(\S+)`),  // < input redirect
-	}
-
 	// First, isolate the main command from redirects
 	// by removing subshells and command substitution
 	processed := command
 	processed = regexp.MustCompile(`\$\([^)]*\)`).ReplaceAllString(processed, "")
 	processed = regexp.MustCompile("`[^`]+`").ReplaceAllString(processed, "")
 
-	for _, pattern := range redirectPatterns {
-		matches := pattern.FindAllStringSubmatch(processed, -1)
-		for _, match := range matches {
-			if len(match) >= 3 {
-				redirects = append(redirects, RedirectInfo{
-					Type:   match[1],
-					Target: match[2],
-					FD:     parseFD(match[1]),
-				})
-			}
+	matches := RedirectPattern.FindAllStringSubmatch(processed, -1)
+	for _, match := range matches {
+		if len(match) >= 3 {
+			redirects = append(redirects, RedirectInfo{
+				Type:   match[1],
+				Target: match[2],
+				FD:     parseFD(match[1]),
+			})
 		}
 	}
 
@@ -778,16 +802,6 @@ func (sv *SemanticValidator) AnalyzeSemantics(command string) *SemanticAnalysis 
 		Chains:    sv.ParseCommandChaining(command),
 	}
 
-	// Check for destructive commands
-	isDestructive, reason := sv.DetectDestructive(command)
-	if isDestructive {
-		analysis.IsValid = false
-		analysis.IsDestructive = true
-		analysis.Reason = reason
-		analysis.Severity = SeverityFatal
-		return analysis
-	}
-
 	// Validate all paths
 	allPaths := sv.ExtractAllPaths(command)
 	for _, path := range allPaths {
@@ -811,15 +825,16 @@ func (sv *SemanticValidator) AnalyzeSemantics(command string) *SemanticAnalysis 
 	// Check if command is read-only
 	if sv.VerifyReadOnly(command) {
 		analysis.IsReadOnly = true
-		analysis.IsValid = true
-		analysis.Severity = SeverityNone
+		if analysis.IsValid && len(analysis.InvalidPaths) == 0 {
+			analysis.Severity = SeverityNone
+		}
 		return analysis
 	}
 
 	// If we have write operations, check if paths are valid
 	if len(analysis.Redirects) > 0 {
 		for _, redirect := range analysis.Redirects {
-			if redirect.FD == 1 || redirect.FD == 3 { // stdout or combined
+			if redirect.FD == 1 || redirect.FD == 2 || redirect.FD == 3 { // stdout, stderr, or combined
 				valid, reason := sv.ValidatePath(redirect.Target)
 				if !valid {
 					analysis.IsValid = false
@@ -840,6 +855,16 @@ func (sv *SemanticValidator) AnalyzeSemantics(command string) *SemanticAnalysis 
 			analysis.Severity = SeverityFatal
 			return analysis
 		}
+	}
+
+	// Check for destructive commands
+	isDestructive, reason := sv.DetectDestructive(command)
+	if isDestructive {
+		analysis.IsValid = false
+		analysis.IsDestructive = true
+		analysis.Reason = reason
+		analysis.Severity = SeverityFatal
+		return analysis
 	}
 
 	// If no issues found but command is not read-only, it's a write command (potentially valid)
