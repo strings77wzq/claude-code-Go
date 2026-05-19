@@ -2,8 +2,8 @@ package api
 
 // Thinking configures extended thinking for API requests.
 type Thinking struct {
-	Type         string `json:"type"`                    // "enabled"
-	BudgetTokens int    `json:"budget_tokens"`           // token budget for thinking
+	Type         string `json:"type"`          // "enabled"
+	BudgetTokens int    `json:"budget_tokens"` // token budget for thinking
 }
 
 // ApiRequest represents a request to the Anthropic Messages API
@@ -19,17 +19,17 @@ type ApiRequest struct {
 
 // CachedSystemPrompt wraps a system prompt with a cache_control breakpoint.
 type CachedSystemPrompt struct {
-	Type         string                `json:"type"`
-	Text         string                `json:"text"`
-	CacheControl *CacheControl         `json:"cache_control,omitempty"`
+	Type         string        `json:"type"`
+	Text         string        `json:"text"`
+	CacheControl *CacheControl `json:"cache_control,omitempty"`
 }
 
 // CachedToolDefinition wraps a tool definition with a cache_control breakpoint.
 type CachedToolDefinition struct {
-	Name         string                `json:"name"`
-	Description  string                `json:"description"`
-	InputSchema  map[string]any        `json:"input_schema"`
-	CacheControl *CacheControl         `json:"cache_control,omitempty"`
+	Name         string         `json:"name"`
+	Description  string         `json:"description"`
+	InputSchema  map[string]any `json:"input_schema"`
+	CacheControl *CacheControl  `json:"cache_control,omitempty"`
 }
 
 // CacheControl marks content for Anthropic prompt caching.

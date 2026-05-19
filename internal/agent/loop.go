@@ -199,33 +199,33 @@ func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(s
 
 		switch resp.StopReason {
 		case "thinking":
-				// Model spent tokens on extended thinking; feed back as tool_result to continue.
-				var thinkingResults []api.ContentBlock
-				for _, block := range resp.Content {
-					if block.Type == "thinking" {
-						a.traceThinking(block.Text)
-						thinkingResults = append(thinkingResults, api.ContentBlock{
-							Type:      "tool_result",
-							ToolUseID: "thinking",
-							Text:      "[thinking consumed: " + block.Text[:min(len(block.Text), 100)] + "...]",
-						})
-					}
-				}
-				if len(thinkingResults) == 0 {
+			// Model spent tokens on extended thinking; feed back as tool_result to continue.
+			var thinkingResults []api.ContentBlock
+			for _, block := range resp.Content {
+				if block.Type == "thinking" {
+					a.traceThinking(block.Text)
 					thinkingResults = append(thinkingResults, api.ContentBlock{
 						Type:      "tool_result",
 						ToolUseID: "thinking",
-						Text:      "[thinking consumed]",
+						Text:      "[thinking consumed: " + block.Text[:min(len(block.Text), 100)] + "...]",
 					})
 				}
-				if err := a.history.AddToolResults(thinkingResults); err != nil {
-					a.traceError(fmt.Sprintf("failed to add thinking results: %v", err))
-					a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "failed")
-					return "", fmt.Errorf("failed to add thinking results: %w", err)
-				}
-				continue
+			}
+			if len(thinkingResults) == 0 {
+				thinkingResults = append(thinkingResults, api.ContentBlock{
+					Type:      "tool_result",
+					ToolUseID: "thinking",
+					Text:      "[thinking consumed]",
+				})
+			}
+			if err := a.history.AddToolResults(thinkingResults); err != nil {
+				a.traceError(fmt.Sprintf("failed to add thinking results: %v", err))
+				a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "failed")
+				return "", fmt.Errorf("failed to add thinking results: %w", err)
+			}
+			continue
 
-			case "end_turn", "stop_sequence":
+		case "end_turn", "stop_sequence":
 			result := extractTextContent(resp.Content)
 			a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "completed")
 			return result, nil

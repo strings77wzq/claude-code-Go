@@ -290,7 +290,7 @@ func convertToOpenAIRequest(req *api.ApiRequest, model string) *openAIChatReques
 	messages := make([]openAIMessage, 0, len(req.Messages))
 
 	sysPrompt := api.ExtractSystemPrompt(req.System)
-		if sysPrompt != "" {
+	if sysPrompt != "" {
 		messages = append(messages, openAIMessage{
 			Role:    "system",
 			Content: sysPrompt,

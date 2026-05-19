@@ -23,7 +23,7 @@ func NewWebFetchTool() tool.Tool {
 	return &WebFetchTool{}
 }
 
-func (w *WebFetchTool) Name() string  { return "WebFetch" }
+func (w *WebFetchTool) Name() string        { return "WebFetch" }
 func (w *WebFetchTool) Tier() tool.ToolTier { return tool.TierExtension }
 
 func (w *WebFetchTool) Description() string {
