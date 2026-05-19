@@ -70,9 +70,10 @@ type Agent struct {
 	recoveryManager    *RecoveryManager
 	keepSession        bool
 	turnCount          int
-	cacheEnabled        bool
+	cacheEnabled       bool
 	disclosedTools     map[string]bool
 	cacheInvalidated   bool
+	thinkingBudget     int
 }
 
 // NewAgent creates a new Agent with the given dependencies.
@@ -129,6 +130,12 @@ func (a *Agent) LoadExternalHooks(dir string) {
 // SetPermissionPrompter sets the prompter used when a tool requires approval.
 func (a *Agent) SetPermissionPrompter(prompter permission.Prompter) {
 	a.permissionPrompter = prompter
+}
+
+// SetThinkingBudget enables extended thinking with the given token budget.
+// Set to 0 to disable (default).
+func (a *Agent) SetThinkingBudget(tokens int) {
+	a.thinkingBudget = tokens
 }
 
 // Run is the main entry point for the agent. It takes user input and returns the final text response.
@@ -191,7 +198,34 @@ func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(s
 		}
 
 		switch resp.StopReason {
-		case "end_turn", "stop_sequence":
+		case "thinking":
+				// Model spent tokens on extended thinking; feed back as tool_result to continue.
+				var thinkingResults []api.ContentBlock
+				for _, block := range resp.Content {
+					if block.Type == "thinking" {
+						a.traceThinking(block.Text)
+						thinkingResults = append(thinkingResults, api.ContentBlock{
+							Type:      "tool_result",
+							ToolUseID: "thinking",
+							Text:      "[thinking consumed: " + block.Text[:min(len(block.Text), 100)] + "...]",
+						})
+					}
+				}
+				if len(thinkingResults) == 0 {
+					thinkingResults = append(thinkingResults, api.ContentBlock{
+						Type:      "tool_result",
+						ToolUseID: "thinking",
+						Text:      "[thinking consumed]",
+					})
+				}
+				if err := a.history.AddToolResults(thinkingResults); err != nil {
+					a.traceError(fmt.Sprintf("failed to add thinking results: %v", err))
+					a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "failed")
+					return "", fmt.Errorf("failed to add thinking results: %w", err)
+				}
+				continue
+
+			case "end_turn", "stop_sequence":
 			result := extractTextContent(resp.Content)
 			a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "completed")
 			return result, nil
@@ -281,6 +315,13 @@ func (a *Agent) buildRequest() *api.ApiRequest {
 		}
 	} else {
 		req.System = a.systemPrompt
+	}
+
+	if a.thinkingBudget > 0 {
+		req.Thinking = &api.Thinking{
+			Type:         "enabled",
+			BudgetTokens: a.thinkingBudget,
+		}
 	}
 
 	a.cacheInvalidated = false
@@ -546,6 +587,13 @@ func (a *Agent) tracePermission(toolName string, decision permission.Decision, r
 		return
 	}
 	session.AppendTracePermissionWithReason(a.traceFilePath, toolName, string(decision), summary, string(reason))
+}
+
+func (a *Agent) traceThinking(text string) {
+	if a.traceFilePath == "" {
+		return
+	}
+	session.AppendTraceRuntime(a.traceFilePath, a.sessionID, "thinking", text)
 }
 
 func (a *Agent) traceRuntime(event, summary string) {
