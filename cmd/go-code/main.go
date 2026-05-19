@@ -29,7 +29,7 @@ import (
 	"github.com/strings77wzq/claude-code-Go/pkg/tui"
 )
 
-const version = "0.3.1"
+const version = "0.3.2"
 
 const systemPrompt = "You are an interactive agent that helps users with software engineering tasks. You have access to tools for reading files, editing files, executing shell commands, searching code, and more. Use your tools to complete tasks efficiently and accurately."
 

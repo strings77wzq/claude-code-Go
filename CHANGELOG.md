@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.3.2] - 2026-05-19
+
+### Fixed
+- **docs**: 7 categories of documentation inaccuracies fixed across 23 English/Chinese pages
+  - "100% Test Coverage" claim replaced with honest "70%+" metric
+  - "WebSearch" corrected to "NotebookEdit" in builtin tools list
+  - "GO_CODE_API_KEY" corrected to "ANTHROPIC_API_KEY" in quick-start examples
+  - Version references updated from "0.1.0" to "0.3.1" in guides and examples
+  - Outdated model name "claude-sonnet-4-20250514" updated to "claude-sonnet-4-6-20251001"
+  - Tools overview: "9 tools" / "6 tools" corrected to "11 tools" with TodoWrite + NotebookEdit
+  - English and Chinese docs fully synced
+
 ## [Unreleased]
 
 ### Added
