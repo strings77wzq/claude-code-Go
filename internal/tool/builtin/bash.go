@@ -27,9 +27,9 @@ func NewBashTool(workingDir string) tool.Tool {
 	}
 }
 
-func (b *BashTool) Name() string {
-	return "Bash"
-}
+func (b *BashTool) Name() string { return "Bash" }
+
+func (b *BashTool) Tier() tool.ToolTier { return tool.TierCore }
 
 func (b *BashTool) Description() string {
 	return "Executes a bash command and returns its output."

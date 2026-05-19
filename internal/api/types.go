@@ -4,10 +4,30 @@ package api
 type ApiRequest struct {
 	Model     string           `json:"model"`
 	MaxTokens int              `json:"max_tokens"`
-	System    string           `json:"system,omitempty"`
+	System    interface{}      `json:"system,omitempty"`
 	Stream    bool             `json:"stream,omitempty"`
 	Messages  []Message        `json:"messages"`
 	Tools     []ToolDefinition `json:"tools,omitempty"`
+}
+
+// CachedSystemPrompt wraps a system prompt with a cache_control breakpoint.
+type CachedSystemPrompt struct {
+	Type         string                `json:"type"`
+	Text         string                `json:"text"`
+	CacheControl *CacheControl         `json:"cache_control,omitempty"`
+}
+
+// CachedToolDefinition wraps a tool definition with a cache_control breakpoint.
+type CachedToolDefinition struct {
+	Name         string                `json:"name"`
+	Description  string                `json:"description"`
+	InputSchema  map[string]any        `json:"input_schema"`
+	CacheControl *CacheControl         `json:"cache_control,omitempty"`
+}
+
+// CacheControl marks content for Anthropic prompt caching.
+type CacheControl struct {
+	Type string `json:"type"` // "ephemeral"
 }
 
 // Message represents a chat message
@@ -18,9 +38,10 @@ type Message struct {
 
 // ToolDefinition defines a tool that can be called
 type ToolDefinition struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	InputSchema map[string]any `json:"input_schema"`
+	Name         string         `json:"name"`
+	Description  string         `json:"description"`
+	InputSchema  map[string]any `json:"input_schema"`
+	CacheControl *CacheControl  `json:"cache_control,omitempty"`
 }
 
 // ApiResponse represents a response from the Anthropic Messages API
@@ -55,4 +76,17 @@ type Usage struct {
 type ErrorResponse struct {
 	Type    string `json:"type"`
 	Message string `json:"message"`
+}
+
+// ExtractSystemPrompt extracts the plain text from a system prompt that may be
+// a plain string or a CachedSystemPrompt struct.
+func ExtractSystemPrompt(system interface{}) string {
+	switch s := system.(type) {
+	case string:
+		return s
+	case CachedSystemPrompt:
+		return s.Text
+	default:
+		return ""
+	}
 }

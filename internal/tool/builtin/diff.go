@@ -18,9 +18,9 @@ func NewDiffTool() tool.Tool {
 	return &DiffTool{}
 }
 
-func (d *DiffTool) Name() string {
-	return "Diff"
-}
+func (d *DiffTool) Name() string { return "Diff" }
+
+func (d *DiffTool) Tier() tool.ToolTier { return tool.TierExtension }
 
 func (d *DiffTool) Description() string {
 	return "Compares two content strings and returns unified diff output."

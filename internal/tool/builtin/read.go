@@ -28,9 +28,9 @@ func NewReadTool(workingDir string) tool.Tool {
 	}
 }
 
-func (r *ReadTool) Name() string {
-	return "Read"
-}
+func (r *ReadTool) Name() string { return "Read" }
+
+func (r *ReadTool) Tier() tool.ToolTier { return tool.TierCore }
 
 func (r *ReadTool) Description() string {
 	return "Reads a file and returns its contents with line numbers."

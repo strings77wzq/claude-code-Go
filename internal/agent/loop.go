@@ -36,6 +36,7 @@ type ToolRegistryInterface interface {
 	GetTool(name string) tool.Tool
 	Execute(ctx context.Context, name string, input map[string]any) tool.Result
 	GetAllDefinitions() []tool.ToolDefinition
+	GetDefinitionsByTier(tiers ...tool.ToolTier) []tool.ToolDefinition
 }
 
 // PermissionPolicyInterface defines the interface for permission checking.
@@ -68,6 +69,10 @@ type Agent struct {
 	traceFilePath      string
 	recoveryManager    *RecoveryManager
 	keepSession        bool
+	turnCount          int
+	cacheEnabled        bool
+	disclosedTools     map[string]bool
+	cacheInvalidated   bool
 }
 
 // NewAgent creates a new Agent with the given dependencies.
@@ -90,6 +95,8 @@ func NewAgent(
 		contextConfig:      DefaultContextConfig(),
 		hooksRegistry:      hooks.NewRegistry(),
 		recoveryManager:    NewRecoveryManager(),
+		cacheEnabled:       true,
+		disclosedTools:     make(map[string]bool),
 	}
 }
 
@@ -139,9 +146,9 @@ func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(s
 		return "", fmt.Errorf("failed to add user message: %w", err)
 	}
 
-	turns := 0
+	a.turnCount = 0
 
-	for turns < MaxTurns {
+	for a.turnCount < MaxTurns {
 		CompactIfNeeded(a.history, a.contextConfig)
 
 		req := a.buildRequest()
@@ -168,7 +175,7 @@ func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(s
 				status = "cancelled"
 				a.traceRuntime("request_cancelled", "request context cancelled")
 			}
-			a.saveSession(turns, totalInputTokens, totalOutputTokens, status)
+			a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, status)
 			return "", fmt.Errorf("API call failed: %w", err)
 		}
 
@@ -179,62 +186,116 @@ func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(s
 
 		if err := a.history.AddAssistantMessage(resp.Content); err != nil {
 			a.traceError(fmt.Sprintf("failed to add assistant message: %v", err))
-			a.saveSession(turns, totalInputTokens, totalOutputTokens, "failed")
+			a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "failed")
 			return "", fmt.Errorf("failed to add assistant message: %w", err)
 		}
 
 		switch resp.StopReason {
 		case "end_turn", "stop_sequence":
 			result := extractTextContent(resp.Content)
-			a.saveSession(turns, totalInputTokens, totalOutputTokens, "completed")
+			a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "completed")
 			return result, nil
 
 		case "max_tokens":
 			result := extractTextContent(resp.Content) + "\n[Warning] Response was truncated (max_tokens reached)."
-			a.saveSession(turns, totalInputTokens, totalOutputTokens, "completed")
+			a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "completed")
 			return result, nil
 
 		case "tool_use":
 			toolResults := a.executeTools(ctx, resp.Content)
 			if err := a.history.AddToolResults(toolResults); err != nil {
 				a.traceError(fmt.Sprintf("failed to add tool results: %v", err))
-				a.saveSession(turns, totalInputTokens, totalOutputTokens, "failed")
+				a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "failed")
 				return "", fmt.Errorf("failed to add tool results: %w", err)
 			}
-			turns++
+			a.turnCount++
 			continue
 
 		default:
 			result := extractTextContent(resp.Content)
-			a.saveSession(turns, totalInputTokens, totalOutputTokens, "completed")
+			a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "completed")
 			return result, nil
 		}
 	}
 
 	result := "[Agent loop stopped] Reached maximum turns (" + fmt.Sprintf("%d", MaxTurns) + ")."
-	a.saveSession(turns, totalInputTokens, totalOutputTokens, "max_turns")
+	a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "max_turns")
 	return result, nil
 }
 
-// buildRequest assembles the API request with system prompt, tools, and messages.
+// buildRequest assembles the API request with progressive tool disclosure and prompt caching.
 func (a *Agent) buildRequest() *api.ApiRequest {
-	toolDefs := make([]api.ToolDefinition, 0)
-	for _, td := range a.toolRegistry.GetAllDefinitions() {
-		toolDefs = append(toolDefs, api.ToolDefinition{
-			Name:        td.Name,
-			Description: td.Description,
-			InputSchema: td.InputSchema,
-		})
+	// Progressive tool disclosure: turn 1 sends all tools; subsequent turns send
+	// core + any extension tools the model previously requested.
+	var toolDefs []api.ToolDefinition
+	if a.turnCount == 0 || a.cacheInvalidated {
+		defs := a.toolRegistry.GetAllDefinitions()
+		toolDefs = make([]api.ToolDefinition, 0, len(defs))
+		for _, td := range defs {
+			toolDefs = append(toolDefs, api.ToolDefinition{
+				Name:        td.Name,
+				Description: td.Description,
+				InputSchema: td.InputSchema,
+			})
+			a.disclosedTools[td.Name] = true
+		}
+	} else {
+		coreDefs := a.toolRegistry.GetDefinitionsByTier(tool.TierCore)
+		toolDefs = make([]api.ToolDefinition, 0, len(coreDefs)+len(a.disclosedTools))
+		for _, td := range coreDefs {
+			toolDefs = append(toolDefs, api.ToolDefinition{
+				Name:        td.Name,
+				Description: td.Description,
+				InputSchema: td.InputSchema,
+			})
+		}
+		// Include any extension/MCP tools already disclosed this session
+		for _, td := range a.toolRegistry.GetAllDefinitions() {
+			if td.Tier != tool.TierCore && a.disclosedTools[td.Name] {
+				toolDefs = append(toolDefs, api.ToolDefinition{
+					Name:        td.Name,
+					Description: td.Description,
+					InputSchema: td.InputSchema,
+				})
+			}
+		}
 	}
 
-	return &api.ApiRequest{
+	req := &api.ApiRequest{
 		Model:     a.model,
 		MaxTokens: a.maxTokens,
-		System:    a.systemPrompt,
 		Stream:    true,
 		Tools:     toolDefs,
 		Messages:  a.history.GetMessages(),
 	}
+
+	// Prompt caching: cache system prompt and tool definitions
+	if a.cacheEnabled {
+		req.System = api.CachedSystemPrompt{
+			Type:         "text",
+			Text:         a.systemPrompt,
+			CacheControl: &api.CacheControl{Type: "ephemeral"},
+		}
+		if len(toolDefs) > 0 {
+			req.Tools = a.wrapToolsWithCache(toolDefs)
+		}
+	} else {
+		req.System = a.systemPrompt
+	}
+
+	a.cacheInvalidated = false
+	return req
+}
+
+// wrapToolsWithCache wraps the last tool definition with a cache breakpoint.
+func (a *Agent) wrapToolsWithCache(defs []api.ToolDefinition) []api.ToolDefinition {
+	if len(defs) == 0 {
+		return defs
+	}
+	cached := make([]api.ToolDefinition, len(defs))
+	copy(cached, defs)
+	cached[len(cached)-1].CacheControl = &api.CacheControl{Type: "ephemeral"}
+	return cached
 }
 
 // executeTools executes tool calls from the assistant's response.

@@ -49,9 +49,25 @@ func Error(msg string) Result {
 	}
 }
 
+// ToolTier categorizes tools for progressive disclosure.
+type ToolTier string
+
+const (
+	TierCore      ToolTier = "core"
+	TierExtension ToolTier = "extension"
+	TierMCP       ToolTier = "mcp"
+)
+
+// TieredTool is an optional interface for tools that declare their tier.
+// Tools that don't implement this interface default to TierCore.
+type TieredTool interface {
+	Tier() ToolTier
+}
+
 // ToolDefinition represents a tool's definition for API responses.
 type ToolDefinition struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	InputSchema map[string]any `json:"input_schema"`
+	Tier        ToolTier       `json:"-"`
 }

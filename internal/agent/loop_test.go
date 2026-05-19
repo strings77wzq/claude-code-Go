@@ -70,6 +70,10 @@ func (m *mockToolRegistry) GetAllDefinitions() []tool.ToolDefinition {
 	return defs
 }
 
+func (m *mockToolRegistry) GetDefinitionsByTier(tiers ...tool.ToolTier) []tool.ToolDefinition {
+	return m.GetAllDefinitions()
+}
+
 func (m *mockToolRegistry) registerTool(t tool.Tool) {
 	m.tools[t.Name()] = t
 }

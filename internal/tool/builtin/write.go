@@ -20,9 +20,9 @@ func NewWriteTool(workingDir string) tool.Tool {
 	}
 }
 
-func (w *WriteTool) Name() string {
-	return "Write"
-}
+func (w *WriteTool) Name() string { return "Write" }
+
+func (w *WriteTool) Tier() tool.ToolTier { return tool.TierCore }
 
 func (w *WriteTool) Description() string {
 	return "Writes content to a file, creating parent directories if needed."

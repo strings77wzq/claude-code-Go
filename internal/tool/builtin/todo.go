@@ -29,6 +29,8 @@ var globalTodoList = &TodoList{
 
 type TodoTool struct{}
 
+func (t *TodoTool) Tier() tool.ToolTier { return tool.TierExtension }
+
 func NewTodoTool() tool.Tool {
 	return &TodoTool{}
 }

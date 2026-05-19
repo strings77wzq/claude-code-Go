@@ -17,6 +17,8 @@ const (
 
 type TreeTool struct{}
 
+func (t *TreeTool) Tier() tool.ToolTier { return tool.TierExtension }
+
 func NewTreeTool() tool.Tool {
 	return &TreeTool{}
 }

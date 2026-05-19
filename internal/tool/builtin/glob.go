@@ -17,9 +17,9 @@ func NewGlobTool() tool.Tool {
 	return &GlobTool{}
 }
 
-func (g *GlobTool) Name() string {
-	return "Glob"
-}
+func (g *GlobTool) Name() string { return "Glob" }
+
+func (g *GlobTool) Tier() tool.ToolTier { return tool.TierExtension }
 
 func (g *GlobTool) Description() string {
 	return "Finds files matching a pattern, supports ** for recursive matching."

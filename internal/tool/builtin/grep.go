@@ -21,9 +21,9 @@ func NewGrepTool() tool.Tool {
 	return &GrepTool{}
 }
 
-func (g *GrepTool) Name() string {
-	return "Grep"
-}
+func (g *GrepTool) Name() string { return "Grep" }
+
+func (g *GrepTool) Tier() tool.ToolTier { return tool.TierCore }
 
 func (g *GrepTool) Description() string {
 	return "Searches for a pattern in files and returns matching lines."

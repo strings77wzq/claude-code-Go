@@ -14,6 +14,8 @@ type EditTool struct {
 	workingDir string
 }
 
+func (e *EditTool) Tier() tool.ToolTier { return tool.TierCore }
+
 func NewEditTool(workingDir string) tool.Tool {
 	return &EditTool{
 		workingDir: workingDir,

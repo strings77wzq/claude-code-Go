@@ -71,11 +71,44 @@ func (r *Registry) GetAllDefinitions() []ToolDefinition {
 
 	definitions := make([]ToolDefinition, 0, len(r.tools))
 	for _, t := range r.tools {
-		definitions = append(definitions, ToolDefinition{
-			Name:        t.Name(),
-			Description: t.Description(),
-			InputSchema: t.InputSchema(),
-		})
+		definitions = append(definitions, r.toolToDefinition(t))
+	}
+	return definitions
+}
+
+func (r *Registry) toolToDefinition(t Tool) ToolDefinition {
+	tier := TierCore
+	if tt, ok := t.(TieredTool); ok {
+		tier = tt.Tier()
+	}
+	return ToolDefinition{
+		Name:        t.Name(),
+		Description: t.Description(),
+		InputSchema: t.InputSchema(),
+		Tier:        tier,
+	}
+}
+
+// GetDefinitionsByTier returns tool definitions filtered by one or more tiers.
+func (r *Registry) GetDefinitionsByTier(tiers ...ToolTier) []ToolDefinition {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if len(tiers) == 0 {
+		return r.GetAllDefinitions()
+	}
+
+	tierSet := make(map[ToolTier]bool, len(tiers))
+	for _, t := range tiers {
+		tierSet[t] = true
+	}
+
+	definitions := make([]ToolDefinition, 0, len(r.tools))
+	for _, t := range r.tools {
+		def := r.toolToDefinition(t)
+		if tierSet[def.Tier] {
+			definitions = append(definitions, def)
+		}
 	}
 	return definitions
 }

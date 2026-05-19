@@ -289,10 +289,11 @@ type openAIStreamChunk struct {
 func convertToOpenAIRequest(req *api.ApiRequest, model string) *openAIChatRequest {
 	messages := make([]openAIMessage, 0, len(req.Messages))
 
-	if req.System != "" {
+	sysPrompt := api.ExtractSystemPrompt(req.System)
+		if sysPrompt != "" {
 		messages = append(messages, openAIMessage{
 			Role:    "system",
-			Content: req.System,
+			Content: sysPrompt,
 		})
 	}
 

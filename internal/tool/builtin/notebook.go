@@ -42,9 +42,8 @@ func NewNotebookTool(workingDir string) tool.Tool {
 	}
 }
 
-func (n *NotebookTool) Name() string {
-	return "NotebookEdit"
-}
+func (n *NotebookTool) Name() string  { return "NotebookEdit" }
+func (n *NotebookTool) Tier() tool.ToolTier { return tool.TierExtension }
 
 func (n *NotebookTool) Description() string {
 	return "Edit Jupyter notebook (.ipynb) files"

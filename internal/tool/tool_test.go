@@ -118,4 +118,70 @@ func TestRegistryExecuteRecoversPanickingTool(t *testing.T) {
 	}
 }
 
+type tieredTool struct {
+	name string
+	tier ToolTier
+}
+
+func (t *tieredTool) Name() string                { return t.name }
+func (t *tieredTool) Description() string         { return "a tool with a tier" }
+func (t *tieredTool) InputSchema() map[string]any { return map[string]any{"type": "object"} }
+func (t *tieredTool) RequiresPermission() bool    { return false }
+func (t *tieredTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelReadOnly
+}
+func (t *tieredTool) Execute(_ context.Context, _ map[string]any) Result {
+	return Success("tiered executed")
+}
+func (t *tieredTool) Tier() ToolTier { return t.tier }
+
+func TestToolTierConstants(t *testing.T) {
+	if TierCore == "" {
+		t.Error("TierCore should not be empty")
+	}
+	if TierExtension == "" {
+		t.Error("TierExtension should not be empty")
+	}
+	if TierMCP == "" {
+		t.Error("TierMCP should not be empty")
+	}
+	if TierCore == TierExtension {
+		t.Error("TierCore and TierExtension should be different")
+	}
+}
+
+func TestRegistryGetDefinitionsByTier(t *testing.T) {
+	reg := NewRegistry()
+	if err := reg.Register(&tieredTool{name: "core_tool", tier: TierCore}); err != nil {
+		t.Fatal(err)
+	}
+	if err := reg.Register(&tieredTool{name: "ext_tool", tier: TierExtension}); err != nil {
+		t.Fatal(err)
+	}
+
+	coreDefs := reg.GetDefinitionsByTier(TierCore)
+	if len(coreDefs) != 1 {
+		t.Fatalf("expected 1 core definition, got %d", len(coreDefs))
+	}
+	if coreDefs[0].Name != "core_tool" {
+		t.Errorf("unexpected tool name: %s", coreDefs[0].Name)
+	}
+
+	allDefs := reg.GetDefinitionsByTier(TierCore, TierExtension)
+	if len(allDefs) != 2 {
+		t.Fatalf("expected 2 definitions for core+extension, got %d", len(allDefs))
+	}
+}
+
+func TestToolDefaultsToCoreTier(t *testing.T) {
+	reg := NewRegistry()
+	reg.Register(&stubTool{}) // stubTool doesn't implement TieredTool
+
+	defs := reg.GetDefinitionsByTier(TierCore)
+	if len(defs) != 1 {
+		t.Fatalf("expected 1 core definition for default tier, got %d", len(defs))
+	}
+}
+
 var _ Tool = (*stubTool)(nil)
+var _ Tool = (*tieredTool)(nil)
