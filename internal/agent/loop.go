@@ -532,7 +532,6 @@ func (a *Agent) ClearHistory() {
 	a.history = NewHistory()
 }
 
-
 // generateSessionID creates a unique session identifier.
 func generateSessionID() string {
 	return fmt.Sprintf("sess_%d", time.Now().UnixMilli())

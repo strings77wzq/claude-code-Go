@@ -11,10 +11,10 @@ import (
 // MemStore is an in-memory implementation of Store.
 // KV data is stored in a map. Semantic search uses brute-force cosine similarity.
 type MemStore struct {
-	mu      sync.RWMutex
-	data    map[string][]byte
-	index   map[string]string // key → content for semantic search
-	vectors map[string][]float64
+	mu       sync.RWMutex
+	data     map[string][]byte
+	index    map[string]string // key → content for semantic search
+	vectors  map[string][]float64
 	embedder Embedder
 }
 
@@ -115,9 +115,9 @@ func (s *MemStore) Search(ctx context.Context, query string, topK int) ([]Result
 	results := make([]Result, topK)
 	for i := 0; i < topK; i++ {
 		results[i] = Result{
-			Key:   scores[i].key,
+			Key:     scores[i].key,
 			Content: s.index[scores[i].key],
-			Score: scores[i].score,
+			Score:   scores[i].score,
 		}
 	}
 	return results, nil

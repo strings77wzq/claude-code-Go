@@ -5,13 +5,13 @@ import "strings"
 
 // Config holds the runtime configuration for go-code.
 type Config struct {
-	APIKey           string
-	BaseURL          string
-	Model            string
-	MaxTokens        int
-	WorkingDir       string
-	Provider         string
-	PermissionMode   string
+	APIKey            string
+	BaseURL           string
+	Model             string
+	MaxTokens         int
+	WorkingDir        string
+	Provider          string
+	PermissionMode    string
 	ReasoningStrategy string
 }
 
@@ -26,10 +26,10 @@ func DefaultConfig() *Config {
 
 // Settings represents the JSON config file structure.
 type Settings struct {
-	APIKey           string `json:"apiKey"`
-	BaseURL          string `json:"baseUrl"`
-	Model            string `json:"model"`
-	Provider         string `json:"provider"`
+	APIKey            string `json:"apiKey"`
+	BaseURL           string `json:"baseUrl"`
+	Model             string `json:"model"`
+	Provider          string `json:"provider"`
 	ReasoningStrategy string `json:"reasoningStrategy"`
 }
 

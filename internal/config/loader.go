@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	envGoCodeAPIKey         = "GO_CODE_API_KEY"
-	envGoCodeBaseURL        = "GO_CODE_BASE_URL"
-	envGoCodeModel          = "GO_CODE_MODEL"
-	envGoCodeProvider       = "GO_CODE_PROVIDER"
+	envGoCodeAPIKey            = "GO_CODE_API_KEY"
+	envGoCodeBaseURL           = "GO_CODE_BASE_URL"
+	envGoCodeModel             = "GO_CODE_MODEL"
+	envGoCodeProvider          = "GO_CODE_PROVIDER"
 	envGoCodePermissionMode    = "GO_CODE_PERMISSION_MODE"
 	envGoCodeReasoningStrategy = "GO_CODE_REASONING_STRATEGY"
 	envDeepSeekAPIKey          = "DEEPSEEK_API_KEY"
