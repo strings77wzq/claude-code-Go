@@ -23,6 +23,7 @@ import (
 	"github.com/strings77wzq/claude-code-Go/internal/provider/registry"
 	"github.com/strings77wzq/claude-code-Go/internal/skills"
 	"github.com/strings77wzq/claude-code-Go/internal/tool"
+	"github.com/strings77wzq/claude-code-Go/internal/tool/builtin"
 	toolinit "github.com/strings77wzq/claude-code-Go/internal/tool/init"
 	"github.com/strings77wzq/claude-code-Go/internal/tool/mcp"
 	"github.com/strings77wzq/claude-code-Go/pkg/tty"
@@ -188,6 +189,12 @@ func main() {
 	policy := permission.NewPolicy(permMode)
 	logger.Info("Permission policy created")
 
+	// Register Task tool for sub-agent delegation
+	taskTool := builtin.NewTaskTool(client, toolRegistry, policy, cfg.Model)
+	if err := toolRegistry.Register(taskTool); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to register Task tool: %v\n", err)
+	}
+
 	// Create agent
 	logger.Info("Creating agent")
 	agentInstance := agent.NewAgent(client, toolRegistry, policy, systemPrompt, cfg.Model)
@@ -195,6 +202,11 @@ func main() {
 		agentInstance.SetPermissionPrompter(permission.NewNonInteractivePrompter())
 	} else {
 		agentInstance.SetPermissionPrompter(permission.NewStdinPrompter(bufio.NewReader(os.Stdin), os.Stdout))
+	}
+
+	// Apply reasoning strategy from config
+	if strategy := config.NormalizeReasoningStrategy(cfg.ReasoningStrategy); strategy == "plan-execute-verify" {
+		agentInstance.SetReasoningStrategy(agent.NewPlanExecuteVerifyStrategy(""))
 	}
 
 	if homeDir, err := os.UserHomeDir(); err == nil {

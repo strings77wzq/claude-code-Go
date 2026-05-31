@@ -14,8 +14,9 @@ const (
 	envGoCodeBaseURL        = "GO_CODE_BASE_URL"
 	envGoCodeModel          = "GO_CODE_MODEL"
 	envGoCodeProvider       = "GO_CODE_PROVIDER"
-	envGoCodePermissionMode = "GO_CODE_PERMISSION_MODE"
-	envDeepSeekAPIKey       = "DEEPSEEK_API_KEY"
+	envGoCodePermissionMode    = "GO_CODE_PERMISSION_MODE"
+	envGoCodeReasoningStrategy = "GO_CODE_REASONING_STRATEGY"
+	envDeepSeekAPIKey          = "DEEPSEEK_API_KEY"
 
 	envAPIKey      = "ANTHROPIC_API_KEY"
 	envBaseURL     = "ANTHROPIC_BASE_URL"
@@ -118,6 +119,9 @@ func loadConfigFile(path string, cfg *Config) error {
 	if settings.Provider != "" {
 		cfg.Provider = settings.Provider
 	}
+	if settings.ReasoningStrategy != "" {
+		cfg.ReasoningStrategy = settings.ReasoningStrategy
+	}
 
 	return nil
 }
@@ -137,6 +141,9 @@ func loadEnvConfig(cfg *Config) {
 	}
 	if permissionMode := os.Getenv(envGoCodePermissionMode); permissionMode != "" {
 		cfg.PermissionMode = permissionMode
+	}
+	if reasoningStrategy := os.Getenv(envGoCodeReasoningStrategy); reasoningStrategy != "" {
+		cfg.ReasoningStrategy = NormalizeReasoningStrategy(reasoningStrategy)
 	}
 	if apiKey := os.Getenv(envDeepSeekAPIKey); apiKey != "" && cfg.APIKey == "" {
 		cfg.APIKey = apiKey

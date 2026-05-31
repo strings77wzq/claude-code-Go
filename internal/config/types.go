@@ -1,15 +1,18 @@
 // Package config provides configuration loading for go-code.
 package config
 
+import "strings"
+
 // Config holds the runtime configuration for go-code.
 type Config struct {
-	APIKey         string
-	BaseURL        string
-	Model          string
-	MaxTokens      int
-	WorkingDir     string
-	Provider       string
-	PermissionMode string
+	APIKey           string
+	BaseURL          string
+	Model            string
+	MaxTokens        int
+	WorkingDir       string
+	Provider         string
+	PermissionMode   string
+	ReasoningStrategy string
 }
 
 // DefaultConfig returns a Config with default values.
@@ -23,8 +26,22 @@ func DefaultConfig() *Config {
 
 // Settings represents the JSON config file structure.
 type Settings struct {
-	APIKey   string `json:"apiKey"`
-	BaseURL  string `json:"baseUrl"`
-	Model    string `json:"model"`
-	Provider string `json:"provider"`
+	APIKey           string `json:"apiKey"`
+	BaseURL          string `json:"baseUrl"`
+	Model            string `json:"model"`
+	Provider         string `json:"provider"`
+	ReasoningStrategy string `json:"reasoningStrategy"`
+}
+
+// ValidReasoningStrategies lists the supported reasoning strategy names.
+var ValidReasoningStrategies = []string{"react", "plan-execute-verify"}
+
+// NormalizeReasoningStrategy returns the canonical strategy name, or "react" if empty/invalid.
+func NormalizeReasoningStrategy(s string) string {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "plan-execute-verify", "pev":
+		return "plan-execute-verify"
+	default:
+		return "react"
+	}
 }
