@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -714,5 +715,344 @@ func TestHistory_GetMessages(t *testing.T) {
 	messages[0].Role = "modified"
 	if h.GetMessages()[0].Role != "user" {
 		t.Error("GetMessages() should return a copy, not modify original")
+	}
+}
+
+func TestAgent_Run_MaxTurnsReached(t *testing.T) {
+	callCount := 0
+	apiClient := &mockApiClient{
+		sendFunc: func(ctx context.Context, req *api.ApiRequest, onTextDelta func(text string)) (*api.ApiResponse, error) {
+			callCount++
+			return &api.ApiResponse{
+				ID:         "test-id",
+				Type:       "message",
+				Role:       "assistant",
+				Content:    []api.ContentBlock{{Type: "tool_use", ID: "toolu_" + fmt.Sprint(callCount), Name: "noop", Input: map[string]any{}}},
+				Model:      "test-model",
+				StopReason: "tool_use",
+				Usage:      api.Usage{InputTokens: 10, OutputTokens: 5},
+			}, nil
+		},
+	}
+	toolRegistry := newMockToolRegistry()
+	noopTool := &mockTool{
+		name:        "noop",
+		description: "No-op tool",
+		inputSchema: map[string]any{"type": "object"},
+		result:      tool.Success("ok"),
+	}
+	toolRegistry.registerTool(noopTool)
+	permissionPolicy := newMockPermissionPolicy()
+
+	agent := NewAgent(apiClient, toolRegistry, permissionPolicy, "test", "test-model")
+
+	result, err := agent.Run(context.Background(), "loop forever", func(string) {})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+
+	if !strings.Contains(result, "Reached maximum turns") {
+		t.Errorf("Run() = %q, want it to contain 'Reached maximum turns'", result)
+	}
+	if callCount != MaxTurns {
+		t.Errorf("API called %d times, want %d (MaxTurns)", callCount, MaxTurns)
+	}
+}
+
+func TestAgent_Run_ContextCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancelled := make(chan struct{})
+
+	apiClient := &mockApiClient{
+		sendFunc: func(ctx context.Context, req *api.ApiRequest, onTextDelta func(text string)) (*api.ApiResponse, error) {
+			select {
+			case <-cancelled:
+				return nil, context.Canceled
+			default:
+				close(cancelled)
+				cancel()
+				return nil, context.Canceled
+			}
+		},
+	}
+	toolRegistry := newMockToolRegistry()
+	permissionPolicy := newMockPermissionPolicy()
+
+	agent := NewAgent(apiClient, toolRegistry, permissionPolicy, "test", "test-model")
+
+	_, err := agent.Run(ctx, "cancel me", func(string) {})
+	if err == nil {
+		t.Fatal("Run() should return error when context is cancelled")
+	}
+	if !strings.Contains(err.Error(), "API call failed") {
+		t.Errorf("Run() error = %q, want it to contain 'API call failed'", err.Error())
+	}
+}
+
+func TestAgent_Run_MultipleToolsSingleResponse(t *testing.T) {
+	tool1 := &mockTool{
+		name:        "tool_a",
+		description: "Tool A",
+		inputSchema: map[string]any{"type": "object"},
+		result:      tool.Success("result A"),
+	}
+	tool2 := &mockTool{
+		name:        "tool_b",
+		description: "Tool B",
+		inputSchema: map[string]any{"type": "object"},
+		result:      tool.Success("result B"),
+	}
+
+	firstCall := true
+	apiClient := &mockApiClient{
+		sendFunc: func(ctx context.Context, req *api.ApiRequest, onTextDelta func(text string)) (*api.ApiResponse, error) {
+			if firstCall {
+				firstCall = false
+				return &api.ApiResponse{
+					ID:   "test-id",
+					Type: "message",
+					Role: "assistant",
+					Content: []api.ContentBlock{
+						{Type: "text", Text: "Using two tools"},
+						{Type: "tool_use", ID: "toolu_a", Name: "tool_a", Input: map[string]any{"x": 1}},
+						{Type: "tool_use", ID: "toolu_b", Name: "tool_b", Input: map[string]any{"y": 2}},
+					},
+					Model:      "test-model",
+					StopReason: "tool_use",
+					Usage:      api.Usage{InputTokens: 10, OutputTokens: 5},
+				}, nil
+			}
+			return &api.ApiResponse{
+				ID:         "test-id-2",
+				Type:       "message",
+				Role:       "assistant",
+				Content:    []api.ContentBlock{{Type: "text", Text: "Both tools done"}},
+				Model:      "test-model",
+				StopReason: "end_turn",
+				Usage:      api.Usage{InputTokens: 20, OutputTokens: 10},
+			}, nil
+		},
+	}
+
+	toolRegistry := newMockToolRegistry()
+	toolRegistry.registerTool(tool1)
+	toolRegistry.registerTool(tool2)
+	permissionPolicy := newMockPermissionPolicy()
+
+	agent := NewAgent(apiClient, toolRegistry, permissionPolicy, "test", "test-model")
+
+	result, err := agent.Run(context.Background(), "use both tools", func(string) {})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if result != "Both tools done" {
+		t.Errorf("Run() = %q, want %q", result, "Both tools done")
+	}
+	if tool1.calls != 1 {
+		t.Errorf("tool_a called %d times, want 1", tool1.calls)
+	}
+	if tool2.calls != 1 {
+		t.Errorf("tool_b called %d times, want 1", tool2.calls)
+	}
+}
+
+func TestAgent_Run_WithPlanExecuteVerifyStrategy(t *testing.T) {
+	callCount := 0
+	apiClient := &mockApiClient{
+		sendFunc: func(ctx context.Context, req *api.ApiRequest, onTextDelta func(text string)) (*api.ApiResponse, error) {
+			callCount++
+			if callCount == 1 {
+				// First call: planning phase
+				return &api.ApiResponse{
+					ID:         "plan-id",
+					Type:       "message",
+					Role:       "assistant",
+					Content:    []api.ContentBlock{{Type: "text", Text: "Plan: read file, then edit"}},
+					Model:      "test-model",
+					StopReason: "end_turn",
+					Usage:      api.Usage{InputTokens: 20, OutputTokens: 10},
+				}, nil
+			}
+			// Second call: normal execution
+			return &api.ApiResponse{
+				ID:         "exec-id",
+				Type:       "message",
+				Role:       "assistant",
+				Content:    []api.ContentBlock{{Type: "text", Text: "Done!"}},
+				Model:      "test-model",
+				StopReason: "end_turn",
+				Usage:      api.Usage{InputTokens: 30, OutputTokens: 15},
+			}, nil
+		},
+	}
+	toolRegistry := newMockToolRegistry()
+	permissionPolicy := newMockPermissionPolicy()
+
+	agent := NewAgent(apiClient, toolRegistry, permissionPolicy, "test", "test-model")
+	agent.SetReasoningStrategy(NewPlanExecuteVerifyStrategy("Create a plan."))
+
+	result, err := agent.Run(context.Background(), "do the task", func(string) {})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if result != "Done!" {
+		t.Errorf("Run() = %q, want %q", result, "Done!")
+	}
+	// Should have 2 API calls: 1 for planning + 1 for execution
+	if callCount != 2 {
+		t.Errorf("API called %d times, want 2 (planning + execution)", callCount)
+	}
+}
+
+func TestAgent_Run_WithReactStrategy_NoChange(t *testing.T) {
+	apiClient := &mockApiClient{
+		response: &api.ApiResponse{
+			ID:         "test-id",
+			Type:       "message",
+			Role:       "assistant",
+			Content:    []api.ContentBlock{{Type: "text", Text: "Hello"}},
+			Model:      "test-model",
+			StopReason: "end_turn",
+			Usage:      api.Usage{InputTokens: 10, OutputTokens: 5},
+		},
+	}
+	toolRegistry := newMockToolRegistry()
+	permissionPolicy := newMockPermissionPolicy()
+
+	agent := NewAgent(apiClient, toolRegistry, permissionPolicy, "test", "test-model")
+	// ReactStrategy is default — no need to set it
+
+	result, err := agent.Run(context.Background(), "hi", func(string) {})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if result != "Hello" {
+		t.Errorf("Run() = %q, want %q", result, "Hello")
+	}
+}
+
+func TestAgent_Run_PlanExecuteVerify_DegradesGracefullyOnAPIFailure(t *testing.T) {
+	callCount := 0
+	apiClient := &mockApiClient{
+		sendFunc: func(ctx context.Context, req *api.ApiRequest, onTextDelta func(text string)) (*api.ApiResponse, error) {
+			callCount++
+			if callCount == 1 {
+				// Planning phase fails
+				return nil, context.DeadlineExceeded
+			}
+			// Execution phase succeeds
+			return &api.ApiResponse{
+				ID:         "exec-id",
+				Type:       "message",
+				Role:       "assistant",
+				Content:    []api.ContentBlock{{Type: "text", Text: "Executed without plan"}},
+				Model:      "test-model",
+				StopReason: "end_turn",
+				Usage:      api.Usage{InputTokens: 10, OutputTokens: 5},
+			}, nil
+		},
+	}
+	toolRegistry := newMockToolRegistry()
+	permissionPolicy := newMockPermissionPolicy()
+
+	agent := NewAgent(apiClient, toolRegistry, permissionPolicy, "test", "test-model")
+	agent.SetReasoningStrategy(NewPlanExecuteVerifyStrategy("plan"))
+
+	result, err := agent.Run(context.Background(), "do task", func(string) {})
+	if err != nil {
+		t.Fatalf("Run() should degrade gracefully on planning failure, got error = %v", err)
+	}
+	if result != "Executed without plan" {
+		t.Errorf("Run() = %q, want %q", result, "Executed without plan")
+	}
+}
+
+// mockTaskTool simulates the Task tool for integration testing.
+type mockTaskTool struct {
+	apiClient ApiClientInterface
+	toolReg   ToolRegistryInterface
+}
+
+func (t *mockTaskTool) Name() string                { return "Task" }
+func (t *mockTaskTool) Description() string         { return "Spawn a sub-agent" }
+func (t *mockTaskTool) InputSchema() map[string]any { return map[string]any{"type": "object"} }
+func (t *mockTaskTool) RequiresPermission() bool    { return false }
+func (t *mockTaskTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelReadOnly
+}
+func (t *mockTaskTool) Execute(ctx context.Context, input map[string]any) tool.Result {
+	subType, _ := input["subagent_type"].(string)
+	prompt, _ := input["prompt"].(string)
+	if subType == "" || prompt == "" {
+		return tool.Error("subagent_type and prompt are required")
+	}
+	// Simulate sub-agent: call API once with a focused prompt
+	resp, err := t.apiClient.SendMessageStream(ctx, &api.ApiRequest{
+		Model:     "test-model",
+		MaxTokens: 1024,
+		Stream:    true,
+		Messages: []api.Message{
+			{Role: "user", Content: prompt},
+		},
+	}, func(string) {})
+	if err != nil {
+		return tool.Error("sub-agent failed: " + err.Error())
+	}
+	return tool.Success(fmt.Sprintf("[%s Sub-Agent Result]\n%s", subType, api.ExtractTextContent(resp.Content)))
+}
+
+func TestAgent_Run_TaskToolIntegration(t *testing.T) {
+	callCount := 0
+	apiClient := &mockApiClient{
+		sendFunc: func(ctx context.Context, req *api.ApiRequest, onTextDelta func(text string)) (*api.ApiResponse, error) {
+			callCount++
+			if callCount == 1 {
+				// First call: main agent decides to use Task tool
+				return &api.ApiResponse{
+					ID:   "main-id",
+					Type: "message",
+					Role: "assistant",
+					Content: []api.ContentBlock{
+						{Type: "text", Text: "I'll use a sub-agent"},
+						{Type: "tool_use", ID: "tasku_1", Name: "Task", Input: map[string]any{
+							"subagent_type": "Explore",
+							"prompt":        "find all Go files in internal/",
+						}},
+					},
+					Model:      "test-model",
+					StopReason: "tool_use",
+					Usage:      api.Usage{InputTokens: 20, OutputTokens: 15},
+				}, nil
+			}
+			// Second call: main agent synthesizes sub-agent result
+			return &api.ApiResponse{
+				ID:         "main-id-2",
+				Type:       "message",
+				Role:       "assistant",
+				Content:    []api.ContentBlock{{Type: "text", Text: "Found Go files via sub-agent"}},
+				Model:      "test-model",
+				StopReason: "end_turn",
+				Usage:      api.Usage{InputTokens: 30, OutputTokens: 20},
+			}, nil
+		},
+	}
+
+	toolRegistry := newMockToolRegistry()
+	taskTool := &mockTaskTool{apiClient: apiClient, toolReg: toolRegistry}
+	toolRegistry.registerTool(taskTool)
+
+	permissionPolicy := newMockPermissionPolicy()
+	agent := NewAgent(apiClient, toolRegistry, permissionPolicy, "test", "test-model")
+
+	result, err := agent.Run(context.Background(), "find all Go files", func(string) {})
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if result != "Found Go files via sub-agent" {
+		t.Errorf("Run() = %q, want %q", result, "Found Go files via sub-agent")
+	}
+	// 3 API calls: 1 main (decides to use Task) + 1 sub-agent (mockTaskTool) + 1 main (synthesizes)
+	if callCount != 3 {
+		t.Errorf("API called %d times, want 3 (main + sub-agent + main)", callCount)
 	}
 }

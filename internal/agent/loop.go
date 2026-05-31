@@ -74,6 +74,7 @@ type Agent struct {
 	disclosedTools     map[string]bool
 	cacheInvalidated   bool
 	thinkingBudget     int
+	reasoningStrategy  ReasoningStrategy
 }
 
 // NewAgent creates a new Agent with the given dependencies.
@@ -98,6 +99,7 @@ func NewAgent(
 		recoveryManager:    NewRecoveryManager(),
 		cacheEnabled:       true,
 		disclosedTools:     make(map[string]bool),
+		reasoningStrategy:  ReactStrategy{},
 	}
 }
 
@@ -138,122 +140,177 @@ func (a *Agent) SetThinkingBudget(tokens int) {
 	a.thinkingBudget = tokens
 }
 
-// Run is the main entry point for the agent. It takes user input and returns the final text response.
-func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(string)) (string, error) {
+// SetReasoningStrategy sets the reasoning strategy for the agent.
+// Default is ReactStrategy (no planning). Use PlanExecuteVerifyStrategy for explicit planning.
+func (a *Agent) SetReasoningStrategy(s ReasoningStrategy) {
+	a.reasoningStrategy = s
+}
+
+// initializeRun sets up session state for a new agent run.
+func (a *Agent) initializeRun(userInput string) error {
 	if !a.keepSession || a.sessionID == "" {
 		a.sessionID = generateSessionID()
 	}
 	a.startTime = time.Now()
 	a.initTraceFile()
 
-	var totalInputTokens, totalOutputTokens int
-
 	if err := a.history.AddUserMessage(userInput); err != nil {
 		a.traceError(fmt.Sprintf("failed to add user message: %v", err))
-		return "", fmt.Errorf("failed to add user message: %w", err)
+		return fmt.Errorf("failed to add user message: %w", err)
 	}
 
 	a.turnCount = 0
+	return nil
+}
+
+// performTurn executes one agent turn: build request, call API with recovery, trace response.
+// Returns the response, token counts, and any error.
+func (a *Agent) performTurn(ctx context.Context, outputCallback func(string)) (*api.ApiResponse, int, int, error) {
+	req := a.buildRequest()
+	a.traceRequest(req.Model, len(req.Messages))
+
+	recoveryCtx := &RecoveryContext{
+		Manager:    a.recoveryManager,
+		Agent:      a,
+		RetryCount: 0,
+	}
+
+	var resp *api.ApiResponse
+	var err error
+
+	err = recoveryCtx.ExecuteWithRecovery(ctx, func() error {
+		resp, err = a.apiClient.SendMessageStream(ctx, req, outputCallback)
+		return err
+	})
+
+	if err != nil {
+		a.traceError(fmt.Sprintf("API call failed after recovery: %v", err))
+		if errors.Is(err, context.Canceled) {
+			a.traceRuntime("request_cancelled", "request context cancelled")
+		}
+		return nil, 0, 0, fmt.Errorf("API call failed: %w", err)
+	}
+
+	a.traceResponse(resp.StopReason, resp.Usage.InputTokens, resp.Usage.OutputTokens)
+	return resp, resp.Usage.InputTokens, resp.Usage.OutputTokens, nil
+}
+
+// finishRun saves the session with final status.
+func (a *Agent) finishRun(turnCount, inputTokens, outputTokens int, status string) {
+	a.saveSession(turnCount, inputTokens, outputTokens, status)
+}
+
+// handleThinking processes thinking blocks from the response and feeds them back as tool results.
+func (a *Agent) handleThinking(resp *api.ApiResponse) error {
+	var thinkingResults []api.ContentBlock
+	for _, block := range resp.Content {
+		if block.Type == "thinking" {
+			a.traceThinking(block.Text)
+			thinkingResults = append(thinkingResults, api.ContentBlock{
+				Type:      "tool_result",
+				ToolUseID: "thinking",
+				Text:      "[thinking consumed: " + block.Text[:min(len(block.Text), 100)] + "...]",
+			})
+		}
+	}
+	if len(thinkingResults) == 0 {
+		thinkingResults = append(thinkingResults, api.ContentBlock{
+			Type:      "tool_result",
+			ToolUseID: "thinking",
+			Text:      "[thinking consumed]",
+		})
+	}
+	if err := a.history.AddToolResults(thinkingResults); err != nil {
+		a.traceError(fmt.Sprintf("failed to add thinking results: %v", err))
+		return fmt.Errorf("failed to add thinking results: %w", err)
+	}
+	return nil
+}
+
+// handleToolUse executes tool calls and adds results to history.
+func (a *Agent) handleToolUse(ctx context.Context, resp *api.ApiResponse) error {
+	toolResults := a.executeTools(ctx, resp.Content)
+	if err := a.history.AddToolResults(toolResults); err != nil {
+		a.traceError(fmt.Sprintf("failed to add tool results: %v", err))
+		return fmt.Errorf("failed to add tool results: %w", err)
+	}
+	a.turnCount++
+	return nil
+}
+
+// handleEndTurn extracts the final text content from the response.
+func (a *Agent) handleEndTurn(resp *api.ApiResponse) string {
+	return api.ExtractTextContent(resp.Content)
+}
+
+// Run is the main entry point for the agent. It takes user input and returns the final text response.
+func (a *Agent) Run(ctx context.Context, userInput string, outputCallback func(string)) (string, error) {
+	if err := a.initializeRun(userInput); err != nil {
+		return "", err
+	}
+
+	// Apply reasoning strategy (e.g., planning before execution)
+	if err := a.reasoningStrategy.BeforeLoop(ctx, a.history, a.apiClient, a.model, outputCallback); err != nil {
+		a.traceError(fmt.Sprintf("reasoning strategy failed: %v", err))
+		a.finishRun(0, 0, 0, "failed")
+		return "", fmt.Errorf("reasoning strategy failed: %w", err)
+	}
+
+	var totalInputTokens, totalOutputTokens int
 
 	for a.turnCount < MaxTurns {
 		CompactIfNeeded(a.history, a.contextConfig)
 
-		req := a.buildRequest()
-		a.traceRequest(req.Model, len(req.Messages))
-
-		recoveryCtx := &RecoveryContext{
-			Manager:    a.recoveryManager,
-			Agent:      a,
-			RetryCount: 0,
-		}
-
-		var resp *api.ApiResponse
-		var err error
-
-		err = recoveryCtx.ExecuteWithRecovery(ctx, func() error {
-			resp, err = a.apiClient.SendMessageStream(ctx, req, outputCallback)
-			return err
-		})
+		resp, inTokens, outTokens, err := a.performTurn(ctx, outputCallback)
+		totalInputTokens += inTokens
+		totalOutputTokens += outTokens
 
 		if err != nil {
-			a.traceError(fmt.Sprintf("API call failed after recovery: %v", err))
 			status := "failed"
 			if errors.Is(err, context.Canceled) {
 				status = "cancelled"
-				a.traceRuntime("request_cancelled", "request context cancelled")
 			}
-			a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, status)
-			return "", fmt.Errorf("API call failed: %w", err)
+			a.finishRun(a.turnCount, totalInputTokens, totalOutputTokens, status)
+			return "", err
 		}
-
-		a.traceResponse(resp.StopReason, resp.Usage.InputTokens, resp.Usage.OutputTokens)
-
-		totalInputTokens += resp.Usage.InputTokens
-		totalOutputTokens += resp.Usage.OutputTokens
 
 		if err := a.history.AddAssistantMessage(resp.Content); err != nil {
 			a.traceError(fmt.Sprintf("failed to add assistant message: %v", err))
-			a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "failed")
+			a.finishRun(a.turnCount, totalInputTokens, totalOutputTokens, "failed")
 			return "", fmt.Errorf("failed to add assistant message: %w", err)
 		}
 
 		switch resp.StopReason {
 		case "thinking":
-			// Model spent tokens on extended thinking; feed back as tool_result to continue.
-			var thinkingResults []api.ContentBlock
-			for _, block := range resp.Content {
-				if block.Type == "thinking" {
-					a.traceThinking(block.Text)
-					thinkingResults = append(thinkingResults, api.ContentBlock{
-						Type:      "tool_result",
-						ToolUseID: "thinking",
-						Text:      "[thinking consumed: " + block.Text[:min(len(block.Text), 100)] + "...]",
-					})
-				}
-			}
-			if len(thinkingResults) == 0 {
-				thinkingResults = append(thinkingResults, api.ContentBlock{
-					Type:      "tool_result",
-					ToolUseID: "thinking",
-					Text:      "[thinking consumed]",
-				})
-			}
-			if err := a.history.AddToolResults(thinkingResults); err != nil {
-				a.traceError(fmt.Sprintf("failed to add thinking results: %v", err))
-				a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "failed")
-				return "", fmt.Errorf("failed to add thinking results: %w", err)
+			if err := a.handleThinking(resp); err != nil {
+				a.finishRun(a.turnCount, totalInputTokens, totalOutputTokens, "failed")
+				return "", err
 			}
 			continue
 
 		case "end_turn", "stop_sequence":
-			result := extractTextContent(resp.Content)
-			a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "completed")
-			return result, nil
+			a.finishRun(a.turnCount, totalInputTokens, totalOutputTokens, "completed")
+			return a.handleEndTurn(resp), nil
 
 		case "max_tokens":
-			result := extractTextContent(resp.Content) + "\n[Warning] Response was truncated (max_tokens reached)."
-			a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "completed")
-			return result, nil
+			a.finishRun(a.turnCount, totalInputTokens, totalOutputTokens, "completed")
+			return a.handleEndTurn(resp) + "\n[Warning] Response was truncated (max_tokens reached).", nil
 
 		case "tool_use":
-			toolResults := a.executeTools(ctx, resp.Content)
-			if err := a.history.AddToolResults(toolResults); err != nil {
-				a.traceError(fmt.Sprintf("failed to add tool results: %v", err))
-				a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "failed")
-				return "", fmt.Errorf("failed to add tool results: %w", err)
+			if err := a.handleToolUse(ctx, resp); err != nil {
+				a.finishRun(a.turnCount, totalInputTokens, totalOutputTokens, "failed")
+				return "", err
 			}
-			a.turnCount++
 			continue
 
 		default:
-			result := extractTextContent(resp.Content)
-			a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "completed")
-			return result, nil
+			a.finishRun(a.turnCount, totalInputTokens, totalOutputTokens, "completed")
+			return a.handleEndTurn(resp), nil
 		}
 	}
 
 	result := "[Agent loop stopped] Reached maximum turns (" + fmt.Sprintf("%d", MaxTurns) + ")."
-	a.saveSession(a.turnCount, totalInputTokens, totalOutputTokens, "max_turns")
+	a.finishRun(a.turnCount, totalInputTokens, totalOutputTokens, "max_turns")
 	return result, nil
 }
 
@@ -475,16 +532,6 @@ func (a *Agent) ClearHistory() {
 	a.history = NewHistory()
 }
 
-// extractTextContent extracts all text from content blocks.
-func extractTextContent(blocks []api.ContentBlock) string {
-	var text string
-	for _, block := range blocks {
-		if block.Type == "text" {
-			text += block.Text
-		}
-	}
-	return text
-}
 
 // generateSessionID creates a unique session identifier.
 func generateSessionID() string {
