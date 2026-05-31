@@ -38,10 +38,14 @@ var ValidReasoningStrategies = []string{"react", "plan-execute-verify"}
 
 // NormalizeReasoningStrategy returns the canonical strategy name, or "react" if empty/invalid.
 func NormalizeReasoningStrategy(s string) string {
-	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "plan-execute-verify", "pev":
+	normalized := strings.ToLower(strings.TrimSpace(s))
+	if normalized == "pev" {
 		return "plan-execute-verify"
-	default:
-		return "react"
 	}
+	for _, valid := range ValidReasoningStrategies {
+		if normalized == valid {
+			return normalized
+		}
+	}
+	return "react"
 }

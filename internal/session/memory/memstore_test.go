@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"math"
 	"testing"
 )
 
@@ -21,7 +22,7 @@ func (e *testEmbedder) Embed(_ context.Context, text string) ([]float64, error) 
 	}
 	if norm > 0 {
 		for i := range vec {
-			vec[i] /= sqrt(norm)
+			vec[i] /= math.Sqrt(norm)
 		}
 	}
 	return vec, nil
