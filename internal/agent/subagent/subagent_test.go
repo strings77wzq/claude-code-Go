@@ -51,6 +51,21 @@ func (p *allowAllPolicy) Evaluate(string, map[string]any, bool) permission.Decis
 	return permission.Allow
 }
 
+type contextAwareClient struct{}
+
+func (c *contextAwareClient) SendMessageStream(ctx context.Context, _ *api.ApiRequest, _ func(string)) (*api.ApiResponse, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		return &api.ApiResponse{
+			StopReason: "end_turn",
+			Content:    []api.ContentBlock{{Type: "text", Text: "done"}},
+			Usage:      api.Usage{InputTokens: 10, OutputTokens: 5},
+		}, nil
+	}
+}
+
 func TestExploreSubAgentToolSet(t *testing.T) {
 	tools := ExploreToolSet()
 	names := toolNames(tools)
@@ -108,7 +123,7 @@ func TestRunSubAgentReturnsStructuredResult(t *testing.T) {
 	reg := &fakeRegistry{tools: make(map[string]tool.Tool)}
 	policy := &allowAllPolicy{}
 
-	result, err := Run(context.Background(), TypeExplore, "find all Go files", client, reg, policy)
+	result, err := Run(context.Background(), TypeExplore, "find all Go files", client, reg, policy, "test-model")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -121,7 +136,7 @@ func TestRunSubAgentReturnsStructuredResult(t *testing.T) {
 }
 
 func TestRunSubAgentInvalidType(t *testing.T) {
-	_, err := Run(context.Background(), "invalid_type", "prompt", nil, nil, nil)
+	_, err := Run(context.Background(), "invalid_type", "prompt", nil, nil, nil, "")
 	if err == nil {
 		t.Error("expected error for invalid sub-agent type")
 	}
@@ -136,6 +151,57 @@ func TestSubAgentTypeString(t *testing.T) {
 	}
 	if TypeTestGen.String() != "TestGen" {
 		t.Errorf("expected 'TestGen', got '%s'", TypeTestGen.String())
+	}
+}
+
+func TestRunConcurrentMultipleSubAgents(t *testing.T) {
+	client := &fakeAPIClient{response: "done"}
+	reg := &fakeRegistry{tools: make(map[string]tool.Tool)}
+	policy := &allowAllPolicy{}
+
+	requests := []SubAgentRequest{
+		{Type: TypeExplore, Prompt: "find Go files"},
+		{Type: TypeReview, Prompt: "review auth module"},
+		{Type: TypeTestGen, Prompt: "generate tests"},
+	}
+
+	results := RunConcurrent(context.Background(), requests, client, reg, policy, "test-model")
+	if len(results) != 3 {
+		t.Fatalf("expected 3 results, got %d", len(results))
+	}
+	for i, r := range results {
+		if r.Error != nil {
+			t.Errorf("result[%d] (%s) unexpected error: %v", i, r.Type, r.Error)
+		}
+		if r.Type != requests[i].Type {
+			t.Errorf("result[%d] type = %s, want %s", i, r.Type, requests[i].Type)
+		}
+		if r.Result == "" {
+			t.Errorf("result[%d] is empty", i)
+		}
+	}
+}
+
+func TestRunConcurrentContextCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately
+
+	// Use a client that checks context
+	client := &contextAwareClient{}
+	reg := &fakeRegistry{tools: make(map[string]tool.Tool)}
+	policy := &allowAllPolicy{}
+
+	requests := []SubAgentRequest{
+		{Type: TypeExplore, Prompt: "find files"},
+	}
+
+	results := RunConcurrent(ctx, requests, client, reg, policy, "test-model")
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	// Should have an error due to cancelled context
+	if results[0].Error == nil {
+		t.Error("expected error from cancelled context")
 	}
 }
 

@@ -15,6 +15,7 @@ type TaskTool struct {
 	apiClient  apiClient
 	toolReg    toolReg
 	permPolicy permPolicy
+	model      string
 }
 
 type apiClient interface {
@@ -33,8 +34,8 @@ type permPolicy interface {
 }
 
 // NewTaskTool creates a TaskTool with agent dependencies for sub-agent execution.
-func NewTaskTool(api apiClient, reg toolReg, pol permPolicy) tool.Tool {
-	return &TaskTool{apiClient: api, toolReg: reg, permPolicy: pol}
+func NewTaskTool(api apiClient, reg toolReg, pol permPolicy, model string) tool.Tool {
+	return &TaskTool{apiClient: api, toolReg: reg, permPolicy: pol, model: model}
 }
 
 func (t *TaskTool) Name() string { return "Task" }
@@ -80,7 +81,7 @@ func (t *TaskTool) Execute(ctx context.Context, input map[string]any) tool.Resul
 		return tool.Error(fmt.Sprintf("unknown subagent_type: %s (valid: Explore, Review, TestGen)", subType))
 	}
 
-	result, err := subagent.Run(ctx, st, prompt, t.apiClient, t.toolReg, t.permPolicy)
+	result, err := subagent.Run(ctx, st, prompt, t.apiClient, t.toolReg, t.permPolicy, t.model)
 	if err != nil {
 		return tool.Error(fmt.Sprintf("sub-agent failed: %v", err))
 	}

@@ -36,14 +36,14 @@ func (p *taskTestPolicy) Evaluate(string, map[string]any, bool) permission.Decis
 }
 
 func TestTaskToolName(t *testing.T) {
-	tk := NewTaskTool(&taskTestAPI{}, &taskTestReg{}, &taskTestPolicy{})
+	tk := NewTaskTool(&taskTestAPI{}, &taskTestReg{}, &taskTestPolicy{}, "test-model")
 	if tk.Name() != "Task" {
 		t.Errorf("expected 'Task', got '%s'", tk.Name())
 	}
 }
 
 func TestTaskToolExplore(t *testing.T) {
-	tk := NewTaskTool(&taskTestAPI{}, &taskTestReg{}, &taskTestPolicy{})
+	tk := NewTaskTool(&taskTestAPI{}, &taskTestReg{}, &taskTestPolicy{}, "test-model")
 	result := tk.Execute(context.Background(), map[string]any{
 		"subagent_type": "Explore",
 		"prompt":        "find all Go files",
@@ -57,7 +57,7 @@ func TestTaskToolExplore(t *testing.T) {
 }
 
 func TestTaskToolInvalidType(t *testing.T) {
-	tk := NewTaskTool(&taskTestAPI{}, &taskTestReg{}, &taskTestPolicy{})
+	tk := NewTaskTool(&taskTestAPI{}, &taskTestReg{}, &taskTestPolicy{}, "test-model")
 	result := tk.Execute(context.Background(), map[string]any{
 		"subagent_type": "InvalidType",
 		"prompt":        "do something",
@@ -68,7 +68,7 @@ func TestTaskToolInvalidType(t *testing.T) {
 }
 
 func TestTaskToolMissingFields(t *testing.T) {
-	tk := NewTaskTool(&taskTestAPI{}, &taskTestReg{}, &taskTestPolicy{})
+	tk := NewTaskTool(&taskTestAPI{}, &taskTestReg{}, &taskTestPolicy{}, "test-model")
 	result := tk.Execute(context.Background(), map[string]any{})
 	if !result.IsError {
 		t.Error("expected error for missing fields")

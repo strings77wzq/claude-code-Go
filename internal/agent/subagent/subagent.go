@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/strings77wzq/claude-code-Go/internal/agent"
 	"github.com/strings77wzq/claude-code-Go/internal/api"
@@ -155,6 +156,7 @@ func Run(
 	apiClient apiClient,
 	mainRegistry toolRegistry,
 	policy permissionPolicy,
+	model string,
 ) (string, error) {
 	tools := toolSet(subType)
 	if tools == nil {
@@ -177,7 +179,7 @@ func Run(
 		subType,
 	)
 
-	a := agent.NewAgent(apiClient, isolated, &subPolicyAdapter{policy}, sysPrompt, "")
+	a := agent.NewAgent(apiClient, isolated, &subPolicyAdapter{policy}, sysPrompt, model)
 	a.SetThinkingBudget(0) // sub-agents don't need extended thinking
 
 	result, err := a.Run(ctx, prompt, func(string) {})
@@ -186,6 +188,45 @@ func Run(
 	}
 
 	return fmt.Sprintf("[%s Sub-Agent Result]\n%s", subType, strings.TrimSpace(result)), nil
+}
+
+// SubAgentRequest describes a single sub-agent to spawn.
+type SubAgentRequest struct {
+	Type   Type
+	Prompt string
+}
+
+// SubAgentResult holds the outcome of a single sub-agent execution.
+type SubAgentResult struct {
+	Type   Type
+	Result string
+	Error  error
+}
+
+// RunConcurrent executes multiple sub-agents in parallel and returns all results.
+// Context cancellation propagates to all running sub-agents.
+func RunConcurrent(
+	ctx context.Context,
+	requests []SubAgentRequest,
+	apiClient apiClient,
+	mainRegistry toolRegistry,
+	policy permissionPolicy,
+	model string,
+) []SubAgentResult {
+	results := make([]SubAgentResult, len(requests))
+	var wg sync.WaitGroup
+
+	for i, req := range requests {
+		wg.Add(1)
+		go func(idx int, r SubAgentRequest) {
+			defer wg.Done()
+			result, err := Run(ctx, r.Type, r.Prompt, apiClient, mainRegistry, policy, model)
+			results[idx] = SubAgentResult{Type: r.Type, Result: result, Error: err}
+		}(i, req)
+	}
+
+	wg.Wait()
+	return results
 }
 
 // subPolicyAdapter adapts a simple permission policy to agent's interface.
