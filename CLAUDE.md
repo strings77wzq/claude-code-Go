@@ -79,3 +79,21 @@ go build -o bin/go-code ./cmd/go-code         # 构建
 4. **测试**: 表驱动测试，AAA 模式，覆盖率 ≥ 80%
 5. **文件大小**: 单文件 ≤ 800 行 (agent/loop.go 当前 733 行，接近上限，考虑拆分)
 6. **不可变性**: 优先返回新值而非修改指针
+
+## Skill routing
+
+When the user's request matches an available skill, invoke it via the Skill tool. When in doubt, invoke the skill.
+
+Key routing rules:
+- Product ideas/brainstorming → invoke /office-hours
+- Strategy/scope → invoke /plan-ceo-review
+- Architecture → invoke /plan-eng-review
+- Design system/plan review → invoke /design-consultation or /plan-design-review
+- Full review pipeline → invoke /autoplan
+- Bugs/errors → invoke /investigate
+- QA/testing site behavior → invoke /qa or /qa-only
+- Code review/diff check → invoke /review
+- Visual polish → invoke /design-review
+- Ship/deploy/PR → invoke /ship or /land-and-deploy
+- Save progress → invoke /context-save
+- Resume context → invoke /context-restore
