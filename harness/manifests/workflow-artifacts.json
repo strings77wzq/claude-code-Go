@@ -1,0 +1,97 @@
+{
+  "schema_version": "workflow-quality.v1",
+  "name": "workflow-artifacts",
+  "description": "Permanent artifacts (always present) + per-change artifacts (generated during OpenSpec workflow). Per-change artifacts live under openspec/changes/<name>/ during active work.",
+  "quality_indicators": [
+    "All design decisions are traceable to a proposal",
+    "New contributors can onboard in < 30 minutes",
+    "Every AC in requirements is verifiable",
+    "Every task in tasks.md declares file boundaries"
+  ],
+  "artifacts": [
+    {
+      "path": "proposal.md",
+      "required": false,
+      "note": "Per-change artifact. Required during active OpenSpec change. Check openspec/changes/*/proposal.md instead.",
+      "min_bytes": 200,
+      "required_sections": [
+        "## Problem",
+        "## Solution",
+        "## Scope",
+        "## Effort Estimate",
+        "## Acceptance Criteria"
+      ],
+      "forbidden_patterns": [
+        "TODO",
+        "FIXME"
+      ]
+    },
+    {
+      "path": "design.md",
+      "required": false,
+      "note": "Per-change artifact. Required during active OpenSpec change.",
+      "min_bytes": 500,
+      "required_sections": [
+        "## Architecture",
+        "## Data Flow",
+        "## Interface",
+        "## Tradeoffs"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "path": "tasks.md",
+      "required": false,
+      "note": "Per-change artifact. Required during active OpenSpec change.",
+      "min_bytes": 300,
+      "required_sections": [
+        "## Task",
+        "File Boundary"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "path": "requirement.md",
+      "required": false,
+      "note": "Per-change artifact. Required during active OpenSpec change.",
+      "min_bytes": 200,
+      "required_sections": [
+        "Given",
+        "When",
+        "Then"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "required": true,
+      "min_bytes": 500,
+      "required_sections": [
+        "## Project Structure",
+        "## Core Abstractions",
+        "## Data Flow",
+        "## Design Decisions"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "required": true,
+      "min_bytes": 300,
+      "required_sections": [
+        "## Development Setup",
+        "## Pull Request",
+        "## Testing",
+        "## Code Style"
+      ],
+      "forbidden_patterns": []
+    },
+    {
+      "path": "CHANGELOG.md",
+      "required": true,
+      "min_bytes": 100,
+      "required_sections": [],
+      "forbidden_patterns": []
+    }
+  ]
+}

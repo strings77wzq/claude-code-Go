@@ -1,122 +1,269 @@
 # Contributing to claude-code-Go
 
-Thank you for your interest in contributing to claude-code-Go! We welcome contributions from the community to make this AI coding assistant even better.
+Thank you for contributing! This guide covers everything you need to get started.
 
 ## Welcome Message
 
-Whether you're reporting a bug, proposing a feature, or submitting a pull request, your contributions are valued. Please read this guide to understand how to contribute effectively.
+Whether you're reporting a bug, proposing a feature, or submitting a pull request, your contributions are valued.
 
-## How to Contribute
-
-### Bug Reports
-
-If you find a bug, please help us by reporting it:
-
-1. Check if the issue already exists
-2. Create a new issue with a clear title and description
-3. Include:
-   - Steps to reproduce the issue
-   - Expected behavior vs actual behavior
-   - Go version (`go version`)
-   - OS and environment details
-   - Any relevant logs or error messages
-
-### Feature Requests
-
-We'd love to hear your ideas for new features:
-
-1. Describe the feature and its use case
-2. Explain why this feature would be valuable
-3. Include any mockups or examples if applicable
-
-### Pull Requests
-
-For code contributions:
-
-1. **Fork the repository** — Click the "Fork" button on GitHub
-2. **Clone your fork**: `git clone https://github.com/YOUR_USERNAME/claude-code-Go.git`
-3. **Add upstream remote**: `git remote add upstream https://github.com/strings77wzq/claude-code-Go.git`
-4. **Create a feature branch**: `git checkout -b feature/your-feature-name`
-5. **Make your changes** following our code guidelines
-6. **Run tests** to ensure everything passes: `go test -v ./...`
-7. **Commit your changes** with clear commit messages
-8. **Push to your fork**: `git push origin feature/your-feature-name`
-9. **Submit a pull request** from your fork to the main repository
+---
 
 ## Development Setup
 
 ### Prerequisites
 
-- Go 1.24 or later
-- Git
+- **Go 1.24** or later (`go version`)
+- **Git** (`git --version`)
+- **Python 3.10+** (for harness tests)
 
-### Clone and Setup
+### Quick Start
 
 ```bash
 git clone https://github.com/strings77wzq/claude-code-Go.git
 cd claude-code-Go
-```
 
-### Build
-
-```bash
+# Build
 make build
-# or
-go build -o bin/go-code ./cmd/go-code
-```
+# → bin/go-code
 
-### Test
-
-```bash
+# Verify everything works
 make test
-# or
-go test -v ./...
+# → go test -v ./... + harness tests
 ```
 
-### Other Development Commands
-
-| Command | Description |
-|---------|-------------|
-| `make install` | Install to `$GOPATH/bin` |
-| `make vet` | Run go vet for static analysis |
-| `make build-all` | Build for all platforms |
-| `make clean` | Remove build artifacts |
-
-### Documentation Build Outputs
-
-Documentation source lives under `docs/**/*.md`, `docs/.vitepress/config.ts`, and `docs/.vitepress/theme/**`. The VitePress build output under `docs/.vitepress/dist/` is generated and should not be included in ordinary pull requests.
-
-Include `docs/.vitepress/dist/` changes only when a release or publishing task explicitly requires generated site artifacts. For CI fixes, update the source Markdown/config files and verify with:
+### Full Dev Environment
 
 ```bash
-cd docs
-npm ci
-npm run build
+# Install Go tooling
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+
+# Install Python harness deps
+cd harness && pip install -r requirements.txt && cd ..
+
+# Run all checks
+make vet           # go vet ./...
+make test          # go test + harness
+golangci-lint run ./...
+gosec ./...
 ```
 
-## Code Style Guidelines
+### Project Structure
+
+```
+cmd/go-code/         → CLI entry point
+internal/
+  agent/             → Core agent loop (loop.go is the hot path)
+  tool/              → Tool registry & execution
+  permission/        → Permission modes
+  hooks/             → Hook system (PreToolUse/PostToolUse/Stop)
+  skills/            → Skill loading & execution
+  config/            → Configuration loading
+  session/           → Session management
+  lsp/               → LSP integration
+  provider/          → Model provider adapters
+  telemetry/         → Telemetry
+  logger/            → Logging
+  command/           → Slash command support
+pkg/
+  tty/               → TTY utilities
+  tui/               → Terminal UI
+tests/integration/   → Integration tests
+openspec/            → OpenSpec specs & changes
+docs/                → VitePress documentation
+harness/             → Python eval harness
+```
+
+---
+
+## Pull Request
+
+### Before You Start
+
+1. **Check existing issues** — Is someone already working on this?
+2. **Open an issue first** for features or large changes — get design alignment before coding
+3. **Read ARCHITECTURE.md** — understand the codebase structure in < 10 minutes
+
+### Workflow (the same process used by maintainers)
+
+This project uses a structured workflow. Every change goes through:
+
+```
+OpenSpec explore → brainstorm → propose → design review → approve
+      ↓
+TDD (red → green → refactor) → quality gates → verify
+      ↓
+Parallel review (code + security + behavior) → atomic commits → ship → archive
+      ↓
+Eval scorecard (pytest harness/test_workflow_quality.py) → merge
+```
+
+### Step-by-Step
+
+1. **Fork** the repository on GitHub
+2. **Clone** your fork:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/claude-code-Go.git
+   cd claude-code-Go
+   git remote add upstream https://github.com/strings77wzq/claude-code-Go.git
+   ```
+3. **Create a feature branch**:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+4. **Write tests first** (TDD — see Testing section below)
+5. **Implement** until all tests pass
+6. **Run quality gates**:
+   ```bash
+   make vet && make test && golangci-lint run ./...
+   ```
+7. **Commit** with conventional commit format (see Commit Convention below)
+8. **Push** to your fork: `git push origin feature/your-feature-name`
+9. **Submit a pull request** to the main repository
+
+### PR Description Template
+
+```markdown
+## Summary
+Brief description of what this PR does.
+
+## Related Issues
+Fixes #123
+
+## Type of Change
+- [ ] Bug fix
+- [ ] Feature
+- [ ] Refactor
+- [ ] Documentation
+- [ ] Test
+
+## Design Artifacts
+- Proposal: openspec/changes/<name>/proposal.md
+- Design: openspec/changes/<name>/design.md
+- Tasks: openspec/changes/<name>/tasks.md
+
+## Testing
+- [ ] Unit tests added/updated
+- [ ] Coverage ≥ 80%
+- [ ] `go test -race ./...` passes
+- [ ] Harness tests pass (`make test`)
+
+## Quality Gates
+- [ ] Lint: `golangci-lint run ./...` — clean
+- [ ] Build: `go build ./...` — passes
+- [ ] Test: `go test -cover ./...` — ≥ 80%
+- [ ] Race: `go test -race ./...` — clean
+- [ ] Security: `gosec ./...` — zero high/critical
+- [ ] Eval: `pytest harness/test_workflow_quality.py` — all green
+```
+
+### Review Process
+
+1. **CI must pass** — lint, test, coverage, race, security scans
+2. **Maintainers review** — expect feedback within 1-3 days
+3. **Address all CRITICAL/HIGH findings** before merge
+4. **Eval scorecard must be green** — `pytest harness/test_workflow_quality.py`
+5. Once approved, a maintainer will merge your PR
+
+---
+
+## Testing
+
+### Test-Driven Development (Required)
+
+This project practices TDD. All code changes must:
+
+1. **Write a failing test first** (RED)
+2. **Write minimal code to pass** (GREEN)
+3. **Refactor while tests stay green** (REFACTOR)
+
+### Running Tests
+
+```bash
+# Go unit + integration tests
+go test -v ./...
+
+# With coverage
+go test -v -coverprofile=coverage.out ./...
+go tool cover -func=coverage.out
+
+# Race detection (required before merge)
+go test -race ./...
+
+# Python harness tests
+cd harness && python -m pytest -v && cd ..
+
+# Eval scorecard (required before merge)
+pytest harness/test_workflow_quality.py -v
+
+# Everything
+make test
+```
+
+### Coverage Target
+
+**≥ 80%** for new code. Check with:
+```bash
+go test -cover ./...
+```
+
+### Test Structure
+
+- **Table-driven tests** for Go (`t.Run` with subtests)
+- **AAA pattern**: Arrange → Act → Assert
+- **Descriptive names**: `TestHandler_ReturnsError_WhenInputIsEmpty`
+- **Harness scenarios** for agent behavior: add manifests in `harness/manifests/`
+
+### Harness Scenarios
+
+For changes to agent loop, tools, or permissions, add a harness scenario:
+
+1. Create a manifest in `harness/manifests/`
+2. Add mock provider behavior in `harness/mock_server/scenarios.py`
+3. Add assertions in `harness/test_scenarios.py` or `harness/test_quality_gates.py`
+
+---
+
+## Code Style
 
 ### Go Code
 
-- Follow standard Go conventions (run `go fmt` before committing)
-- Use meaningful variable and function names
-- Add comments for exported functions and types
-- Keep functions focused and concise
-- Handle errors explicitly, don't ignore them
+- **Format**: `go fmt ./...` before every commit (automated by hooks)
+- **Lint**: `go vet ./...` + `golangci-lint run ./...`
+- **Naming**: idiomatic Go — `camelCase` for unexported, `PascalCase` for exported
+- **Comments**: document all exported functions and types
+- **Errors**: handle explicitly, wrap with `%w`, never silently swallow
+- **Immutability**: prefer returning new values over mutating pointers
 
-### Formatting
+### File Size Limits
 
-```bash
-# Format code before committing
-go fmt ./...
-go vet ./...
-```
+- **Files**: ≤ 800 lines (agent/loop.go is ~733, approaching the limit)
+- **Functions**: ≤ 50 lines
+- **Nesting**: ≤ 4 levels deep
 
-### Testing
+### Quality Gates (Auto-Enforced)
 
-- Add tests for new features and bug fixes
-- Ensure all tests pass before submitting PR
-- Keep test coverage meaningful, not just for coverage metrics
+| Gate | Command | Threshold |
+|------|---------|-----------|
+| Format | `gofmt -l .` | Zero diffs |
+| Vet | `go vet ./...` | Zero errors |
+| Lint | `golangci-lint run ./...` | Zero new issues |
+| Build | `go build ./...` | Must pass |
+| Test | `go test -cover ./...` | ≥ 80% coverage |
+| Race | `go test -race ./...` | Zero races |
+| Security | `gosec ./...` | Zero high/critical |
+| Eval | `pytest harness/test_workflow_quality.py` | All green |
+
+### Anti-Patterns (Blockers)
+
+- ❌ Hardcoded secrets/API keys (use env vars)
+- ❌ Silent error swallowing (handle or propagate)
+- ❌ `fmt.Printf` / `print()` debug statements (remove before commit)
+- ❌ Assuming code works without running `go test`
+- ❌ Referencing APIs/libraries without grep-verifying they exist
+- ❌ "顺手改" (incidental changes) without updating tasks.md
+
+---
 
 ## Commit Message Convention
 
@@ -124,10 +271,6 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>(<scope>): <description>
-
-[optional body]
-
-[optional footer]
 ```
 
 ### Types
@@ -137,10 +280,11 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 | `feat` | New feature |
 | `fix` | Bug fix |
 | `docs` | Documentation changes |
-| `style` | Code style (formatting, no logic change) |
-| `refactor` | Code refactoring |
+| `refactor` | Code refactoring (no behavior change) |
 | `test` | Adding or updating tests |
-| `chore` | Maintenance, deps, build changes |
+| `chore` | Maintenance, dependencies, build |
+| `perf` | Performance improvement |
+| `ci` | CI/CD changes |
 
 ### Examples
 
@@ -149,39 +293,33 @@ feat(agent): add context compression for long sessions
 fix(tool): correct glob pattern matching for hidden files
 docs(readme): update installation instructions
 refactor(api): simplify SSE streaming parser
+test(permission): add table-driven tests for deny flow
 ```
 
-## Pull Request Process
+---
 
-### Before Submitting
+## Bug Reports
 
-1. **Ensure tests pass**: Run `go test -v ./...`
-2. **Run static analysis**: Run `go vet ./...` and `go fmt ./...`
-3. **Update documentation**: If your change affects usage, update relevant docs
-4. **Keep changes focused**: One PR per feature or fix
+1. Check if the issue already exists
+2. Create a new issue with:
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - `go version` output
+   - OS and environment
+   - Relevant logs or error messages
 
-### PR Description
+## Feature Requests
 
-Include in your PR description:
+1. Describe the feature and use case
+2. Explain why it's valuable
+3. Include mockups or examples if applicable
+4. Ideally, start with `Skill: openspec-explore` to understand the impact
 
-- **Summary**: What does this PR do?
-- **Related issues**: Link to any related issues (e.g., "Fixes #123")
-- **Type of change**: Bug fix, feature, docs, refactor, etc.
-- **Testing**: How did you test your changes?
-
-### Review Process
-
-1. Maintainers will review your PR
-2. Address any feedback or requested changes
-3. Once approved, your PR will be merged
-
-## Code of Conduct
-
-Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+---
 
 ## Changelog Discipline
 
-User-visible changes must include a CHANGELOG entry. Add your change under `[Unreleased]` in [CHANGELOG.md](CHANGELOG.md) using [Keep a Changelog](https://keepachangelog.com/) format:
+User-visible changes must include a CHANGELOG entry in [CHANGELOG.md](CHANGELOG.md) under `[Unreleased]`, using [Keep a Changelog](https://keepachangelog.com/) format:
 
 ```markdown
 ### Added
@@ -194,9 +332,11 @@ User-visible changes must include a CHANGELOG entry. Add your change under `[Unr
 - Bug fix description.
 ```
 
+---
+
 ## First Good Issues
 
-If you're new to the project, look for issues tagged `good first issue` in the [issue tracker](https://github.com/strings77wzq/claude-code-Go/issues). These are scoped for new contributors and come with context in the issue description.
+Look for issues tagged `good first issue` in the [issue tracker](https://github.com/strings77wzq/claude-code-Go/issues).
 
 Good starter contributions:
 - Adding tests to packages with low coverage
@@ -205,22 +345,23 @@ Good starter contributions:
 - Adding examples to existing docs
 
 When working on a `good first issue`:
-1. Comment on the issue to let others know you're working on it
-2. Ask questions in the issue if the scope is unclear
-3. Start with `make test` from a clean checkout to verify your environment
+1. Comment on the issue to claim it
+2. Ask questions if scope is unclear
+3. Start with `make test` from a clean checkout
 
-## Test Evidence
-
-Pull requests that change runtime code must include test evidence:
-- Go unit tests for new functions or changed behavior
-- Run `go test ./...` before submitting and include the pass/fail result
-- For agent loop or tool changes, consider adding a harness scenario
+---
 
 ## Getting Help
 
 - **Issues**: [GitHub Issues](https://github.com/strings77wzq/claude-code-Go/issues)
-- **Discussions**: Start a GitHub Discussion
+- **Discussions**: [GitHub Discussions](https://github.com/strings77wzq/claude-code-Go/discussions)
 
-## Thank You
+---
 
-Your contributions make open source a better place. Thank you for taking the time to contribute!
+## Code of Conduct
+
+This project follows a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to abide by its terms.
+
+---
+
+Thank you for contributing! Your work makes open source better.

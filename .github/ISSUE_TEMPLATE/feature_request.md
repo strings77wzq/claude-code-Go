@@ -1,25 +1,58 @@
 ---
 name: Feature Request
-about: Suggest an idea for this project
+about: Propose a new feature for claude-code-Go
 title: '[FEATURE] '
 labels: enhancement
 assignees: ''
 ---
 
-## Is your feature request related to a problem?
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## Problem Statement
 
-## Describe the solution you'd like
-A clear and concise description of what you want to happen.
+<!-- What problem are you trying to solve? Be specific. -->
 
-## Describe alternatives you've considered
-A clear and concise description of any alternative solutions or features you've considered.
+## Proposed Solution
 
-## Additional Context
-Add any other context or screenshots about the feature request here.
+<!-- How would you solve it? Include API/CLI changes if applicable. -->
 
-## Impact
-- [ ] This would improve the user experience
-- [ ] This would fix a missing capability
-- [ ] This would improve performance
-- [ ] This would improve security
+## Design Exploration
+
+<!-- Recommended: run `Skill: openspec-explore` first and summarize findings. -->
+
+- **Affected modules**: <!-- e.g., internal/agent/, internal/tool/ -->
+- **Dependencies on existing code**: <!-- what would this feature touch? -->
+- **Similar existing features**: <!-- grep for related implementations -->
+
+## Alternatives Considered
+
+<!-- At least 2 alternatives with brief tradeoff analysis. -->
+
+| Alternative | Pros | Cons |
+|------------|------|------|
+| | | |
+| | | |
+
+## Acceptance Criteria
+
+<!-- Use Given/When/Then format. -->
+
+```
+Given <precondition>
+When <trigger>
+Then <expected outcome>
+```
+
+## Impact Assessment
+
+- [ ] New public API / CLI flag
+- [ ] Breaking change to existing behavior
+- [ ] New dependency (Go module or external service)
+- [ ] Performance-sensitive path
+- [ ] Security-sensitive (auth, permissions, data handling)
+- [ ] Requires documentation update
+- [ ] Requires harness scenario
+
+## Scope Estimate
+
+- **Files affected**: <!-- count -->
+- **Lines of code**: <!-- estimate -->
+- **Complexity**: <!-- low / medium / high -->

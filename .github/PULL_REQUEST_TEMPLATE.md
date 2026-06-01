@@ -1,35 +1,68 @@
 ## Description
 
-<!-- Please provide a clear and concise description of what this PR does. -->
+<!-- Brief description of what this PR does. Link to OpenSpec proposal if applicable. -->
+
+## Design Traceability
+
+<!-- REQUIRED for feature PRs. Link your design artifacts. -->
+
+- **Proposal**: <!-- openspec/changes/<name>/proposal.md -->
+- **Design**: <!-- openspec/changes/<name>/design.md -->
+- **Tasks**: <!-- openspec/changes/<name>/tasks.md -->
+- **Requirements**: <!-- openspec/changes/<name>/requirement.md -->
 
 ## Related Issues
 
-<!-- Link any related issues using GitHub keywords (e.g., "Fixes #123", "Closes #456"). -->
+<!-- Link issues: "Fixes #123", "Closes #456" -->
 
 ## Type of Change
 
-What type of PR is this? (Select all that apply)
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Refactor
+- [ ] Documentation
+- [ ] Test
+- [ ] Chore
 
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
-- [ ] Documentation update
-- [ ] Code refactoring
-- [ ] Test addition/update
-- [ ] Chore (maintenance, dependency updates, etc.)
+## Quality Gates
 
-## Checklist
+<!-- ALL must be checked before requesting review. -->
 
-Before submitting this PR, please ensure:
+- [ ] **Format**: `gofmt -l .` — zero diffs
+- [ ] **Vet**: `go vet ./...` — clean
+- [ ] **Lint**: `golangci-lint run ./...` — zero new issues
+- [ ] **Build**: `go build ./...` — passes
+- [ ] **Test**: `go test -cover ./...` — ≥ 80%
+- [ ] **Race**: `go test -race ./...` — clean
+- [ ] **Security**: `gosec ./...` — zero high/critical
+- [ ] **Eval**: `pytest harness/test_workflow_quality.py` — **Scorecard 100% green**
 
-- [ ] I have tested my changes locally
-- [ ] `go test -v ./...` passes
-- [ ] `go fmt ./...` has been run
-- [ ] `go vet ./...` produces no errors
-- [ ] Documentation has been updated (if applicable)
-- [ ] I have added appropriate tests (if applicable)
-- [ ] My code follows the project's coding style
+## Scope Verification
+
+<!-- Confirm the diff matches what tasks.md declared. -->
+
+```bash
+$ git diff --name-only main...HEAD
+```
+
+- [ ] All changed files are within declared task boundaries
+- [ ] No incidental changes ("顺便改") outside scope
+
+## Testing Evidence
+
+<!-- Paste test output or link to CI run. -->
+
+```
+$ go test -v -cover ./...
+<output>
+
+$ go test -race ./...
+<output>
+
+$ pytest harness/test_workflow_quality.py -v
+<output>
+```
 
 ## Additional Notes
 
-<!-- Add any other context about the PR here, such as screenshots, testing steps, or potential concerns. -->
+<!-- Screenshots, migration steps, breaking change notices, performance data. -->
