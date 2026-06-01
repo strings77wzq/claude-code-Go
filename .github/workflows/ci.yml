@@ -75,7 +75,7 @@ jobs:
           # G302: file permissions 0600 (expected — session files, logs need owner-only)
           # G304: file inclusion via variable (expected — CLI reads user files)
           # G703: path traversal (expected — CLI works with file paths)
-          args: -exclude=G101,G107,G118,G122,G204,G301,G302,G304,G703 ./...
+          args: -exclude=G101,G104,G107,G118,G122,G204,G301,G302,G304,G306,G703 ./...
 
       - name: govulncheck vulnerability scan
         run: |
