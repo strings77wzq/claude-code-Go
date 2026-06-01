@@ -21,7 +21,7 @@ jobs:
 
       - name: Check formatting
         run: |
-          go install golang.org/x/tools/cmd/goimports@latest
+          go install golang.org/x/tools/cmd/goimports@v0.30.0
           fmt_output=$(goimports -l .)
           if [ -n "$fmt_output" ]; then
             echo "The following files need formatting:"
@@ -65,7 +65,14 @@ jobs:
       - name: gosec security scan
         uses: securego/gosec@master
         with:
-          args: ./...
+          # Exclude rules that are expected false positives for a CLI tool:
+          # G101: hardcoded credentials (env var names, not actual secrets)
+          # G118: goroutine uses context.Background (acceptable for TTY repl)
+          # G122: filesystem race in WalkDir (acceptable for grep tool)
+          # G204: subprocess with variable (expected — CLI runs user commands)
+          # G304: file inclusion via variable (expected — CLI reads user files)
+          # G703: path traversal (expected — CLI works with file paths)
+          args: -exclude=G101,G118,G122,G204,G304,G703 ./...
 
       - name: govulncheck vulnerability scan
         run: |
