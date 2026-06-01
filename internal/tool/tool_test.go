@@ -105,8 +105,10 @@ func TestRegistryExecuteRegisteredTool(t *testing.T) {
 // largeOutputTool returns content exceeding maxResultSize to test truncation.
 type largeOutputTool struct{}
 
-func (l *largeOutputTool) Name() string                { return "large_output" }
-func (l *largeOutputTool) Description() string         { return "a tool that returns more than 100KB of output" }
+func (l *largeOutputTool) Name() string { return "large_output" }
+func (l *largeOutputTool) Description() string {
+	return "a tool that returns more than 100KB of output"
+}
 func (l *largeOutputTool) InputSchema() map[string]any { return map[string]any{"type": "object"} }
 func (l *largeOutputTool) RequiresPermission() bool    { return false }
 func (l *largeOutputTool) RequiredPermissionLevel() permission.PermissionLevel {

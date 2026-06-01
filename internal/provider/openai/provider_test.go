@@ -230,10 +230,10 @@ func TestParseStreamResponse(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-			name:    "carriage return suffix",
-			data:    "data: {\"id\":\"1\",\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}\r\n",
+			name:     "carriage return suffix",
+			data:     "data: {\"id\":\"1\",\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}\r\n",
 			wantText: "Hi",
-			wantLen: 1,
+			wantLen:  1,
 		},
 		{
 			name:    "empty response body",

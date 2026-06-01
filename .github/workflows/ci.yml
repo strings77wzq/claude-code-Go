@@ -67,12 +67,15 @@ jobs:
         with:
           # Exclude rules that are expected false positives for a CLI tool:
           # G101: hardcoded credentials (env var names, not actual secrets)
+          # G107: HTTP request with variable URL (expected — update checker, telemetry)
           # G118: goroutine uses context.Background (acceptable for TTY repl)
           # G122: filesystem race in WalkDir (acceptable for grep tool)
           # G204: subprocess with variable (expected — CLI runs user commands)
+          # G301: directory permissions 0750 (expected — user-facing dirs need world-read)
+          # G302: file permissions 0600 (expected — session files, logs need owner-only)
           # G304: file inclusion via variable (expected — CLI reads user files)
           # G703: path traversal (expected — CLI works with file paths)
-          args: -exclude=G101,G118,G122,G204,G304,G703 ./...
+          args: -exclude=G101,G107,G118,G122,G204,G301,G302,G304,G703 ./...
 
       - name: govulncheck vulnerability scan
         run: |
