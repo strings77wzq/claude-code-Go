@@ -6,6 +6,21 @@ import (
 	"sync"
 )
 
+const (
+	maxResultSize = 100 * 1024 // 100KB
+)
+
+// truncateResult truncates the result Content if it exceeds maxResultSize,
+// appending a marker with the truncated byte count.
+func truncateResult(result Result) Result {
+	if len(result.Content) <= maxResultSize {
+		return result
+	}
+	truncated := len(result.Content) - maxResultSize
+	result.Content = result.Content[:maxResultSize] + fmt.Sprintf("\n... [truncated %d bytes]", truncated)
+	return result
+}
+
 type Registry struct {
 	mu    sync.RWMutex
 	tools map[string]Tool
@@ -60,6 +75,7 @@ func (r *Registry) Execute(ctx context.Context, name string, input map[string]an
 		if recovered := recover(); recovered != nil {
 			result = Error(fmt.Sprintf("tool %s panic recovered", name))
 		}
+		result = truncateResult(result)
 	}()
 
 	return tool.Execute(ctx, input)

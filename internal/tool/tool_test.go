@@ -102,6 +102,42 @@ func TestRegistryExecuteRegisteredTool(t *testing.T) {
 	}
 }
 
+// largeOutputTool returns content exceeding maxResultSize to test truncation.
+type largeOutputTool struct{}
+
+func (l *largeOutputTool) Name() string                { return "large_output" }
+func (l *largeOutputTool) Description() string         { return "a tool that returns more than 100KB of output" }
+func (l *largeOutputTool) InputSchema() map[string]any { return map[string]any{"type": "object"} }
+func (l *largeOutputTool) RequiresPermission() bool    { return false }
+func (l *largeOutputTool) RequiredPermissionLevel() permission.PermissionLevel {
+	return permission.LevelReadOnly
+}
+func (l *largeOutputTool) Execute(_ context.Context, _ map[string]any) Result {
+	buf := make([]byte, 150*1024)
+	for i := range buf {
+		buf[i] = 'x'
+	}
+	return Success(string(buf))
+}
+
+func TestRegistryTruncatesLargeOutput(t *testing.T) {
+	reg := NewRegistry()
+	if err := reg.Register(&largeOutputTool{}); err != nil {
+		t.Fatalf("Register failed: %v", err)
+	}
+
+	result := reg.Execute(context.Background(), "large_output", nil)
+	if result.IsError {
+		t.Fatalf("unexpected error: %s", result.Content)
+	}
+	if len(result.Content) > 110*1024 {
+		t.Errorf("output should be truncated to ~100KB, got %d bytes", len(result.Content))
+	}
+	if !strings.Contains(result.Content, "[truncated") {
+		t.Error("truncated output should contain a truncation marker")
+	}
+}
+
 func TestRegistryExecuteRecoversPanickingTool(t *testing.T) {
 	reg := NewRegistry()
 	if err := reg.Register(&panicTool{}); err != nil {

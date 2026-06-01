@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
 	"time"
+
+	"github.com/strings77wzq/claude-code-Go/internal/sanitize"
 )
 
 // Session represents a conversation session with metadata.
@@ -130,14 +130,7 @@ type traceRuntimeLine struct {
 
 type traceExtensionLine map[string]interface{}
 
-const redactedMarker = "[REDACTED]"
 const traceSchemaVersion = "trace.v1"
-
-var (
-	bearerSecretPattern = regexp.MustCompile(`(?i)bearer\s+[A-Za-z0-9._~+/=-]+`)
-	apiKeyPattern       = regexp.MustCompile(`sk-[A-Za-z0-9][A-Za-z0-9._-]{8,}`)
-	tokenLikePattern    = regexp.MustCompile(`(?i)\b(api[_-]?key|authorization|password|secret|token)[_:=.-][A-Za-z0-9._~+/=-]+`)
-)
 
 // AppendTraceRequest appends a request trace line to the session file.
 func AppendTraceRequest(filepath, model string, messagesCount int) error {
@@ -287,25 +280,12 @@ func appendTraceLine(filepath string, v interface{}) error {
 }
 
 func redactTraceValue(v interface{}) interface{} {
-	switch value := v.(type) {
-	case map[string]interface{}:
-		redacted := make(map[string]interface{}, len(value))
-		for key, item := range value {
-			if isSensitiveTraceKey(key) {
-				redacted[key] = redactedMarker
-				continue
-			}
-			redacted[key] = redactTraceValue(item)
-		}
-		return redacted
-	case []interface{}:
-		redacted := make([]interface{}, 0, len(value))
-		for _, item := range value {
-			redacted = append(redacted, redactTraceValue(item))
-		}
-		return redacted
-	case string:
-		return redactTraceString(value)
+	// Sanitize handles maps, slices, and strings directly.
+	// Structs and other opaque types need a JSON round-trip first so that
+	// sanitize.RedactValue can traverse their fields recursively.
+	switch v.(type) {
+	case map[string]any, []any, string:
+		return sanitize.RedactValue(v)
 	default:
 		data, err := json.Marshal(v)
 		if err != nil {
@@ -315,38 +295,16 @@ func redactTraceValue(v interface{}) interface{} {
 		if err := json.Unmarshal(data, &decoded); err != nil {
 			return v
 		}
-		switch decoded.(type) {
-		case map[string]interface{}, []interface{}:
-			return redactTraceValue(decoded)
-		default:
-			return decoded
-		}
+		return redactTraceValue(decoded)
 	}
 }
 
 func isSensitiveTraceKey(key string) bool {
-	normalized := strings.ToLower(strings.NewReplacer("_", "", "-", "", ".", "").Replace(key))
-	for _, token := range []string{"apikey", "authorization", "secret", "password"} {
-		if strings.Contains(normalized, token) {
-			return true
-		}
-	}
-	if strings.Contains(normalized, "token") && !strings.Contains(normalized, "tokens") {
-		return true
-	}
-	return false
+	return sanitize.SensitiveKey(key)
 }
 
 func redactTraceString(value string) string {
-	value = bearerSecretPattern.ReplaceAllStringFunc(value, func(match string) string {
-		if strings.HasPrefix(strings.ToLower(match), "bearer ") {
-			return "Bearer " + redactedMarker
-		}
-		return redactedMarker
-	})
-	value = apiKeyPattern.ReplaceAllString(value, redactedMarker)
-	value = tokenLikePattern.ReplaceAllString(value, redactedMarker)
-	return value
+	return sanitize.RedactString(value)
 }
 
 // SaveSession saves a session and its messages to a JSONL file.

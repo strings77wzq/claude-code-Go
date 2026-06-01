@@ -1,11 +1,11 @@
 package diagnostic
 
 import (
-	"encoding/json"
 	"fmt"
-	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/strings77wzq/claude-code-Go/internal/sanitize"
 )
 
 type Severity string
@@ -15,7 +15,7 @@ const (
 	SeverityWarn  Severity = "WARN"
 	SeverityError Severity = "ERROR"
 
-	RedactedMarker = "[REDACTED]"
+	RedactedMarker = sanitize.RedactedMarker
 )
 
 type Diagnostic struct {
@@ -67,72 +67,13 @@ func (d Diagnostic) TraceFields() map[string]any {
 }
 
 func redactValue(value any) any {
-	switch v := value.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(v))
-		for key, item := range v {
-			if sensitiveKey(key) {
-				out[key] = RedactedMarker
-				continue
-			}
-			out[key] = redactValue(item)
-		}
-		return out
-	case map[string]string:
-		out := make(map[string]any, len(v))
-		for key, item := range v {
-			if sensitiveKey(key) {
-				out[key] = RedactedMarker
-				continue
-			}
-			out[key] = redactString(item)
-		}
-		return out
-	case []any:
-		out := make([]any, 0, len(v))
-		for _, item := range v {
-			out = append(out, redactValue(item))
-		}
-		return out
-	case string:
-		return redactString(v)
-	default:
-		data, err := json.Marshal(v)
-		if err != nil {
-			return v
-		}
-		var decoded any
-		if err := json.Unmarshal(data, &decoded); err != nil {
-			return v
-		}
-		switch decoded.(type) {
-		case map[string]any, []any:
-			return redactValue(decoded)
-		default:
-			return decoded
-		}
-	}
+	return sanitize.RedactValue(value)
 }
 
 func sensitiveKey(key string) bool {
-	normalized := strings.ToLower(strings.NewReplacer("_", "", "-", "", ".", "").Replace(key))
-	for _, token := range []string{"apikey", "authorization", "password", "secret"} {
-		if strings.Contains(normalized, token) {
-			return true
-		}
-	}
-	return strings.Contains(normalized, "token") && !strings.Contains(normalized, "tokens")
+	return sanitize.SensitiveKey(key)
 }
 
-var (
-	bearerPattern = regexp.MustCompile(`(?i)bearer\s+[A-Za-z0-9._~+/=-]+`)
-	keyPattern    = regexp.MustCompile(`sk-[A-Za-z0-9][A-Za-z0-9._-]{8,}`)
-	tokenPattern  = regexp.MustCompile(`(?i)\b(api[_-]?key|authorization|password|secret|token)[_:=.-][A-Za-z0-9._~+/=-]+`)
-)
-
 func redactString(value string) string {
-	value = bearerPattern.ReplaceAllString(value, "Bearer "+RedactedMarker)
-	value = keyPattern.ReplaceAllString(value, RedactedMarker)
-	value = tokenPattern.ReplaceAllString(value, RedactedMarker)
-	return value
+	return sanitize.RedactString(value)
 }

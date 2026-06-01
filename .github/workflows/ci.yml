@@ -21,7 +21,8 @@ jobs:
 
       - name: Check formatting
         run: |
-          fmt_output=$(gofmt -l .)
+          go install golang.org/x/tools/cmd/goimports@latest
+          fmt_output=$(goimports -l .)
           if [ -n "$fmt_output" ]; then
             echo "The following files need formatting:"
             echo "$fmt_output"
@@ -32,10 +33,44 @@ jobs:
         run: go vet ./...
 
       - name: Run tests
-        run: go test -v ./...
+        run: go test -race -v -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Enforce coverage threshold
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | tr -d '%')
+          echo "Total coverage: ${COVERAGE}%"
+          # Ratchet threshold: set at current coverage level (67%).
+          # Increase as coverage improves — target: 80%.
+          THRESHOLD=67
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "::error::Coverage ${COVERAGE}% is below ${THRESHOLD}% threshold"
+            exit 1
+          fi
 
       - name: Build binary
         run: go build -o bin/go-code ./cmd/go-code
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: gosec security scan
+        uses: securego/gosec@master
+        with:
+          args: ./...
+
+      - name: govulncheck vulnerability scan
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
 
   python-harness:
     runs-on: ubuntu-latest
@@ -128,6 +163,40 @@ jobs:
         run: |
           cd docs
           npm run build
+
+  workflow-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install harness
+        run: |
+          pip install -r harness/requirements.txt
+          pip install -e .
+
+      - name: Run workflow quality eval
+        run: |
+          pytest harness/test_workflow_quality.py -v --tb=short
+          # Scorecard must be 100% green — PR blocked otherwise
+
+      - name: Content quality check
+        run: |
+          python -c "
+          from harness.workflow.content_check import ContentQualityChecker
+          from pathlib import Path
+          checker = ContentQualityChecker()
+          result = checker.check(Path('.'))
+          print(result.render())
+          if not result.passed:
+              print('::error::Content quality check failed — fix ARCHITECTURE.md or CONTRIBUTING.md')
+              exit(1)
+          "
 
   docker-build:
     runs-on: ubuntu-latest

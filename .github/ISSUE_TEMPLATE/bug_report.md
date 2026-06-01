@@ -1,35 +1,61 @@
 ---
 name: Bug Report
-about: Create a report to help us improve
+about: Report a bug in claude-code-Go
 title: '[BUG] '
 labels: bug
 assignees: ''
 ---
 
 ## Describe the Bug
-A clear and concise description of what the bug is.
 
-## To Reproduce
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Run command '...'
-3. See error
+<!-- Clear, concise description. -->
+
+## Reproduction
+
+<!-- REQUIRED. Steps that reproduce the bug. -->
+
+1.
+2.
+3.
+
+## Minimal Reproduction Test
+
+<!-- If possible, provide a Go test case that demonstrates the bug. -->
+
+```go
+func TestReproduceBug(t *testing.T) {
+    // Arrange
+
+    // Act
+
+    // Assert — this should pass but fails
+}
+```
 
 ## Expected Behavior
-A clear and concise description of what you expected to happen.
+
+<!-- What should happen. -->
 
 ## Actual Behavior
-A clear and concise description of what actually happened.
+
+<!-- What actually happened. Include error messages. -->
 
 ## Environment
-- **OS**: [e.g. macOS 14.0, Ubuntu 22.04, Windows 11]
-- **Go Version**: [e.g. 1.24.0]
-- **claude-code-Go Version**: [e.g. v0.1.0]
-- **Provider**: [e.g. Anthropic, OpenAI, DeepSeek, Qwen, GLM]
-- **Model**: [e.g. claude-sonnet-4-6-20251001]
 
-## Additional Context
-Add any other context about the problem here.
+- **OS**: <!-- e.g., Ubuntu 22.04, macOS 14.0 -->
+- **Go Version**: <!-- `go version` -->
+- **claude-code-Go Version**: <!-- `go-code --version` or commit hash -->
+- **Provider**: <!-- Anthropic / Bedrock / Vertex / DeepSeek -->
+- **Model**: <!-- e.g., claude-sonnet-4-6 -->
 
 ## Logs
-If applicable, add logs or error output.
+
+<!-- Paste relevant logs or error output. -->
+
+```
+<paste logs here>
+```
+
+## Root Cause Hypothesis
+
+<!-- Optional: any initial diagnosis. -->

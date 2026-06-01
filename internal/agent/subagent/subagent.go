@@ -203,8 +203,12 @@ type SubAgentResult struct {
 	Error  error
 }
 
+// MaxConcurrentSubAgents is the maximum number of sub-agents that can run concurrently.
+var MaxConcurrentSubAgents = 10
+
 // RunConcurrent executes multiple sub-agents in parallel and returns all results.
 // Context cancellation propagates to all running sub-agents.
+// Concurrency is bounded by MaxConcurrentSubAgents to prevent resource exhaustion.
 func RunConcurrent(
 	ctx context.Context,
 	requests []SubAgentRequest,
@@ -216,10 +220,15 @@ func RunConcurrent(
 	results := make([]SubAgentResult, len(requests))
 	var wg sync.WaitGroup
 
+	// Bounded concurrency via semaphore channel
+	sem := make(chan struct{}, MaxConcurrentSubAgents)
+
 	for i, req := range requests {
 		wg.Add(1)
 		go func(idx int, r SubAgentRequest) {
 			defer wg.Done()
+			sem <- struct{}{}        // acquire
+			defer func() { <-sem }() // release
 			result, err := Run(ctx, r.Type, r.Prompt, apiClient, mainRegistry, policy, model)
 			results[idx] = SubAgentResult{Type: r.Type, Result: result, Error: err}
 		}(i, req)
